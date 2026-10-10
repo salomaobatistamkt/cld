@@ -35,7 +35,7 @@
       "source": "heygen-com/hyperframes",
       "sourceType": "github",
       "skillPath": "skills/hyperframes-animation/SKILL.md",
-      "computedHash": "e4902360b4578194f8088506a38388ea4355a0b2a690281492fc59591fb3bcfc"
+      "computedHash": "1fca72d17a4202929b3b99ec0078120e8eb10c2f6741b9ddc25802dfc49568e1"
     },
     "hyperframes-audio": {
       "source": "heygen-com/hyperframes",
@@ -47,7 +47,7 @@
       "source": "heygen-com/hyperframes",
       "sourceType": "github",
       "skillPath": "skills/hyperframes-cli/SKILL.md",
-      "computedHash": "29a496b4f1ee9e0ce1bbd1d8c29946c6c594e7144e5b1b5c94ec65e2c9fa9ebc"
+      "computedHash": "2fb3d9f67be780e7dc988015ce78f2d9b2854d896047cb09418d1dcc987f927a"
     },
     "hyperframes-core": {
       "source": "heygen-com/hyperframes",

@@ -1,5 +1,9 @@
 # HyperFrames Composition Project
 
+## Idioma
+
+**Sempre se comunique com o usuário em português (pt-BR)** — respostas, perguntas, resumos e explicações. Código, nomes de arquivos e comandos permanecem como estão.
+
 ## Skills — USE THESE FIRST
 
 **Always invoke the relevant skill before writing or modifying compositions.** Skills encode framework-specific patterns (e.g., `window.__timelines` registration, `data-*` attribute semantics, shader-compatible CSS rules) that are NOT in generic web docs. Skipping them produces broken compositions.

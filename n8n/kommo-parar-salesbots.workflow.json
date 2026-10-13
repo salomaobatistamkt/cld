@@ -1,0 +1,107 @@
+{
+  "name": "Kommo - Parar Salesbots em Venda Perdida",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "kommo-venda-perdida",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "a1f0c6b2-0001-4c1e-9a10-000000000001",
+      "name": "Webhook Kommo",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "kommo-venda-perdida"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ajuste aqui o subdomínio da sua conta Kommo\nconst KOMMO_BASE_URL = 'https://amarketingevendas.kommo.com';\n// 143 = etapa \"Venda perdida\" (fixa em todo funil do Kommo)\nconst STATUS_PERDIDO = '143';\n\n// O Kommo manda x-www-form-urlencoded (ex.: leads[status][0][id]=123).\n// Se o n8n entregar as chaves \"achatadas\", reconstruímos o objeto.\nfunction unflatten(flat) {\n  const out = {};\n  for (const [key, value] of Object.entries(flat)) {\n    const parts = key.replace(/\\]/g, '').split('[');\n    let cur = out;\n    parts.forEach((p, i) => {\n      if (i === parts.length - 1) cur[p] = value;\n      else cur = cur[p] = cur[p] ?? {};\n    });\n  }\n  return out;\n}\n\nconst toArray = (x) => Array.isArray(x) ? x : (x && typeof x === 'object' ? Object.values(x) : []);\n\nconst seen = new Set();\nconst result = [];\n\nfor (const item of $input.all()) {\n  let body = item.json.body ?? item.json;\n  if (Object.keys(body).some((k) => k.includes('['))) body = unflatten(body);\n\n  const leads = body.leads ?? {};\n  // Mudança de etapa chega em leads.status; edições gerais em leads.update\n  const candidatos = [...toArray(leads.status), ...toArray(leads.update)];\n\n  for (const lead of candidatos) {\n    if (String(lead.status_id) !== STATUS_PERDIDO) continue;\n    const id = Number(lead.id);\n    if (!id || seen.has(id)) continue;\n    seen.add(id);\n    result.push({ json: { lead_id: id, base_url: KOMMO_BASE_URL } });\n  }\n}\n\n// Lista vazia = nenhum lead perdido neste evento; o fluxo para aqui.\nreturn result;"
+      },
+      "id": "a1f0c6b2-0002-4c1e-9a10-000000000002",
+      "name": "Extrair leads perdidos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 0]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.base_url }}/api/v4/bots",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "limit", "value": "250" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1f0c6b2-0003-4c1e-9a10-000000000003",
+      "name": "Listar Salesbots",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 0],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Cruza cada lead perdido com cada bot da conta\nconst leads = $('Extrair leads perdidos').all();\nconst bots = $input.first().json._embedded?.bots ?? [];\n\nconst out = [];\nfor (const lead of leads) {\n  for (const bot of bots) {\n    out.push({\n      json: {\n        lead_id: lead.json.lead_id,\n        bot_id: bot.id,\n        bot_name: bot.name ?? null,\n        base_url: lead.json.base_url,\n      },\n    });\n  }\n}\nreturn out;"
+      },
+      "id": "a1f0c6b2-0004-4c1e-9a10-000000000004",
+      "name": "Lead x Bot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.base_url }}/api/v4/bots/{{ $json.bot_id }}/stop",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ entity_id: $json.lead_id, entity_type: 'leads' }) }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 5,
+              "batchInterval": 1000
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "a1f0c6b2-0005-4c1e-9a10-000000000005",
+      "name": "Parar Salesbot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 0]
+    }
+  ],
+  "connections": {
+    "Webhook Kommo": {
+      "main": [[{ "node": "Extrair leads perdidos", "type": "main", "index": 0 }]]
+    },
+    "Extrair leads perdidos": {
+      "main": [[{ "node": "Listar Salesbots", "type": "main", "index": 0 }]]
+    },
+    "Listar Salesbots": {
+      "main": [[{ "node": "Lead x Bot", "type": "main", "index": 0 }]]
+    },
+    "Lead x Bot": {
+      "main": [[{ "node": "Parar Salesbot", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

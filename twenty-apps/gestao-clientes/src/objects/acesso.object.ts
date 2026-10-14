@@ -1,0 +1,85 @@
+import { defineObject, FieldType } from 'twenty-sdk/define';
+
+import {
+  ACESSO_CATEGORIA_FIELD_UID,
+  ACESSO_COFRE_FIELD_UID,
+  ACESSO_LINK_FIELD_UID,
+  ACESSO_LOGIN_FIELD_UID,
+  ACESSO_NAME_FIELD_UID,
+  ACESSO_OBSERVACOES_FIELD_UID,
+  ACESSO_UID,
+} from 'src/constants/universal-identifiers';
+
+export default defineObject({
+  universalIdentifier: ACESSO_UID,
+  nameSingular: 'acesso',
+  namePlural: 'acessos',
+  labelSingular: 'Acesso',
+  labelPlural: 'Acessos',
+  description: 'Contas e links do cliente: redes sociais, anúncios, site, Drive…',
+  icon: 'IconKey',
+  labelIdentifierFieldMetadataUniversalIdentifier: ACESSO_NAME_FIELD_UID,
+  fields: [
+    {
+      universalIdentifier: ACESSO_NAME_FIELD_UID,
+      type: FieldType.TEXT,
+      name: 'name',
+      label: 'Plataforma',
+      description: 'Ex.: Instagram, Meta Ads, Google Ads, Hostinger, Drive',
+      icon: 'IconAbc',
+    },
+    {
+      universalIdentifier: ACESSO_CATEGORIA_FIELD_UID,
+      type: FieldType.SELECT,
+      name: 'categoria',
+      label: 'Categoria',
+      icon: 'IconTag',
+      defaultValue: "'OUTRO'",
+      options: [
+        { position: 0, label: 'Rede social', value: 'REDE_SOCIAL', color: 'pink' },
+        { position: 1, label: 'Anúncios', value: 'ANUNCIOS', color: 'blue' },
+        { position: 2, label: 'Site / hospedagem', value: 'SITE', color: 'purple' },
+        { position: 3, label: 'Domínio / DNS', value: 'DOMINIO', color: 'turquoise' },
+        { position: 4, label: 'Arquivos / Drive', value: 'ARQUIVOS', color: 'yellow' },
+        { position: 5, label: 'E-mail', value: 'EMAIL', color: 'sky' },
+        { position: 6, label: 'Analytics', value: 'ANALYTICS', color: 'orange' },
+        { position: 7, label: 'Outro', value: 'OUTRO', color: 'gray' },
+      ],
+    },
+    {
+      universalIdentifier: ACESSO_LINK_FIELD_UID,
+      type: FieldType.LINKS,
+      name: 'linkAcesso',
+      label: 'Link',
+      icon: 'IconLink',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: ACESSO_LOGIN_FIELD_UID,
+      type: FieldType.TEXT,
+      name: 'login',
+      label: 'Login / usuário',
+      icon: 'IconUser',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: ACESSO_COFRE_FIELD_UID,
+      type: FieldType.TEXT,
+      name: 'ondeEstaASenha',
+      label: 'Onde está a senha',
+      description:
+        'Não guarde a senha aqui: indique o cofre (ex.: Bitwarden › Pasta do cliente)',
+      icon: 'IconLock',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: ACESSO_OBSERVACOES_FIELD_UID,
+      type: FieldType.TEXT,
+      name: 'observacoes',
+      label: 'Observações',
+      description: 'Ex.: quem é o admin, 2FA no celular de quem, ID da conta',
+      icon: 'IconNotes',
+      isNullable: true,
+    },
+  ],
+});

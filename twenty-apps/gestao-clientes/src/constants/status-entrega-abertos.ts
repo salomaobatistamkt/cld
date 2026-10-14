@@ -1,0 +1,7 @@
+export const STATUS_ENTREGA_ABERTOS = [
+  'BACKLOG',
+  'A_FAZER',
+  'EM_PRODUCAO',
+  'EM_REVISAO',
+  'AGUARDANDO_CLIENTE',
+];

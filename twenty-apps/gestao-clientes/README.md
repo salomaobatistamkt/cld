@@ -35,16 +35,23 @@ App que transforma o Twenty num painel de **clientes, serviços contratados e en
 
 ## Instalar
 
-Requisitos: Node 24 e Yarn 4. Funciona em qualquer instância do Twenty: Twenty Cloud ou auto-hospedado (≥ 2.46).
+Requisitos: Node 24 e Yarn 4 (`corepack enable`). Funciona em qualquer instância do Twenty: Twenty Cloud ou auto-hospedado (≥ 2.46).
+
+> **Windows:** use uma pasta sem acentos ou espaços no caminho (ex.: `C:\dev\cld`).
 
 ```bash
-cd packages/twenty-apps/internal/gestao-clientes
+cd twenty-apps/gestao-clientes
 yarn install
-yarn twenty auth login --url https://SEU-TWENTY   # conecta seu workspace
-yarn twenty app apply --create                    # instala o app
-```
 
-Para testar localmente com Docker, siga o [SETUP.md](SETUP.md).
+# Twenty Cloud ou servidor próprio:
+yarn twenty remote:add --url https://SEU-TWENTY
+
+# ...ou um Twenty local com Docker (login: tim@apple.dev / tim@apple.dev):
+yarn twenty docker:start
+yarn twenty remote:add --local
+
+yarn twenty apply   # instala/atualiza o app no workspace conectado
+```
 
 ## Adaptar
 

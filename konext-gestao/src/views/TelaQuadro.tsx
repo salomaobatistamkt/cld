@@ -19,8 +19,8 @@ const TelaQuadro = ({ id }: { id: string }) => {
   return (
     <div className="editor-quadro">
       <div className="editor-topo">
-        <button type="button" className="btn pequeno" onClick={voltar}>
-          <ArrowLeft size={15} /> Voltar
+        <button type="button" className="btn pequeno" onClick={voltar} aria-label="Voltar">
+          <ArrowLeft size={15} /> <span className="texto-botao">Voltar</span>
         </button>
         <input
           id="titulo-quadro"
@@ -33,7 +33,7 @@ const TelaQuadro = ({ id }: { id: string }) => {
             if (atual && titulo.trim() && titulo !== atual.titulo) salvar('quadros', { ...atual, titulo: titulo.trim() });
           }}
         />
-        {cliente ? <span style={{ opacity: 0.85, fontWeight: 600 }}>{cliente.nome}</span> : null}
+        {cliente ? <span className="nome-cliente">{cliente.nome}</span> : null}
         <span className="salvo">Salvo automaticamente</span>
         <button type="button" className="btn pequeno" onClick={() => setExcluir(true)} aria-label="Excluir quadro">
           <Trash2 size={15} />

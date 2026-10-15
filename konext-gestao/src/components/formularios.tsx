@@ -31,6 +31,8 @@ export const novoCliente = (): Cliente => ({
   documento: '',
   briefing: { publico: '', tomDeVoz: '', objetivos: '', concorrentes: '', identidade: '', observacoes: '' },
   acessos: [],
+  metaContaId: '',
+  notasReuniao: '',
   criadoEm: hojeISO(),
 });
 
@@ -141,6 +143,9 @@ export const FormCliente = ({ inicial, aoFechar }: { inicial: Cliente; aoFechar:
               />
             ))}
           </div>
+        </Campo>
+        <Campo rotulo="Conta de anúncios do Meta" dica="Para ver as campanhas deste cliente. Ex.: act_123456789">
+          <input id="cli-meta" value={c.metaContaId} onChange={(e) => setC({ ...c, metaContaId: e.target.value.trim() })} placeholder="act_…" />
         </Campo>
         <h3 className="largo" style={{ fontSize: 15, marginTop: 6 }}>
           Briefing

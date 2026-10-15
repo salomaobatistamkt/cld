@@ -17,14 +17,17 @@ export const classePrazo = (entrega: Entrega) => {
   return '';
 };
 
-export const CardEntrega = ({ entrega, mostrarCliente, aoAbrir }: { entrega: Entrega; mostrarCliente: boolean; aoAbrir: () => void }) => {
+type PropsCard = { entrega: Entrega; mostrarCliente: boolean; aoAbrir: () => void; aoMover?: (status: StatusEntrega) => void };
+
+export const CardEntrega = ({ entrega, mostrarCliente, aoAbrir, aoMover }: PropsCard) => {
   const cliente = useStore((estado) => estado.dados.clientes.find((c) => c.id === entrega.clienteId));
   const servico = useStore((estado) => estado.dados.servicos.find((s) => s.id === entrega.servicoId));
   const [arrastando, setArrastando] = useState(false);
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       className={`card-entrega${arrastando ? ' arrastando' : ''}`}
       draggable
       onDragStart={(evento) => {
@@ -34,6 +37,13 @@ export const CardEntrega = ({ entrega, mostrarCliente, aoAbrir }: { entrega: Ent
       }}
       onDragEnd={() => setArrastando(false)}
       onClick={aoAbrir}
+      onKeyDown={(evento) => {
+        if (evento.target !== evento.currentTarget) return;
+        if (evento.key === 'Enter' || evento.key === ' ') {
+          evento.preventDefault();
+          aoAbrir();
+        }
+      }}
     >
       {mostrarCliente && cliente ? (
         <span style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 12, color: 'var(--text-2)', fontWeight: 700 }}>
@@ -61,7 +71,23 @@ export const CardEntrega = ({ entrega, mostrarCliente, aoAbrir }: { entrega: Ent
         ) : null}
         {entrega.link ? <Link2 size={13} aria-label="Tem link" /> : null}
       </span>
-    </button>
+      {aoMover ? (
+        // No toque não existe arrastar: um seletor muda a coluna direto do card.
+        <select
+          className="mover-toque"
+          value={entrega.status}
+          aria-label="Mover para"
+          onClick={(evento) => evento.stopPropagation()}
+          onChange={(evento) => aoMover(evento.target.value as StatusEntrega)}
+        >
+          {ORDEM_STATUS_ENTREGA.map((status) => (
+            <option key={status} value={status}>
+              {STATUS_ENTREGA[status].label}
+            </option>
+          ))}
+        </select>
+      ) : null}
+    </div>
   );
 };
 
@@ -110,7 +136,7 @@ export const Kanban = ({ entregas, clienteFixo }: { entregas: Entrega[]; cliente
                 <span className="contagem">{daColuna.length}</span>
               </div>
               {daColuna.map((entrega) => (
-                <CardEntrega key={entrega.id} entrega={entrega} mostrarCliente={!clienteFixo} aoAbrir={() => setEditando(entrega)} />
+                <CardEntrega key={entrega.id} entrega={entrega} mostrarCliente={!clienteFixo} aoAbrir={() => setEditando(entrega)} aoMover={(novo) => mover(entrega.id, novo)} />
               ))}
               <button type="button" className="btn fantasma pequeno" onClick={() => setEditando(novaEntrega(clienteFixo ?? primeiroCliente, status))}>
                 <Plus size={14} /> Adicionar

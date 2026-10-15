@@ -40,6 +40,8 @@ export const criarDadosExemplo = (hoje = hojeISO()): Dados => {
         { id: 'a2', plataforma: 'Meta Ads (BM)', login: 'Acesso de parceiro', link: 'https://business.facebook.com', ondeSenha: 'BM da agência' },
         { id: 'a3', plataforma: 'Hospedagem do site', login: 'marina@paodourado.com.br', link: 'https://hpanel.hostinger.com', ondeSenha: 'Cofre › Pão Dourado' },
       ],
+      metaContaId: 'act_100200300400',
+      notasReuniao: 'Cliente quer reforçar encomendas de Natal. Combinar envio das fotos do cardápio até sexta.',
       criadoEm: d(-210),
     },
     {
@@ -61,6 +63,8 @@ export const criarDadosExemplo = (hoje = hojeISO()): Dados => {
         observacoes: 'Seguir regras do CFO para anúncios.',
       },
       acessos: [{ id: 'a4', plataforma: 'Google Ads', login: 'ads@sorrisoleve.com', link: 'https://ads.google.com', ondeSenha: 'Cofre › Sorriso Leve' }],
+      metaContaId: 'act_500600700800',
+      notasReuniao: '',
       criadoEm: d(-95),
     },
     {
@@ -75,6 +79,8 @@ export const criarDadosExemplo = (hoje = hojeISO()): Dados => {
       documento: '',
       briefing: { publico: 'Mulheres de 25 a 45 anos.', tomDeVoz: 'Energético e motivador.', objetivos: 'Lotar turmas da manhã.', concorrentes: '', identidade: '', observacoes: '' },
       acessos: [],
+      metaContaId: '',
+      notasReuniao: '',
       criadoEm: d(-6),
     },
     {
@@ -89,6 +95,8 @@ export const criarDadosExemplo = (hoje = hojeISO()): Dados => {
       documento: '',
       briefing: { publico: '', tomDeVoz: '', objetivos: 'Começar vendas pelo site.', concorrentes: '', identidade: '', observacoes: 'Proposta enviada, aguardando retorno.' },
       acessos: [],
+      metaContaId: '',
+      notasReuniao: '',
       criadoEm: d(-2),
     },
   ];
@@ -190,6 +198,7 @@ export const criarDadosExemplo = (hoje = hojeISO()): Dados => {
     processos,
     config: {
       empresa: 'Konext',
+      logo: '',
       tiposServico: ['Marketing / Tráfego', 'Sites / Sistemas', 'Consultoria / Mentoria', 'Social media', 'Identidade visual'],
       categoriasEntrada: ['Mensalidade', 'Projeto', 'Consultoria', 'Outros'],
       categoriasSaida: ['Ferramentas', 'Equipe', 'Infraestrutura', 'Impostos', 'Marketing próprio', 'Outros'],

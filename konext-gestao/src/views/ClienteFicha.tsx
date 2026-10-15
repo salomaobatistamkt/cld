@@ -5,6 +5,7 @@ import {
   ExternalLink,
   FileText,
   KeyRound,
+  Megaphone,
   Package,
   Pencil,
   PenTool,
@@ -16,7 +17,8 @@ import { useState } from 'react';
 
 import { FormCliente, FormLancamento, FormServico, novoLancamento, novoServico } from '@/components/formularios';
 import { Kanban } from '@/components/Kanban';
-import { Avatar, Confirmar, Modal, Campo, Tag, Vazio } from '@/components/ui';
+import { PainelCampanhas } from '@/components/PainelCampanhas';
+import { Avatar, Campo, Confirmar, Modal, Tag, useItemAtivoVisivel, Vazio } from '@/components/ui';
 import { RECORRENCIA, STATUS_CLIENTE, STATUS_SERVICO } from '@/lib/constantes';
 import { valorMensal } from '@/lib/financeiro';
 import { useStore } from '@/lib/store';
@@ -31,6 +33,7 @@ const ABAS = [
   { id: 'servicos', rotulo: 'Serviços', icone: <ClipboardList size={15} /> },
   { id: 'entregas', rotulo: 'Entregas', icone: <Package size={15} /> },
   { id: 'estrategia', rotulo: 'Estratégias', icone: <PenTool size={15} /> },
+  { id: 'campanhas', rotulo: 'Campanhas', icone: <Megaphone size={15} /> },
   { id: 'financeiro', rotulo: 'Financeiro', icone: <CircleDollarSign size={15} /> },
   { id: 'acessos', rotulo: 'Acessos', icone: <KeyRound size={15} /> },
 ];
@@ -52,6 +55,7 @@ export const ClienteFicha = ({ id, aba = 'visao' }: { id: string; aba?: string }
   const [lancamento, setLancamento] = useState<Lancamento | null>(null);
   const [acesso, setAcesso] = useState<Acesso | null>(null);
   const [novoQuadro, setNovoQuadro] = useState(false);
+  const abasRef = useItemAtivoVisivel<HTMLDivElement>('[aria-selected="true"]', aba);
 
   if (!cliente) {
     return (
@@ -122,7 +126,7 @@ export const ClienteFicha = ({ id, aba = 'visao' }: { id: string; aba?: string }
         </div>
       </div>
 
-      <div className="abas" role="tablist">
+      <div className="abas" role="tablist" ref={abasRef}>
         {ABAS.map((item) => (
           <button key={item.id} type="button" role="tab" aria-selected={aba === item.id} className={aba === item.id ? 'ativo' : ''} onClick={() => trocarAba(item.id)}>
             {item.icone}
@@ -221,6 +225,15 @@ export const ClienteFicha = ({ id, aba = 'visao' }: { id: string; aba?: string }
             </button>
           </div>
           {quadros.length === 0 ? <Vazio texto="Crie um funil, mapa mental ou plano de campanha para este cliente." /> : <GradeQuadros quadros={quadros} />}
+        </section>
+      ) : null}
+
+      {aba === 'campanhas' ? (
+        <section className="cartao">
+          <div className="cartao-titulo">
+            <h3>Campanhas no Meta</h3>
+          </div>
+          <PainelCampanhas contaId={cliente.metaContaId} aoConfigurar={() => setEditando(true)} />
         </section>
       ) : null}
 

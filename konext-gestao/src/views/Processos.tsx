@@ -93,7 +93,7 @@ export const Processos = ({ idInicial }: { idInicial?: string }) => {
       {dados.processos.length === 0 ? (
         <Vazio texto="Nenhum processo. Comece documentando o onboarding de clientes." />
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 280px) minmax(0, 1fr)', gap: 18 }} className="grade-processos">
+        <div className="grade-processos">
           <section className="cartao" style={{ padding: 10, alignSelf: 'start' }}>
             {dados.config.areasProcesso
               .filter((area) => dados.processos.some((p) => p.area === area))
@@ -134,7 +134,7 @@ export const Processos = ({ idInicial }: { idInicial?: string }) => {
 
               <div className="fluxo">
                 {processo.etapas.map((e, indice) => (
-                  <div key={e.id} style={{ display: 'flex' }}>
+                  <div key={e.id} className="passo-fluxo">
                     <div className="etapa">
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span className="numero">{indice + 1}</span>

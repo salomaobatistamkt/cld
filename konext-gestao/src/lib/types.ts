@@ -27,6 +27,10 @@ export type Cliente = {
     observacoes: string;
   };
   acessos: Acesso[];
+  // Conta de anúncios do Meta deste cliente (ex.: act_123456789).
+  metaContaId: string;
+  // Anotações feitas durante as reuniões (aparecem no modo apresentação).
+  notasReuniao: string;
   criadoEm: string;
 };
 
@@ -109,6 +113,8 @@ export type Processo = {
 
 export type Config = {
   empresa: string;
+  // Logo da empresa em data URL (aparece no menu e nas apresentações).
+  logo: string;
   tiposServico: string[];
   categoriasEntrada: string[];
   categoriasSaida: string[];
@@ -134,5 +140,6 @@ export type Rota =
   | { tela: 'quadro'; id: string }
   | { tela: 'caixa' }
   | { tela: 'processos'; id?: string }
-  | { tela: 'config' }
+  | { tela: 'campanhas' }
+  | { tela: 'config'; aba?: string }
   | { tela: 'apresentacao'; clienteId: string };

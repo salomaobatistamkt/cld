@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { type ReactNode, useEffect } from 'react';
+import { type ReactNode, useEffect, useRef } from 'react';
 
 import { type Rotulo } from '@/lib/constantes';
 import { iniciais } from '@/lib/util';
@@ -129,3 +129,15 @@ export const Confirmar = ({
     <p style={{ margin: 0 }}>{texto}</p>
   </Modal>
 );
+
+// Faixas que rolam de lado (abas, menu das configurações): mantém o item ativo à vista.
+export const useItemAtivoVisivel = <T extends HTMLElement>(seletor: string, chave: string) => {
+  const ref = useRef<T>(null);
+  useEffect(() => {
+    const faixa = ref.current;
+    const ativo = faixa?.querySelector<HTMLElement>(seletor);
+    if (!faixa || !ativo || faixa.scrollWidth <= faixa.clientWidth) return;
+    faixa.scrollLeft = ativo.offsetLeft - (faixa.clientWidth - ativo.offsetWidth) / 2;
+  }, [seletor, chave]);
+  return ref;
+};

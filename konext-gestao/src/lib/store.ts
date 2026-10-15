@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import { type Backend, type Colecao, criarBackendLocal } from './backend';
+import { gravarHash, lerHash } from './rotas';
 import { criarDadosExemplo } from './seed';
 import { type Dados, type Rota } from './types';
 
@@ -31,6 +32,13 @@ const vazio = (): Dados => ({
   processos: [],
 });
 
+// Completa campos que versões antigas dos dados não tinham.
+const normalizar = (dados: Dados): Dados => ({
+  ...dados,
+  clientes: dados.clientes.map((c) => ({ ...c, metaContaId: c.metaContaId ?? '', notasReuniao: c.notasReuniao ?? '' })),
+  config: { ...vazio().config, ...dados.config },
+});
+
 const CHAVE_EXEMPLOS = 'konext-gestao:exemplos';
 
 const lerFlag = () => {
@@ -55,7 +63,7 @@ export const useStore = create<Estado>((set, get) => {
 
   return {
     dados: vazio(),
-    rota: { tela: 'painel' },
+    rota: lerHash(),
     pronto: false,
     backend: null,
     erroSalvar: null,
@@ -64,7 +72,7 @@ export const useStore = create<Estado>((set, get) => {
     iniciar: async (backend) => {
       const salvos = await backend.carregar();
       if (salvos && (salvos.clientes.length || backend.modo === 'servidor')) {
-        set({ dados: { ...vazio(), ...salvos }, backend, pronto: true, usandoExemplos: backend.modo === 'local' && lerFlag() && salvos.clientes.some((c) => c.id === 'c-padaria') });
+        set({ dados: normalizar({ ...vazio(), ...salvos }), backend, pronto: true, usandoExemplos: backend.modo === 'local' && lerFlag() && salvos.clientes.some((c) => c.id === 'c-padaria') });
         return;
       }
       if (backend.modo === 'local' && lerFlag()) {
@@ -78,6 +86,7 @@ export const useStore = create<Estado>((set, get) => {
 
     ir: (rota) => {
       set({ rota });
+      gravarHash(rota);
       try {
         document.querySelector('.conteudo')?.scrollTo({ top: 0 });
       } catch {

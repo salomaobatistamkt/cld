@@ -3,21 +3,27 @@ import {
   ChevronLeft,
   ChevronRight,
   LayoutDashboard,
+  Megaphone,
+  MoreHorizontal,
   Package,
   PenTool,
   Search,
   Settings,
   Wallet,
   Workflow,
+  X,
 } from 'lucide-react';
-import { lazy, type ReactNode, Suspense, useMemo, useState } from 'react';
+import { lazy, type ReactNode, Suspense, useEffect, useMemo, useState } from 'react';
 
+import { Logo } from '@/components/Logo';
+import { lerHash } from '@/lib/rotas';
 import { useStore } from '@/lib/store';
 import { useToast } from '@/lib/toast';
 import { type Rota } from '@/lib/types';
 import { diasAte } from '@/lib/util';
 import { Apresentacao } from '@/views/Apresentacao';
 import { Caixa } from '@/views/Caixa';
+import { Campanhas } from '@/views/Campanhas';
 import { ClienteFicha } from '@/views/ClienteFicha';
 import { Clientes } from '@/views/Clientes';
 import { Configuracoes } from '@/views/Configuracoes';
@@ -28,46 +34,78 @@ import { Quadros } from '@/views/Quadros';
 
 const TelaQuadro = lazy(() => import('@/views/TelaQuadro'));
 
-type ItemMenu = { tela: Rota['tela']; rotulo: string; icone: ReactNode; ir: Rota; badge?: number };
+type ItemMenu = { tela: Rota['tela']; rotulo: string; curto?: string; icone: ReactNode; ir: Rota; badge?: number };
+
+const usarLarguraRecolhida = () => {
+  const consulta = '(max-width: 1100px) and (min-width: 721px)';
+  const [recolher, setRecolher] = useState(() => typeof window !== 'undefined' && window.matchMedia(consulta).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(consulta);
+    const mudar = () => setRecolher(mq.matches);
+    mq.addEventListener('change', mudar);
+    return () => mq.removeEventListener('change', mudar);
+  }, []);
+  return recolher;
+};
 
 export const App = () => {
-  const { rota, ir, dados, pronto, erroSalvar } = useStore();
+  const { rota, ir, dados, pronto, erroSalvar, backend } = useStore();
   const toast = useToast((estado) => estado.toast);
-  const [recolhido, setRecolhido] = useState(false);
+  const recolherAuto = usarLarguraRecolhida();
+  const [recolhidoManual, setRecolhidoManual] = useState<boolean | null>(null);
+  const recolhido = recolhidoManual ?? recolherAuto;
   const [filtro, setFiltro] = useState('');
+  const [maisAberto, setMaisAberto] = useState(false);
+
+  useEffect(() => {
+    const voltar = () => {
+      setMaisAberto(false);
+      useStore.setState({ rota: lerHash() });
+    };
+    window.addEventListener('popstate', voltar);
+    return () => window.removeEventListener('popstate', voltar);
+  }, []);
 
   const atrasadas = useMemo(
     () => dados.entregas.filter((e) => e.status !== 'entregue' && e.prazo && diasAte(e.prazo) < 0).length,
     [dados.entregas],
   );
 
+  const itens: Record<string, ItemMenu> = {
+    painel: { tela: 'painel', rotulo: 'Painel', icone: <LayoutDashboard size={19} />, ir: { tela: 'painel' } },
+    clientes: { tela: 'clientes', rotulo: 'Clientes', icone: <Briefcase size={19} />, ir: { tela: 'clientes' } },
+    entregas: { tela: 'entregas', rotulo: 'Entregas', icone: <Package size={19} />, ir: { tela: 'entregas' }, badge: atrasadas },
+    quadros: { tela: 'quadros', rotulo: 'Estratégias', curto: 'Quadros', icone: <PenTool size={19} />, ir: { tela: 'quadros' } },
+    campanhas: { tela: 'campanhas', rotulo: 'Campanhas', icone: <Megaphone size={19} />, ir: { tela: 'campanhas' } },
+    caixa: { tela: 'caixa', rotulo: 'Caixa', icone: <Wallet size={19} />, ir: { tela: 'caixa' } },
+    processos: { tela: 'processos', rotulo: 'Processos', icone: <Workflow size={19} />, ir: { tela: 'processos' } },
+    config: { tela: 'config', rotulo: 'Configurações', icone: <Settings size={19} />, ir: { tela: 'config' } },
+  };
+
   const grupos: Array<{ titulo: string; itens: ItemMenu[] }> = [
-    { titulo: 'Visão geral', itens: [{ tela: 'painel', rotulo: 'Painel', icone: <LayoutDashboard size={18} />, ir: { tela: 'painel' } }] },
-    {
-      titulo: 'Clientes',
-      itens: [
-        { tela: 'clientes', rotulo: 'Clientes', icone: <Briefcase size={18} />, ir: { tela: 'clientes' } },
-        { tela: 'entregas', rotulo: 'Entregas', icone: <Package size={18} />, ir: { tela: 'entregas' }, badge: atrasadas },
-        { tela: 'quadros', rotulo: 'Estratégias', icone: <PenTool size={18} />, ir: { tela: 'quadros' } },
-      ],
-    },
-    {
-      titulo: 'Empresa',
-      itens: [
-        { tela: 'caixa', rotulo: 'Caixa', icone: <Wallet size={18} />, ir: { tela: 'caixa' } },
-        { tela: 'processos', rotulo: 'Processos', icone: <Workflow size={18} />, ir: { tela: 'processos' } },
-        { tela: 'config', rotulo: 'Configurações', icone: <Settings size={18} />, ir: { tela: 'config' } },
-      ],
-    },
+    { titulo: 'Visão geral', itens: [itens.painel] },
+    { titulo: 'Clientes', itens: [itens.clientes, itens.entregas, itens.quadros, itens.campanhas] },
+    { titulo: 'Empresa', itens: [itens.caixa, itens.processos, itens.config] },
   ];
+  const barraInferior = [itens.painel, itens.clientes, itens.entregas, itens.quadros];
+  const noMais = [itens.campanhas, itens.caixa, itens.processos, itens.config];
 
   const ativo = (item: ItemMenu) =>
     item.tela === rota.tela ||
-    (item.tela === 'clientes' && rota.tela === 'cliente') ||
+    (item.tela === 'clientes' && (rota.tela === 'cliente' || rota.tela === 'apresentacao')) ||
     (item.tela === 'quadros' && rota.tela === 'quadro');
 
+  const navegar = (item: ItemMenu) => {
+    setMaisAberto(false);
+    ir(item.ir);
+  };
+
   if (!pronto) {
-    return <div style={{ display: 'grid', placeItems: 'center', height: '100%', color: 'var(--text-3)' }}>Carregando Konext Gestão…</div>;
+    return (
+      <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
+        <Logo />
+      </div>
+    );
   }
 
   const tela = (() => {
@@ -77,18 +115,21 @@ export const App = () => {
       case 'clientes':
         return <Clientes />;
       case 'cliente':
-        return <ClienteFicha id={rota.id} aba={rota.aba} />;
+      case 'apresentacao':
+        return rota.tela === 'cliente' ? <ClienteFicha id={rota.id} aba={rota.aba} /> : <ClienteFicha id={rota.clienteId} />;
       case 'entregas':
         return <Entregas />;
       case 'quadros':
       case 'quadro':
         return <Quadros />;
+      case 'campanhas':
+        return <Campanhas />;
       case 'caixa':
         return <Caixa />;
       case 'processos':
         return <Processos idInicial={rota.id} />;
       case 'config':
-        return <Configuracoes />;
+        return <Configuracoes aba={rota.aba} />;
       default:
         return <Painel />;
     }
@@ -98,11 +139,8 @@ export const App = () => {
     <div className={`app${recolhido ? ' recolhido' : ''}`}>
       <aside className="sidebar">
         <div className="marca">
-          <span className="logo">
-            K<span className="logo-resto">o<b>next</b></span>
-            <small>Gestão</small>
-          </span>
-          <button type="button" className="btn fantasma icone" onClick={() => setRecolhido(!recolhido)} aria-label={recolhido ? 'Expandir menu' : 'Recolher menu'}>
+          <Logo compacto={recolhido} />
+          <button type="button" className="btn fantasma icone botao-recolher" onClick={() => setRecolhidoManual(!recolhido)} aria-label={recolhido ? 'Expandir menu' : 'Recolher menu'}>
             {recolhido ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
           </button>
         </div>
@@ -112,16 +150,16 @@ export const App = () => {
         </label>
         <nav className="nav" aria-label="Menu principal">
           {grupos.map((grupo) => {
-            const itens = grupo.itens.filter((item) => item.rotulo.toLowerCase().includes(filtro.toLowerCase()));
-            if (itens.length === 0) return null;
+            const visiveis = grupo.itens.filter((item) => item.rotulo.toLowerCase().includes(filtro.toLowerCase()));
+            if (visiveis.length === 0) return null;
             return (
-              <div key={grupo.titulo} style={{ display: 'contents' }}>
+              <div key={grupo.titulo} className="nav-bloco">
                 <div className="nav-grupo">{grupo.titulo}</div>
-                {itens.map((item) => (
-                  <button key={item.tela} type="button" className={`nav-item${ativo(item) ? ' ativo' : ''}`} onClick={() => ir(item.ir)} title={item.rotulo}>
+                {visiveis.map((item) => (
+                  <button key={item.tela} type="button" className={`nav-item${ativo(item) ? ' ativo' : ''}`} onClick={() => navegar(item)} title={item.rotulo}>
                     {item.icone}
                     <span>{item.rotulo}</span>
-                    {item.badge ? <em className="badge" style={{ fontStyle: 'normal' }}>{item.badge}</em> : null}
+                    {item.badge ? <em className="badge">{item.badge}</em> : null}
                   </button>
                 ))}
               </div>
@@ -129,10 +167,48 @@ export const App = () => {
           })}
         </nav>
         <div className="rodape-sidebar">
-          <span>{dados.config.empresa} · {useStore.getState().backend?.modo === 'servidor' ? 'online' : 'neste navegador'}</span>
+          <span className={`ponto-status${backend?.modo === 'servidor' ? ' online' : ''}`} />
+          <span>{backend?.modo === 'servidor' ? 'Online' : 'Protótipo · neste navegador'}</span>
         </div>
       </aside>
+
+      <header className="topo-celular">
+        <Logo />
+        <button type="button" className="btn fantasma icone" onClick={() => ir({ tela: 'config' })} aria-label="Configurações">
+          <Settings size={19} />
+        </button>
+      </header>
+
       <main className="conteudo">{tela}</main>
+
+      <nav className="barra-inferior" aria-label="Navegação">
+        {barraInferior.map((item) => (
+          <button key={item.tela} type="button" className={ativo(item) ? 'ativo' : ''} onClick={() => navegar(item)}>
+            <span className="icone-barra">
+              {item.icone}
+              {item.badge ? <em className="badge">{item.badge}</em> : null}
+            </span>
+            <span>{item.curto ?? item.rotulo}</span>
+          </button>
+        ))}
+        <button type="button" className={noMais.some(ativo) || maisAberto ? 'ativo' : ''} onClick={() => setMaisAberto(!maisAberto)}>
+          <span className="icone-barra">{maisAberto ? <X size={19} /> : <MoreHorizontal size={19} />}</span>
+          <span>Mais</span>
+        </button>
+      </nav>
+
+      {maisAberto ? (
+        <div className="fundo-mais" onClick={() => setMaisAberto(false)}>
+          <div className="folha-mais" onClick={(e) => e.stopPropagation()}>
+            {noMais.map((item) => (
+              <button key={item.tela} type="button" className={`nav-item${ativo(item) ? ' ativo' : ''}`} onClick={() => navegar(item)}>
+                {item.icone}
+                <span>{item.rotulo}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {rota.tela === 'quadro' ? (
         <Suspense fallback={<div className="editor-quadro" style={{ placeItems: 'center', display: 'grid' }}>Abrindo quadro…</div>}>

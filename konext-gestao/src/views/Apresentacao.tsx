@@ -11,6 +11,7 @@ import {
   Link2,
   Maximize,
   Package,
+  Repeat,
   Sparkles,
   User,
   X,
@@ -22,6 +23,7 @@ import { Logo } from '@/components/Logo';
 import { PainelCampanhas } from '@/components/PainelCampanhas';
 import { Avatar, Kpi, Tag } from '@/components/ui';
 import { PRIORIDADE, RECORRENCIA, STATUS_CLIENTE, STATUS_ENTREGA } from '@/lib/constantes';
+import { descreverRecorrencia } from '@/lib/processoServico';
 import { useStore } from '@/lib/store';
 import { type Cliente, type Entrega } from '@/lib/types';
 import { diasAte, formatarData, formatarMoeda, hojeISO, prazoRelativo } from '@/lib/util';
@@ -115,7 +117,8 @@ export const Apresentacao = ({ clienteId }: { clienteId: string }) => {
   const slides = useMemo(() => {
     if (!cliente) return [];
     const servicos = dados.servicos.filter((s) => s.clienteId === clienteId && s.status !== 'encerrado' && s.status !== 'proposta');
-    const entregas = dados.entregas.filter((e) => e.clienteId === clienteId);
+    // Entregas internas (contrato, cobrança…) ficam fora da reunião.
+    const entregas = dados.entregas.filter((e) => e.clienteId === clienteId && !e.interna);
     const quadros = dados.quadros.filter((q) => q.clienteId === clienteId);
     const feitas = entregas.filter((e) => e.status === 'entregue').sort((a, b) => (b.entregueEm || b.prazo).localeCompare(a.entregueEm || a.prazo));
     const andamento = entregas
@@ -218,6 +221,40 @@ export const Apresentacao = ({ clienteId }: { clienteId: string }) => {
           </>
         ),
       },
+      ...(() => {
+        // Rotina combinada com o cliente (só o que não é interno).
+        const combinados = servicos.flatMap((servico) =>
+          (dados.config.processosServico?.[servico.tipo]?.rotina ?? []).filter((item) => !item.interna).map((item) => ({ servico, item })),
+        );
+        if (!combinados.length) return [];
+        return [
+          {
+            id: 'rotina',
+            rotulo: 'Nossa rotina',
+            conteudo: (
+              <>
+                <span className="eyebrow">Como trabalhamos</span>
+                <h2>Nossa rotina com você</h2>
+                <div className="grade-entregas-apres">
+                  {combinados.map(({ servico, item }) => (
+                    <div key={`${servico.id}-${item.id}`} className="cartao-entrega-apres">
+                      <span className="chip" style={{ alignSelf: 'flex-start' }}>{servico.nome}</span>
+                      <b style={{ fontSize: 17, lineHeight: 1.3 }}>{item.titulo}</b>
+                      {item.descricao ? <p className="detalhes">{item.descricao}</p> : null}
+                      <div className="meta-entrega">
+                        <span>
+                          <Repeat size={14} />
+                          {descreverRecorrencia(item)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ),
+          },
+        ];
+      })(),
       {
         id: 'andamento',
         rotulo: 'Em andamento',

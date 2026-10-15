@@ -1,3 +1,4 @@
+import { processosPadrao, TIPO_CRM, TIPO_TRAFEGO } from './processosPadrao';
 import { type Dados } from './types';
 import { hojeISO, somarDias } from './util';
 
@@ -102,9 +103,9 @@ export const criarDadosExemplo = (hoje = hojeISO()): Dados => {
   ];
 
   const servicos: Dados['servicos'] = [
-    { id: 's-1', clienteId: 'c-padaria', tipo: 'Marketing / Tráfego', nome: 'Tráfego pago + social media', valor: 2500, recorrencia: 'mensal', diaPagamento: 10, inicio: d(-210), status: 'ativo', escopo: '12 posts/mês, 8 stories, gestão de Meta Ads, relatório mensal.' },
+    { id: 's-1', clienteId: 'c-padaria', tipo: TIPO_TRAFEGO, nome: 'Tráfego pago + social media', valor: 2500, recorrencia: 'mensal', diaPagamento: 10, inicio: d(-210), status: 'ativo', escopo: '12 posts/mês, 8 stories, gestão de Meta Ads, relatório mensal.' },
     { id: 's-2', clienteId: 'c-padaria', tipo: 'Sites / Sistemas', nome: 'Cardápio digital + site', valor: 4800, recorrencia: 'pontual', diaPagamento: 5, inicio: d(-20), status: 'ativo', escopo: 'Site institucional com cardápio e pedidos via WhatsApp.' },
-    { id: 's-3', clienteId: 'c-clinica', tipo: 'Marketing / Tráfego', nome: 'Google Ads + landing page', valor: 3200, recorrencia: 'mensal', diaPagamento: 15, inicio: d(-95), status: 'ativo', escopo: 'Campanhas de pesquisa, LP de implantes, otimização semanal.' },
+    { id: 's-3', clienteId: 'c-clinica', tipo: TIPO_TRAFEGO, nome: 'Google Ads + landing page', valor: 3200, recorrencia: 'mensal', diaPagamento: 15, inicio: d(-95), status: 'ativo', escopo: 'Campanhas de pesquisa, LP de implantes, otimização semanal.' },
     { id: 's-4', clienteId: 'c-studio', tipo: 'Consultoria / Mentoria', nome: 'Mentoria de posicionamento', valor: 1500, recorrencia: 'mensal', diaPagamento: 20, inicio: d(-6), status: 'ativo', escopo: '4 encontros/mês e plano de ação.' },
     { id: 's-5', clienteId: 'c-loja', tipo: 'Sites / Sistemas', nome: 'Loja virtual', valor: 6500, recorrencia: 'pontual', diaPagamento: 10, inicio: '', status: 'proposta', escopo: 'Loja Shopify com 40 produtos.' },
   ];
@@ -196,13 +197,15 @@ export const criarDadosExemplo = (hoje = hojeISO()): Dados => {
     quadros,
     lancamentos,
     processos,
+    rotina: [],
     config: {
       empresa: 'Konext',
       logo: '',
-      tiposServico: ['Marketing / Tráfego', 'Sites / Sistemas', 'Consultoria / Mentoria', 'Social media', 'Identidade visual'],
+      tiposServico: [TIPO_TRAFEGO, TIPO_CRM, 'Sites / Sistemas', 'Consultoria / Mentoria', 'Social media', 'Identidade visual'],
       categoriasEntrada: ['Mensalidade', 'Projeto', 'Consultoria', 'Outros'],
       categoriasSaida: ['Ferramentas', 'Equipe', 'Infraestrutura', 'Impostos', 'Marketing próprio', 'Outros'],
       areasProcesso: ['Comercial', 'Atendimento', 'Produção', 'Financeiro', 'Estratégia'],
+      processosServico: processosPadrao(),
     },
   };
 };

@@ -1,4 +1,4 @@
-import { Building2, Check, Database, Download, ImagePlus, Megaphone, Pencil, Plug, Plus, Settings, Tags, Trash2, Upload, Wallet, Webhook as WebhookIcone, Workflow, X } from 'lucide-react';
+import { Building2, Check, Database, Download, ImagePlus, ListChecks, Megaphone, Pencil, Plug, Plus, Settings, Tags, Trash2, Upload, Wallet, Webhook as WebhookIcone, Workflow, X } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 
 import { Campo, Confirmar, useItemAtivoVisivel } from '@/components/ui';
@@ -8,6 +8,7 @@ import { useToast } from '@/lib/toast';
 import { criarDadosExemplo } from '@/lib/seed';
 import { type Config, type Dados } from '@/lib/types';
 
+import { SecaoProcessosServico } from './ProcessosServico';
 import { SecaoWebhooks } from './Webhooks';
 
 type Secao = { id: string; rotulo: string; icone: ReactNode; descricao: string };
@@ -15,6 +16,7 @@ type Secao = { id: string; rotulo: string; icone: ReactNode; descricao: string }
 const SECOES: Secao[] = [
   { id: 'empresa', rotulo: 'Empresa', icone: <Building2 size={17} />, descricao: 'Nome e logo que aparecem no menu e nas apresentações para clientes.' },
   { id: 'servicos', rotulo: 'Serviços que você vende', icone: <Tags size={17} />, descricao: 'A lista de tipos de serviço. Ela aparece quando você cadastra um serviço num cliente e serve de filtro nas entregas.' },
+  { id: 'processo-servico', rotulo: 'Processo de cada serviço', icone: <ListChecks size={17} />, descricao: 'As etapas que todo cliente passa ao contratar cada serviço e a rotina que se repete depois (semanal ou mensal).' },
   { id: 'caixa', rotulo: 'Categorias do caixa', icone: <Wallet size={17} />, descricao: 'Como você classifica o dinheiro que entra e que sai. Aparecem ao registrar um lançamento no Caixa.' },
   { id: 'processos', rotulo: 'Áreas dos processos', icone: <Workflow size={17} />, descricao: 'Agrupam os processos da empresa na tela Processos (ex.: Comercial, Produção).' },
   { id: 'integracoes', rotulo: 'Integrações', icone: <Plug size={17} />, descricao: 'Conexão com o Meta Ads para ver as métricas das campanhas dos clientes.' },
@@ -224,7 +226,13 @@ export const Configuracoes = ({ aba = 'empresa' }: { aba?: string }) => {
   };
 
   const renomear = (campo: 'tiposServico' | 'categoriasEntrada' | 'categoriasSaida' | 'areasProcesso', antigo: string, novo: string) => {
-    mudar({ [campo]: config[campo].map((i) => (i === antigo ? novo : i)) } as Partial<Config>, 'Renomeado em todos os registros');
+    const mudancas = { [campo]: config[campo].map((i) => (i === antigo ? novo : i)) } as Partial<Config>;
+    // O processo do serviço acompanha o novo nome do tipo.
+    if (campo === 'tiposServico' && config.processosServico?.[antigo]) {
+      const { [antigo]: processo, ...outros } = config.processosServico;
+      mudancas.processosServico = { ...outros, [novo]: processo };
+    }
+    mudar(mudancas, 'Renomeado em todos os registros');
     if (campo === 'tiposServico') dados.servicos.filter((s) => s.tipo === antigo).forEach((s) => salvar('servicos', { ...s, tipo: novo }));
     if (campo === 'categoriasEntrada' || campo === 'categoriasSaida')
       dados.lancamentos.filter((l) => l.categoria === antigo).forEach((l) => salvar('lancamentos', { ...l, categoria: novo }));
@@ -362,6 +370,8 @@ export const Configuracoes = ({ aba = 'empresa' }: { aba?: string }) => {
           {secao.id === 'integracoes' ? <IntegracaoMeta /> : null}
 
           {secao.id === 'webhooks' ? <SecaoWebhooks /> : null}
+
+          {secao.id === 'processo-servico' ? <SecaoProcessosServico /> : null}
 
           {secao.id === 'dados' ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>

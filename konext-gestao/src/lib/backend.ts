@@ -1,6 +1,6 @@
 import { type Dados } from './types';
 
-export type Colecao = 'clientes' | 'servicos' | 'entregas' | 'quadros' | 'lancamentos' | 'processos';
+export type Colecao = 'clientes' | 'servicos' | 'entregas' | 'quadros' | 'lancamentos' | 'processos' | 'rotina';
 
 export type Backend = {
   modo: 'local' | 'servidor';

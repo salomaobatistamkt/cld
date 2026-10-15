@@ -64,7 +64,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS chaves (chave TEXT PRIMARY KEY, valor TEXT NOT NULL);
 `);
 
-const COLECOES = ['clientes', 'servicos', 'entregas', 'quadros', 'lancamentos', 'processos'];
+const COLECOES = ['clientes', 'servicos', 'entregas', 'quadros', 'lancamentos', 'processos', 'rotina'];
 const sql = {
   todos: db.prepare('SELECT colecao, dados FROM registros ORDER BY rowid'),
   gravar: db.prepare(
@@ -79,7 +79,7 @@ const sql = {
 };
 
 const lerChave = (chave) => sql.lerChave.get(chave)?.valor ?? null;
-const webhooks = criarWebhooks({ db, lerChave, gravarChave: (chave, valor) => sql.gravarChave.run(chave, valor), log });
+const webhooks = criarWebhooks({ db, lerChave, gravarChave: (chave, valor) => sql.gravarChave.run(chave, valor), log, assinar: (texto) => assinar(texto) });
 
 const transacao = (fn) => {
   db.exec('BEGIN');
@@ -371,6 +371,14 @@ const api = async (req, res, caminho) => {
 
   if (caminho === '/api/saude') return responder(res, 200, { app: 'konext-gestao', ok: true, autenticado: sessaoValida(req) });
 
+  // Link que vai nos avisos da rotina: o n8n chama (GET ou POST) para dar baixa na tarefa.
+  // Não pede senha: a assinatura no próprio link é a autorização.
+  if (caminho === '/api/publico/rotina/concluir' && (metodo === 'GET' || metodo === 'POST')) {
+    const url = new URL(req.url, 'http://local');
+    const { status, corpo } = webhooks.concluirRotina({ id: url.searchParams.get('id'), assinatura: url.searchParams.get('assinatura') });
+    return responder(res, status, corpo);
+  }
+
   // Pedidos que mudam algo precisam vir como JSON do próprio site (proteção contra CSRF).
   if (metodo !== 'GET' && metodo !== 'DELETE' && !(req.headers['content-type'] || '').includes('application/json')) {
     return responder(res, 415, { erro: 'Envie JSON' });
@@ -394,6 +402,7 @@ const api = async (req, res, caminho) => {
   }
 
   if (!sessaoValida(req)) return responder(res, 401, { erro: 'Entre com a senha para continuar.' });
+  webhooks.registrarOrigem(req);
 
   if (caminho === '/api/dados' && metodo === 'GET') return responder(res, 200, lerTudo());
 

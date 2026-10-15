@@ -1,5 +1,6 @@
 import {
   Briefcase,
+  CalendarCheck,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -35,6 +36,7 @@ import { Entregas } from '@/views/Entregas';
 import { Painel } from '@/views/Painel';
 import { Processos } from '@/views/Processos';
 import { Quadros } from '@/views/Quadros';
+import { Rotina } from '@/views/Rotina';
 
 const TelaQuadro = lazy(() => import('@/views/TelaQuadro'));
 
@@ -79,6 +81,7 @@ export const App = () => {
     painel: { tela: 'painel', rotulo: 'Painel', icone: <LayoutDashboard size={19} />, ir: { tela: 'painel' } },
     clientes: { tela: 'clientes', rotulo: 'Clientes', icone: <Briefcase size={19} />, ir: { tela: 'clientes' } },
     entregas: { tela: 'entregas', rotulo: 'Entregas', icone: <Package size={19} />, ir: { tela: 'entregas' }, badge: atrasadas },
+    rotina: { tela: 'rotina', rotulo: 'Rotina', icone: <CalendarCheck size={19} />, ir: { tela: 'rotina' } },
     quadros: { tela: 'quadros', rotulo: 'Estratégias', curto: 'Quadros', icone: <PenTool size={19} />, ir: { tela: 'quadros' } },
     campanhas: { tela: 'campanhas', rotulo: 'Campanhas', icone: <Megaphone size={19} />, ir: { tela: 'campanhas' } },
     caixa: { tela: 'caixa', rotulo: 'Caixa', icone: <Wallet size={19} />, ir: { tela: 'caixa' } },
@@ -88,11 +91,11 @@ export const App = () => {
 
   const grupos: Array<{ titulo: string; itens: ItemMenu[] }> = [
     { titulo: 'Visão geral', itens: [itens.painel] },
-    { titulo: 'Clientes', itens: [itens.clientes, itens.entregas, itens.quadros, itens.campanhas] },
+    { titulo: 'Clientes', itens: [itens.clientes, itens.entregas, itens.rotina, itens.quadros, itens.campanhas] },
     { titulo: 'Empresa', itens: [itens.caixa, itens.processos, itens.config] },
   ];
   const barraInferior = [itens.painel, itens.clientes, itens.entregas, itens.quadros];
-  const noMais = [itens.campanhas, itens.caixa, itens.processos, itens.config];
+  const noMais = [itens.rotina, itens.campanhas, itens.caixa, itens.processos, itens.config];
 
   const ativo = (item: ItemMenu) =>
     item.tela === rota.tela ||
@@ -152,6 +155,8 @@ export const App = () => {
         return <Quadros />;
       case 'campanhas':
         return <Campanhas />;
+      case 'rotina':
+        return <Rotina />;
       case 'caixa':
         return <Caixa />;
       case 'processos':

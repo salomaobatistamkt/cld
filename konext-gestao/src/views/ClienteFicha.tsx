@@ -5,6 +5,7 @@ import {
   ExternalLink,
   FileText,
   KeyRound,
+  ListChecks,
   Megaphone,
   Package,
   Pencil,
@@ -21,6 +22,7 @@ import { PainelCampanhas } from '@/components/PainelCampanhas';
 import { Avatar, Campo, Confirmar, Modal, Tag, useItemAtivoVisivel, Vazio } from '@/components/ui';
 import { RECORRENCIA, STATUS_CLIENTE, STATUS_SERVICO } from '@/lib/constantes';
 import { valorMensal } from '@/lib/financeiro';
+import { entregasDoProcesso, etapasPendentes } from '@/lib/processoServico';
 import { useStore } from '@/lib/store';
 import { useToast } from '@/lib/toast';
 import { type Acesso, type Lancamento, type Servico } from '@/lib/types';
@@ -191,6 +193,7 @@ export const ClienteFicha = ({ id, aba = 'visao' }: { id: string; aba?: string }
                     <th>Recorrência</th>
                     <th>Pagamento</th>
                     <th style={{ textAlign: 'right' }}>Valor</th>
+                    <th />
                   </tr>
                 </thead>
                 <tbody>
@@ -205,6 +208,27 @@ export const ClienteFicha = ({ id, aba = 'visao' }: { id: string; aba?: string }
                       <td>{RECORRENCIA[s.recorrencia].label}</td>
                       <td>Todo dia {s.diaPagamento}</td>
                       <td className="num" style={{ textAlign: 'right', fontWeight: 800 }}>{formatarMoeda(s.valor)}</td>
+                      <td style={{ textAlign: 'right' }}>
+                        {(() => {
+                          const pendentes = etapasPendentes(s, dados.config, dados.entregas);
+                          if (!pendentes.length) return null;
+                          return (
+                            <button
+                              type="button"
+                              className="btn pequeno"
+                              title={`Cria nas entregas as etapas do processo de ${s.tipo} que ainda não existem`}
+                              onClick={(evento) => {
+                                evento.stopPropagation();
+                                const novas = entregasDoProcesso(s, dados.config, dados.entregas);
+                                novas.forEach((entrega) => salvar('entregas', entrega));
+                                mostrar(`${novas.length} etapas criadas nas entregas`);
+                              }}
+                            >
+                              <ListChecks size={14} /> Aplicar processo ({pendentes.length})
+                            </button>
+                          );
+                        })()}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

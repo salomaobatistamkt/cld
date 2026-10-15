@@ -2,6 +2,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { CORES_AVATAR, ORDEM_STATUS_ENTREGA, PRIORIDADE, RECORRENCIA, STATUS_CLIENTE, STATUS_ENTREGA, STATUS_SERVICO } from '@/lib/constantes';
+import { entregasDoProcesso, etapasPendentes, processoDoTipo } from '@/lib/processoServico';
 import { useStore } from '@/lib/store';
 import { useToast } from '@/lib/toast';
 import {
@@ -196,6 +197,10 @@ export const FormServico = ({ inicial, aoFechar }: { inicial: Servico; aoFechar:
   const [novoTipo, setNovoTipo] = useState('');
   const existe = useStore.getState().dados.servicos.some((item) => item.id === inicial.id);
   const salvarConfig = useStore((estado) => estado.salvarConfig);
+  const entregas = useStore((estado) => estado.dados.entregas);
+  const [aplicarProcesso, setAplicarProcesso] = useState(true);
+  const processo = processoDoTipo(config, s.tipo);
+  const pendentes = existe ? [] : etapasPendentes(s, config, entregas);
 
   if (confirmar) {
     return (
@@ -222,8 +227,11 @@ export const FormServico = ({ inicial, aoFechar }: { inicial: Servico; aoFechar:
         className="grade-form"
         onSubmit={(evento) => {
           evento.preventDefault();
-          salvar('servicos', { ...s, nome: s.nome.trim() });
-          mostrar(existe ? 'Serviço atualizado' : 'Serviço adicionado');
+          const servico = { ...s, nome: s.nome.trim() };
+          salvar('servicos', servico);
+          const novas = !existe && aplicarProcesso ? entregasDoProcesso(servico, config, entregas) : [];
+          novas.forEach((entrega) => salvar('entregas', entrega));
+          mostrar(existe ? 'Serviço atualizado' : novas.length ? `Serviço adicionado com ${novas.length} etapas nas entregas` : 'Serviço adicionado');
           aoFechar();
         }}
       >
@@ -264,6 +272,18 @@ export const FormServico = ({ inicial, aoFechar }: { inicial: Servico; aoFechar:
             </button>
           </div>
         </Campo>
+        {!existe && processo ? (
+          <label className="largo aviso-processo">
+            <input type="checkbox" checked={aplicarProcesso} onChange={(e) => setAplicarProcesso(e.target.checked)} />
+            <span>
+              <b>Criar as {pendentes.length} etapas do processo de {s.tipo}</b>
+              <small>
+                Viram entregas com prazo a partir da data de início
+                {processo.rotina.length ? ` · ${processo.rotina.length} tarefa(s) entram na Rotina enquanto o serviço estiver ativo` : ''}.
+              </small>
+            </span>
+          </label>
+        ) : null}
         <Campo rotulo="Nome do serviço *" largo>
           <input id="srv-nome" value={s.nome} onChange={(e) => setS({ ...s, nome: e.target.value })} placeholder="Ex.: Gestão de tráfego — plano Pro" autoFocus />
         </Campo>
@@ -425,6 +445,12 @@ export const FormEntrega = ({ inicial, aoFechar }: { inicial: Entrega; aoFechar:
         <Campo rotulo="Detalhes / checklist" largo>
           <textarea id="ent-desc" value={e.descricao} onChange={(ev) => setE({ ...e, descricao: ev.target.value })} />
         </Campo>
+        <label className="largo opcao-evento">
+          <input type="checkbox" checked={Boolean(e.interna)} onChange={(ev) => setE({ ...e, interna: ev.target.checked })} />
+          <span>
+            Interna <code>só a equipe vê; não aparece na apresentação ao cliente</code>
+          </span>
+        </label>
       </form>
     </Modal>
   );

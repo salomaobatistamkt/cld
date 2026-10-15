@@ -27,6 +27,7 @@ export const hashParaRota = (hash: string): Rota => {
     case 'quadros':
     case 'caixa':
     case 'campanhas':
+    case 'rotina':
       return { tela };
     case 'cliente':
       return id ? { tela: 'cliente', id, aba: aba || undefined } : { tela: 'clientes' };

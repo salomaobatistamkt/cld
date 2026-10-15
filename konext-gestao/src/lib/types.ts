@@ -73,6 +73,10 @@ export type Entrega = {
   link: string;
   entregueEm: string;
   ordem: number;
+  // Interna: só a equipe vê (fica fora do modo apresentação).
+  interna?: boolean;
+  // Etapa do processo padrão que gerou esta entrega (evita criar duas vezes).
+  modeloId?: string;
 };
 
 export type Quadro = {
@@ -119,6 +123,48 @@ export type Config = {
   categoriasEntrada: string[];
   categoriasSaida: string[];
   areasProcesso: string[];
+  // Processo padrão de cada tipo de serviço (chave = nome do tipo).
+  processosServico: Record<string, ProcessoServico>;
+};
+
+// Etapa feita uma vez, no começo do serviço (vira uma entrega do cliente).
+export type EtapaModelo = {
+  id: string;
+  fase: string;
+  titulo: string;
+  descricao: string;
+  // Prazo: quantos dias depois do início do serviço.
+  dias: number;
+  interna: boolean;
+};
+
+// Tarefa que se repete (vai para a Rotina, não para o quadro de entregas).
+export type ItemRotina = {
+  id: string;
+  titulo: string;
+  descricao: string;
+  quando: 'semanal' | 'mensal';
+  // Semanal: dias da semana (0 = domingo … 6 = sábado). Mensal: dias do mês.
+  dias: number[];
+  hora: string;
+  interna: boolean;
+  // Avisa o n8n (webhook "rotina.horario") quando chega a hora.
+  avisar: boolean;
+  // Identificador para a automação saber o que fazer (ex.: pausar_campanhas).
+  codigo: string;
+};
+
+export type ProcessoServico = { etapas: EtapaModelo[]; rotina: ItemRotina[] };
+
+// Tarefa da rotina marcada como feita (o id é servico~item~data).
+export type RotinaFeita = {
+  id: string;
+  servicoId: string;
+  clienteId: string;
+  itemId: string;
+  data: string;
+  feitoEm: string;
+  origem: 'manual' | 'automacao';
 };
 
 export type Dados = {
@@ -128,6 +174,7 @@ export type Dados = {
   quadros: Quadro[];
   lancamentos: Lancamento[];
   processos: Processo[];
+  rotina: RotinaFeita[];
   config: Config;
 };
 
@@ -141,5 +188,6 @@ export type Rota =
   | { tela: 'caixa' }
   | { tela: 'processos'; id?: string }
   | { tela: 'campanhas' }
+  | { tela: 'rotina' }
   | { tela: 'config'; aba?: string }
   | { tela: 'apresentacao'; clienteId: string };

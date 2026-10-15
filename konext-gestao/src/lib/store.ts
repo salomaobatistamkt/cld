@@ -34,14 +34,26 @@ const vazio = (): Dados => ({
   quadros: [],
   lancamentos: [],
   processos: [],
+  rotina: [],
 });
 
 // Completa campos que versões antigas dos dados não tinham.
-const normalizar = (dados: Dados): Dados => ({
-  ...dados,
-  clientes: dados.clientes.map((c) => ({ ...c, metaContaId: c.metaContaId ?? '', notasReuniao: c.notasReuniao ?? '' })),
-  config: { ...vazio().config, ...dados.config },
-});
+const normalizar = (dados: Dados): Dados => {
+  const padrao = vazio();
+  const config = { ...padrao.config, ...dados.config };
+  // Primeira vez com os processos de serviço: traz os prontos e os tipos deles.
+  if (!dados.config?.processosServico) {
+    config.processosServico = padrao.config.processosServico;
+    const novos = Object.keys(padrao.config.processosServico).filter((tipo) => !config.tiposServico.includes(tipo));
+    config.tiposServico = [...novos, ...config.tiposServico];
+  }
+  return {
+    ...dados,
+    clientes: dados.clientes.map((c) => ({ ...c, metaContaId: c.metaContaId ?? '', notasReuniao: c.notasReuniao ?? '' })),
+    rotina: dados.rotina ?? [],
+    config,
+  };
+};
 
 const CHAVE_EXEMPLOS = 'konext-gestao:exemplos';
 
@@ -78,7 +90,10 @@ export const useStore = create<Estado>((set, get) => {
     iniciar: async (backend) => {
       const salvos = await backend.carregar();
       if (salvos && (salvos.clientes.length || backend.modo === 'servidor')) {
-        set({ dados: normalizar({ ...vazio(), ...salvos }), backend, pronto: true, usandoExemplos: backend.modo === 'local' && lerFlag() && salvos.clientes.some((c) => c.id === 'c-padaria') });
+        const dados = normalizar({ ...vazio(), ...salvos });
+        set({ dados, backend, pronto: true, usandoExemplos: backend.modo === 'local' && lerFlag() && salvos.clientes.some((c) => c.id === 'c-padaria') });
+        // Guarda os processos prontos no servidor: ele precisa deles para avisar o n8n na hora da rotina.
+        if (!salvos.config?.processosServico) backend.salvarConfig(dados.config).catch(relatarErro);
         return;
       }
       if (backend.modo === 'local' && lerFlag()) {
@@ -119,7 +134,8 @@ export const useStore = create<Estado>((set, get) => {
       get().backend?.salvarConfig(config).catch(relatarErro);
     },
 
-    substituirTudo: (dados, usandoExemplos = false) => {
+    substituirTudo: (dadosNovos, usandoExemplos = false) => {
+      const dados = normalizar(dadosNovos);
       set({ dados, usandoExemplos });
       gravarFlag(usandoExemplos);
       get().backend?.substituirTudo(dados).catch(relatarErro);

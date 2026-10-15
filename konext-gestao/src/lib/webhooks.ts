@@ -33,6 +33,8 @@ export const EVENTOS_WEBHOOK: Record<string, string> = {
   'cliente.status_alterado': 'Status do cliente mudou',
   'entrega.status_alterado': 'Entrega mudou de etapa',
   'entrega.entregue': 'Entrega concluída',
+  'rotina.horario': 'Tarefa da rotina chegou no horário',
+  'rotina.concluida': 'Tarefa da rotina concluída',
 };
 
 const pedir = async <T,>(caminho: string, init?: RequestInit): Promise<T> => {

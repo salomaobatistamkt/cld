@@ -98,6 +98,15 @@ Exemplo com n8n + Evolution API:
 2. No Konext, clique em **Novo webhook**, cole a URL e marque **Cobrança vence em 3 dias** e **Cobrança venceu**. Clique em **Enviar teste**.
 3. No n8n, envie a mensagem pela Evolution API usando os campos `data.cliente.contato.whatsapp`, `data.cobranca.valor` e `data.cobranca.vencimento`.
 
+### Rotina com o n8n (pausar/reativar campanhas, relatórios)
+
+1. Em **Configurações → Processo de cada serviço**, marque **Avisar o n8n no horário** nas tarefas da rotina e dê um código a cada uma (ex.: `pausar_campanhas`).
+2. Em **Configurações → Webhooks**, marque o evento **Tarefa da rotina chegou no horário** (`rotina.horario`).
+3. No n8n, use `data.tarefa.codigo` para decidir o que fazer e mande o WhatsApp pela Evolution API.
+4. No fim do fluxo, faça um **POST** (pode ser GET) no `data.concluir_url`. A tarefa aparece como feita na tela **Rotina**. Esse link não pede senha, porque a assinatura dentro dele já autoriza.
+
+O aviso sai uma vez por tarefa, até 3 horas depois do horário marcado. Isso cobre o caso de o sistema estar reiniciando bem na hora.
+
 ---
 
 ## Atualizar o sistema

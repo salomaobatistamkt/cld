@@ -3,6 +3,8 @@
 // assinatura HMAC-SHA256 do corpo em X-Konext-Signature e até 3 tentativas.
 import { createHmac, randomBytes, randomUUID } from 'node:crypto';
 
+import { ocorrenciasDaRotina } from './recorrencia.mjs';
+
 export const EVENTOS = {
   'cobranca.gerada': 'Cobrança gerada no Caixa',
   'cobranca.vencendo': 'Cobrança vence em 3 dias',
@@ -13,6 +15,8 @@ export const EVENTOS = {
   'cliente.status_alterado': 'Status do cliente mudou',
   'entrega.status_alterado': 'Entrega mudou de etapa',
   'entrega.entregue': 'Entrega concluída',
+  'rotina.horario': 'Tarefa da rotina chegou no horário',
+  'rotina.concluida': 'Tarefa da rotina concluída',
 };
 
 const TENTATIVAS_ESPERA = [1000, 5000];
@@ -21,9 +25,17 @@ const FUSO = process.env.KONEXT_FUSO || 'America/Sao_Paulo';
 
 const hojeNoFuso = () => new Intl.DateTimeFormat('en-CA', { timeZone: FUSO }).format(new Date());
 const horaNoFuso = () => Number(new Intl.DateTimeFormat('en-US', { timeZone: FUSO, hour: 'numeric', hourCycle: 'h23' }).format(new Date()));
+const minutosNoFuso = () => {
+  const [h, m] = new Intl.DateTimeFormat('en-GB', { timeZone: FUSO, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date()).split(':').map(Number);
+  return h * 60 + m;
+};
+const minutosDe = (hora) => {
+  const [h, m] = String(hora).split(':').map(Number);
+  return Number.isFinite(h) ? h * 60 + (Number.isFinite(m) ? m : 0) : null;
+};
 const diasEntre = (de, ate) => Math.round((Date.parse(`${ate}T12:00:00Z`) - Date.parse(`${de}T12:00:00Z`)) / 86400000);
 
-export const criarWebhooks = ({ db, lerChave, gravarChave, log }) => {
+export const criarWebhooks = ({ db, lerChave, gravarChave, log, assinar }) => {
   db.exec(`
     CREATE TABLE IF NOT EXISTS webhook_atividade (
       id TEXT PRIMARY KEY,
@@ -133,6 +145,15 @@ export const criarWebhooks = ({ db, lerChave, gravarChave, log }) => {
         if (!antes) disparar('cliente.criado', { cliente: clientePublico(depois) });
         else if (antes.status !== depois.status) disparar('cliente.status_alterado', { cliente: clientePublico(depois), status_anterior: antes.status });
       }
+      if (colecao === 'rotina' && !antes) {
+        const servico = ler('servicos', depois.servicoId);
+        const item = lerConfig().processosServico?.[servico?.tipo]?.rotina?.find((i) => i.id === depois.itemId);
+        disparar('rotina.concluida', {
+          tarefa: { id: depois.id, titulo: item?.titulo || 'Tarefa da rotina', codigo: item?.codigo || '', data: depois.data, origem: depois.origem, feito_em: depois.feitoEm },
+          cliente: clientePublico(ler('clientes', depois.clienteId)),
+          servico: servico && { id: servico.id, nome: servico.nome, tipo: servico.tipo },
+        });
+      }
       if (colecao === 'entregas' && antes && antes.status !== depois.status) {
         const data = {
           entrega: { id: depois.id, titulo: depois.titulo, status: depois.status, status_anterior: antes.status, prazo: depois.prazo, responsavel: depois.responsavel, link: depois.link },
@@ -170,6 +191,89 @@ export const criarWebhooks = ({ db, lerChave, gravarChave, log }) => {
   };
   setTimeout(verificarVencimentos, 15000).unref();
   setInterval(verificarVencimentos, 60 * 60 * 1000).unref();
+
+  const lerConfig = () => {
+    try {
+      return JSON.parse(lerChave('config') || '{}');
+    } catch {
+      return {};
+    }
+  };
+
+  // Endereço público do sistema (para o link de "dar baixa" que vai no aviso).
+  let origemConhecida = process.env.KONEXT_URL || lerChave('url_publica') || '';
+  const registrarOrigem = (req) => {
+    if (process.env.KONEXT_URL) return;
+    const host = (req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim();
+    if (!host || /^(localhost|127\.|0\.0\.0\.0)/.test(host) && origemConhecida) return;
+    const proto = (req.headers['x-forwarded-proto'] || 'http').split(',')[0].trim();
+    const origem = `${proto}://${host}`;
+    if (origem !== origemConhecida) {
+      origemConhecida = origem;
+      gravarChave('url_publica', origem);
+    }
+  };
+  const assinaturaRotina = (id) => assinar(`rotina:${id}`);
+  const linkConcluir = (id) =>
+    origemConhecida ? `${origemConhecida}/api/publico/rotina/concluir?id=${encodeURIComponent(id)}&assinatura=${assinaturaRotina(id)}` : null;
+
+  const dadosDaRotina = (o) => ({
+    tarefa: {
+      id: o.id,
+      titulo: o.item.titulo,
+      descricao: o.item.descricao || '',
+      codigo: o.item.codigo || '',
+      data: o.data,
+      hora: o.hora,
+      interna: Boolean(o.item.interna),
+    },
+    cliente: clientePublico(ler('clientes', o.servico.clienteId)),
+    servico: { id: o.servico.id, nome: o.servico.nome, tipo: o.servico.tipo },
+    concluir_url: linkConcluir(o.id),
+  });
+
+  // A cada 5 minutos: tarefas da rotina com "avisar" que chegaram no horário (até 3h de atraso).
+  const verificarRotina = () => {
+    try {
+      const processos = lerConfig().processosServico;
+      if (!processos || !listar().some((h) => h.ativo && h.eventos.includes('rotina.horario'))) return;
+      const hoje = hojeNoFuso();
+      const agora = minutosNoFuso();
+      const servicos = sql.daColecao.all('servicos').map((l) => JSON.parse(l.dados));
+      for (const o of ocorrenciasDaRotina({ servicos, processos, de: hoje, ate: hoje })) {
+        const minuto = minutosDe(o.hora);
+        if (!o.item.avisar || minuto === null || minuto > agora || agora - minuto > 180) continue;
+        if (ler('rotina', o.id)) continue;
+        const chave = `aviso:rotina:${o.id}`;
+        if (sql.jaAvisou.get(chave)) continue;
+        if (disparar('rotina.horario', dadosDaRotina(o))) gravarChave(chave, new Date().toISOString());
+      }
+    } catch (falha) {
+      log('webhook: erro ao verificar a rotina', falha);
+    }
+  };
+  setTimeout(verificarRotina, 10000).unref();
+  setInterval(verificarRotina, 5 * 60 * 1000).unref();
+
+  // Chamado pelo n8n depois de fazer a tarefa: grava como feita.
+  const concluirRotina = ({ id, assinatura }) => {
+    if (!id || !assinatura) return { status: 400, corpo: { erro: 'Faltou o id ou a assinatura.' } };
+    const esperado = assinaturaRotina(id);
+    if (assinatura.length !== esperado.length || assinatura !== esperado) return { status: 401, corpo: { erro: 'Assinatura inválida.' } };
+    const [servicoId, itemId, data] = String(id).split('~');
+    const servico = ler('servicos', servicoId);
+    if (!servico || !itemId || !/^\d{4}-\d{2}-\d{2}$/.test(data || '')) return { status: 404, corpo: { erro: 'Tarefa não encontrada.' } };
+    if (ler('rotina', id)) return { status: 200, corpo: { ok: true, ja_estava_feita: true } };
+    const registro = { id, servicoId, clienteId: servico.clienteId, itemId, data, feitoEm: new Date().toISOString(), origem: 'automacao' };
+    db.prepare('INSERT INTO registros (colecao, id, dados, atualizado_em) VALUES (?, ?, ?, ?) ON CONFLICT (colecao, id) DO NOTHING').run(
+      'rotina',
+      id,
+      JSON.stringify(registro),
+      registro.feitoEm,
+    );
+    aoSalvar('rotina', null, registro);
+    return { status: 200, corpo: { ok: true, ja_estava_feita: false } };
+  };
 
   const validar = (entrada, existente) => {
     const nome = String(entrada.nome || '').trim().slice(0, 80);
@@ -243,5 +347,5 @@ export const criarWebhooks = ({ db, lerChave, gravarChave, log }) => {
     return false;
   };
 
-  return { aoSalvar, rotas, ler };
+  return { aoSalvar, rotas, ler, registrarOrigem, concluirRotina };
 };

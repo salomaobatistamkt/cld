@@ -8,10 +8,24 @@ import { novoId } from '@/lib/util';
 import { type AtividadeWebhook, EVENTOS_WEBHOOK, type Webhook, webhooksApi } from '@/lib/webhooks';
 
 const GRUPOS: Array<{ titulo: string; prefixo: string }> = [
+  { titulo: 'Rotina (pausar/reativar campanhas, relatórios…)', prefixo: 'rotina.' },
   { titulo: 'Financeiro', prefixo: 'cobranca.' },
   { titulo: 'Clientes', prefixo: 'cliente.' },
   { titulo: 'Entregas', prefixo: 'entrega.' },
 ];
+
+const EXEMPLO_ROTINA = `{
+  "event": "rotina.horario",
+  "occurred_at": "2026-10-17T15:00:00.000Z",
+  "data": {
+    "tarefa": { "id": "…", "titulo": "Pausar campanhas e avisar o cliente",
+                "codigo": "pausar_campanhas", "data": "2026-10-17", "hora": "12:00" },
+    "cliente": { "nome": "Clínica Sorriso Leve",
+                 "contato": { "nome": "Paulo", "whatsapp": "(11) 97777-3344" } },
+    "servico": { "nome": "Google Ads + landing page", "tipo": "Gestão de Tráfego" },
+    "concluir_url": "https://gestao.kntbr.com/api/publico/rotina/concluir?id=…&assinatura=…"
+  }
+}`;
 
 const EXEMPLO = `{
   "event": "cobranca.vencida",
@@ -152,6 +166,7 @@ export const SecaoWebhooks = () => {
         <div><b>1</b><span>No n8n (ou Make, Zapier), crie um fluxo começando por um nó <b>Webhook</b> com método POST e copie a URL de produção.</span></div>
         <div><b>2</b><span>Aqui, clique em <b>Novo webhook</b>, cole a URL e marque quando o Konext deve avisar, por exemplo: <i>cobrança vence em 3 dias</i> e <i>cobrança venceu</i>.</span></div>
         <div><b>3</b><span>Clique em <b>Enviar teste</b>. No n8n, use os dados recebidos (nome, WhatsApp, valor, vencimento) para mandar a mensagem pela Evolution API.</span></div>
+        <div><b>4</b><span>Para a <b>rotina</b> (pausar/reativar campanhas, relatórios): marque <i>Tarefa da rotina chegou no horário</i>. Depois de avisar o cliente, o n8n chama o <code>concluir_url</code> e a tarefa já aparece como feita.</span></div>
       </div>
 
       {modo !== 'servidor' ? (
@@ -258,6 +273,12 @@ export const SecaoWebhooks = () => {
           uma vez por cobrança, entre 8h e 20h (horário de Brasília).
         </p>
         <pre className="exemplo-json">{EXEMPLO}</pre>
+        <p className="muted">
+          <b>Rotina:</b> no horário de cada tarefa marcada com “Avisar o n8n”, chega o evento <code>rotina.horario</code>. Use o <code>codigo</code> para decidir o que fazer
+          (ex.: <code>pausar_campanhas</code>, <code>reativar_campanhas</code>, <code>relatorio</code>). Depois de mandar o WhatsApp, faça um <b>POST</b> (ou GET) no{' '}
+          <code>concluir_url</code>: a tarefa fica marcada como feita no Konext, sem precisar de senha.
+        </p>
+        <pre className="exemplo-json">{EXEMPLO_ROTINA}</pre>
       </details>
 
       {editando ? <FormWebhook inicial={editando} aoFechar={() => setEditando(null)} aoSalvar={carregar} /> : null}

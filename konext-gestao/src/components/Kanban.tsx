@@ -1,4 +1,4 @@
-import { CalendarClock, Link2, Plus, User } from 'lucide-react';
+import { CalendarClock, Link2, Lock, Plus, User } from 'lucide-react';
 import { useState } from 'react';
 
 import { ORDEM_STATUS_ENTREGA, PRIORIDADE, STATUS_ENTREGA } from '@/lib/constantes';
@@ -55,6 +55,11 @@ export const CardEntrega = ({ entrega, mostrarCliente, aoAbrir, aoMover }: Props
       <span className="meta">
         {entrega.prioridade === 'alta' || entrega.prioridade === 'urgente' ? <Tag rotulo={PRIORIDADE[entrega.prioridade]} /> : null}
         {servico ? <span className="chip">{servico.tipo}</span> : null}
+        {entrega.interna ? (
+          <span className="tag slate sem-ponto" title="Interna: não aparece na apresentação">
+            <Lock size={11} /> Interna
+          </span>
+        ) : null}
       </span>
       <span className="meta">
         {entrega.prazo ? (

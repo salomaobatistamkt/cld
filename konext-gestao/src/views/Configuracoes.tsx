@@ -1,4 +1,4 @@
-import { Building2, Check, Database, Download, ImagePlus, Megaphone, Pencil, Plug, Plus, Settings, Tags, Trash2, Upload, Wallet, Workflow, X } from 'lucide-react';
+import { Building2, Check, Database, Download, ImagePlus, Megaphone, Pencil, Plug, Plus, Settings, Tags, Trash2, Upload, Wallet, Webhook as WebhookIcone, Workflow, X } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 
 import { Campo, Confirmar, useItemAtivoVisivel } from '@/components/ui';
@@ -8,6 +8,8 @@ import { useToast } from '@/lib/toast';
 import { criarDadosExemplo } from '@/lib/seed';
 import { type Config, type Dados } from '@/lib/types';
 
+import { SecaoWebhooks } from './Webhooks';
+
 type Secao = { id: string; rotulo: string; icone: ReactNode; descricao: string };
 
 const SECOES: Secao[] = [
@@ -16,6 +18,7 @@ const SECOES: Secao[] = [
   { id: 'caixa', rotulo: 'Categorias do caixa', icone: <Wallet size={17} />, descricao: 'Como você classifica o dinheiro que entra e que sai. Aparecem ao registrar um lançamento no Caixa.' },
   { id: 'processos', rotulo: 'Áreas dos processos', icone: <Workflow size={17} />, descricao: 'Agrupam os processos da empresa na tela Processos (ex.: Comercial, Produção).' },
   { id: 'integracoes', rotulo: 'Integrações', icone: <Plug size={17} />, descricao: 'Conexão com o Meta Ads para ver as métricas das campanhas dos clientes.' },
+  { id: 'webhooks', rotulo: 'Webhooks', icone: <WebhookIcone size={17} />, descricao: 'Avisa outros sistemas (n8n, Make, Zapier) quando uma cobrança vence, é paga, ou quando um cliente ou entrega muda. Ex.: lembrete de pagamento no WhatsApp.' },
   { id: 'dados', rotulo: 'Seus dados', icone: <Database size={17} />, descricao: 'Onde os dados ficam, cópia de segurança e dados de exemplo.' },
 ];
 
@@ -357,6 +360,8 @@ export const Configuracoes = ({ aba = 'empresa' }: { aba?: string }) => {
           ) : null}
 
           {secao.id === 'integracoes' ? <IntegracaoMeta /> : null}
+
+          {secao.id === 'webhooks' ? <SecaoWebhooks /> : null}
 
           {secao.id === 'dados' ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>

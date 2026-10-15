@@ -10,6 +10,8 @@ import { fileURLToPath } from 'node:url';
 import { gzip } from 'node:zlib';
 import { promisify } from 'node:util';
 
+import { criarWebhooks } from './webhooks.mjs';
+
 const gzipAsync = promisify(gzip);
 const AQUI = fileURLToPath(new URL('.', import.meta.url));
 
@@ -77,6 +79,7 @@ const sql = {
 };
 
 const lerChave = (chave) => sql.lerChave.get(chave)?.valor ?? null;
+const webhooks = criarWebhooks({ db, lerChave, gravarChave: (chave, valor) => sql.gravarChave.run(chave, valor), log });
 
 const transacao = (fn) => {
   db.exec('BEGIN');
@@ -457,6 +460,19 @@ const api = async (req, res, caminho) => {
     return responder(res, 404, { erro: 'Rota não encontrada' });
   }
 
+  // ----- Webhooks de saída -----
+  if (caminho === '/api/webhooks' || caminho.startsWith('/api/webhooks/')) {
+    const tratado = await webhooks.rotas({
+      metodo,
+      rota: caminho.slice('/api/webhooks'.length),
+      lerCorpo: (limite) => lerCorpo(req, limite),
+      responder,
+      res,
+    });
+    if (!tratado) responder(res, 404, { erro: 'Rota não encontrada' });
+    return;
+  }
+
   // ----- Registros: /api/:colecao/:id -----
   const [, , colecao, idBruto, sobra] = caminho.split('/');
   if (COLECOES.includes(colecao) && idBruto && sobra === undefined) {
@@ -464,7 +480,9 @@ const api = async (req, res, caminho) => {
     if (metodo === 'PUT') {
       const item = await lerCorpo(req, 40 * MB);
       if (!item || item.id !== id) return responder(res, 400, { erro: 'Registro inválido' });
+      const antes = webhooks.ler(colecao, id);
       sql.gravar.run(colecao, id, JSON.stringify(item), new Date().toISOString());
+      webhooks.aoSalvar(colecao, antes, item);
       return responder(res, 204);
     }
     if (metodo === 'DELETE') {

@@ -1856,6 +1856,232 @@ table.tabela {
   margin-left: auto;
 }
 
+
+/* ---------- Cobranças ---------- */
+.resumo-cobrancas {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.resumo-cobrancas b {
+  color: var(--tag-red);
+}
+
+.dica-cobrancas {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--text-2);
+  background: rgba(46, 34, 28, 0.6);
+  border: 1px solid var(--linha);
+  border-radius: 10px;
+  padding: 9px 12px;
+}
+
+.linha-cobranca {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px 12px;
+  align-items: center;
+  padding: 11px 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.linha-cobranca:last-child {
+  border-bottom: 0;
+}
+
+.linha-cobranca.atrasada {
+  background: linear-gradient(90deg, rgba(127, 29, 29, 0.22), transparent 70%);
+  border-radius: 10px;
+  padding-inline: 8px;
+}
+
+.linha-cobranca .quem {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+
+.linha-cobranca .titulo {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.linha-cobranca .sub {
+  color: var(--text-3);
+  font-size: 12.5px;
+}
+
+.linha-cobranca .sub b {
+  color: var(--text);
+}
+
+.acoes-cobranca {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.cartao-titulo .tag svg {
+  margin-right: 2px;
+}
+
+/* ---------- Webhooks ---------- */
+.eventos-webhook {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rotulo-eventos {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+.eventos-webhook fieldset {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px 12px 10px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.eventos-webhook legend {
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cinza-quente);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.opcao-evento {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 7px 2px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.opcao-evento input {
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  accent-color: var(--branco);
+  flex-shrink: 0;
+}
+
+.opcao-evento code {
+  display: block;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+.lista-webhooks {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cartao-webhook {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(31, 22, 18, 0.5);
+}
+
+.topo-webhook {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.url-webhook {
+  color: var(--text-3);
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+
+.segredo-webhook {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+}
+
+.segredo-webhook code {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 8px;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.lista-atividade {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.linha-atividade {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13.5px;
+}
+
+.linha-atividade:last-child {
+  border-bottom: 0;
+}
+
+.linha-atividade svg {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.linha-atividade .muted {
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+
+.detalhes-tecnicos summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.detalhes-tecnicos p {
+  font-size: 13px;
+}
+
+.exemplo-json {
+  background: var(--preto);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 12px;
+  overflow-x: auto;
+  color: var(--off-white);
+}
+
 /* ---------- Notebook / tablet deitado (até 1100px) ---------- */
 @media (max-width: 1100px) {
   .conteudo {
@@ -2199,6 +2425,20 @@ table.tabela {
 
   .grade-entregas-apres {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .linha-cobranca {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .acoes-cobranca {
+    grid-column: 1 / -1;
+  }
+
+  .acoes-cobranca .btn {
+    flex: 1;
+    justify-content: center;
+    min-height: 40px;
   }
 
   /* Campanhas no celular: cada campanha vira um cartão com os números em grade. */

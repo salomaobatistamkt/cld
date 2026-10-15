@@ -1,14 +1,14 @@
-import { ArrowDownCircle, ArrowUpCircle, ChevronLeft, ChevronRight, Plus, Receipt, Wallet } from 'lucide-react';
+import { ArrowDownCircle, ArrowUpCircle, ChevronLeft, ChevronRight, Receipt, Wallet } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { FormLancamento, novoLancamento } from '@/components/formularios';
-import { Avatar, Kpi, Vazio } from '@/components/ui';
-import { cobrancasDoMes, mesesAnteriores, saldo, totaisDoMes } from '@/lib/financeiro';
+import { Kpi, Vazio } from '@/components/ui';
+import { mesesAnteriores, saldo, totaisDoMes } from '@/lib/financeiro';
 import { useStore } from '@/lib/store';
-import { useToast } from '@/lib/toast';
 import { type Lancamento } from '@/lib/types';
-import { diasAte, formatarData, formatarMoeda, hojeISO, nomeMes, novoId } from '@/lib/util';
+import { diasAte, formatarData, formatarMoeda, hojeISO, nomeMes } from '@/lib/util';
 
+import { Cobrancas } from './Cobrancas';
 import { FaixaExemplos } from './FaixaExemplos';
 
 const deslocarMes = (mesISO: string, delta: number) => {
@@ -17,15 +17,12 @@ const deslocarMes = (mesISO: string, delta: number) => {
 };
 
 export const Caixa = () => {
-  const { dados, salvar } = useStore();
-  const mostrar = useToast((estado) => estado.mostrar);
+  const { dados } = useStore();
   const [mes, setMes] = useState(hojeISO().slice(0, 7));
   const [filtro, setFiltro] = useState<'todos' | 'entrada' | 'saida' | 'pendentes'>('todos');
   const [editando, setEditando] = useState<Lancamento | null>(null);
 
   const totais = totaisDoMes(dados.lancamentos, mes);
-  const cobrancas = cobrancasDoMes(mes, dados.servicos, dados.lancamentos);
-  const naoGeradas = cobrancas.filter((c) => !c.lancamento);
   const meses = mesesAnteriores(6, `${mes}-01`);
   const historico = meses.map((m) => ({ mes: m, ...totaisDoMes(dados.lancamentos, m) }));
   const maximo = Math.max(1, ...historico.flatMap((h) => [h.entradas + h.aReceber, h.saidas + h.aPagar]));
@@ -38,24 +35,6 @@ export const Caixa = () => {
         .sort((a, b) => a.data.localeCompare(b.data)),
     [dados.lancamentos, mes, filtro],
   );
-
-  const gerarCobrancas = () => {
-    naoGeradas.forEach(({ servico, data }) => {
-      const cliente = dados.clientes.find((c) => c.id === servico.clienteId);
-      salvar('lancamentos', {
-        id: novoId(),
-        tipo: 'entrada',
-        descricao: `${cliente?.nome ?? 'Cliente'} · ${servico.nome}`,
-        categoria: 'Mensalidade',
-        valor: servico.valor,
-        data,
-        pago: false,
-        clienteId: servico.clienteId,
-        servicoId: servico.id,
-      });
-    });
-    mostrar(`${naoGeradas.length} cobrança(s) gerada(s) para ${nomeMes(mes)}`);
-  };
 
   return (
     <div className="pagina">
@@ -107,77 +86,30 @@ export const Caixa = () => {
         />
       </div>
 
-      <div className="grade-2">
-        <section className="cartao">
-          <div className="cartao-titulo">
-            <h3>Entradas × saídas</h3>
-            <div className="legenda">
-              <span><i style={{ background: 'var(--good)' }} />Entradas</span>
-              <span><i style={{ background: 'var(--bad)' }} />Saídas</span>
-            </div>
-          </div>
-          <div className="barras">
-            {historico.map((h) => (
-              <div key={h.mes} className="barra-mes">
-                <div className="barra-par">
-                  <div title={`Entradas: ${formatarMoeda(h.entradas + h.aReceber)}`} style={{ height: `${((h.entradas + h.aReceber) / maximo) * 100}%`, background: h.aReceber ? 'linear-gradient(var(--tag-green-bg), var(--good))' : 'var(--good)' }} />
-                  <div title={`Saídas: ${formatarMoeda(h.saidas + h.aPagar)}`} style={{ height: `${((h.saidas + h.aPagar) / maximo) * 100}%`, background: 'var(--bad)' }} />
-                </div>
-                <small className="muted" style={{ fontWeight: h.mes === mes ? 800 : 500, color: h.mes === mes ? 'var(--text)' : undefined }}>
-                  {nomeMes(h.mes)}
-                </small>
-              </div>
-            ))}
-          </div>
-        </section>
+      <Cobrancas mes={mes} />
 
-        <section className="cartao">
-          <div className="cartao-titulo">
-            <h3>Cobranças dos serviços</h3>
-            <button type="button" className="btn primario pequeno" disabled={!naoGeradas.length} onClick={gerarCobrancas}>
-              <Plus size={14} /> Gerar {naoGeradas.length || ''} cobrança{naoGeradas.length === 1 ? '' : 's'}
-            </button>
+      <section className="cartao">
+        <div className="cartao-titulo">
+          <h3>Entradas × saídas</h3>
+          <div className="legenda">
+            <span><i style={{ background: 'var(--good)' }} />Entradas</span>
+            <span><i style={{ background: 'var(--bad)' }} />Saídas</span>
           </div>
-          {cobrancas.length === 0 ? (
-            <Vazio texto="Nenhum serviço recorrente ativo neste mês." />
-          ) : (
-            <div className="lista">
-              {cobrancas.map(({ servico, data, lancamento }) => {
-                const cliente = dados.clientes.find((c) => c.id === servico.clienteId);
-                return (
-                  <div key={servico.id} className="linha">
-                    <div style={{ display: 'flex', gap: 10, alignItems: 'center', minWidth: 0 }}>
-                      {cliente ? <Avatar nome={cliente.nome} cor={cliente.cor} tamanho={30} /> : null}
-                      <div style={{ minWidth: 0 }}>
-                        <div className="titulo">{cliente?.nome}</div>
-                        <div className="sub">
-                          {formatarData(data)} · {formatarMoeda(servico.valor)}
-                        </div>
-                      </div>
-                    </div>
-                    {!lancamento ? (
-                      <span className="tag slate">Não gerada</span>
-                    ) : lancamento.pago ? (
-                      <span className="tag green">Recebido</span>
-                    ) : (
-                      <button
-                        type="button"
-                        className={`btn pequeno`}
-                        onClick={() => {
-                          salvar('lancamentos', { ...lancamento, pago: true });
-                          mostrar('Recebimento confirmado');
-                        }}
-                      >
-                        {diasAte(data) < 0 ? <span className="tag red sem-ponto">Atrasado</span> : null} Marcar recebido
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
+        </div>
+        <div className="barras">
+          {historico.map((h) => (
+            <div key={h.mes} className="barra-mes">
+              <div className="barra-par">
+                <div title={`Entradas: ${formatarMoeda(h.entradas + h.aReceber)}`} style={{ height: `${((h.entradas + h.aReceber) / maximo) * 100}%`, background: h.aReceber ? 'linear-gradient(var(--tag-green-bg), var(--good))' : 'var(--good)' }} />
+                <div title={`Saídas: ${formatarMoeda(h.saidas + h.aPagar)}`} style={{ height: `${((h.saidas + h.aPagar) / maximo) * 100}%`, background: 'var(--bad)' }} />
+              </div>
+              <small className="muted" style={{ fontWeight: h.mes === mes ? 800 : 500, color: h.mes === mes ? 'var(--text)' : undefined }}>
+                {nomeMes(h.mes)}
+              </small>
             </div>
-          )}
-        </section>
-      </div>
+          ))}
+        </div>
+      </section>
 
       <section className="cartao">
         <div className="cartao-titulo">

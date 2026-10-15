@@ -70,6 +70,34 @@ Nada aqui mexe no DeskCRM, no n8n, na Evolution API nem no próprio Coolify.
 
 O token fica cifrado no servidor e nunca volta para a tela. Ele é enviado à Meta no cabeçalho da requisição, nunca no endereço, igual ao DeskCRM.
 
+### Webhooks (lembrete de cobrança no WhatsApp pelo n8n)
+
+Em **Configurações → Webhooks**, o Konext avisa outro sistema quando algo acontece. Funciona do mesmo jeito que no DeskCRM:
+- `POST` em JSON no formato `{event, occurred_at, data}`;
+- assinatura HMAC-SHA256 do corpo no cabeçalho `X-Konext-Signature`;
+- até 3 tentativas.
+
+Eventos disponíveis:
+
+| Evento | Quando dispara |
+|---|---|
+| `cobranca.gerada` | Uma cobrança é gerada no Caixa. |
+| `cobranca.vencendo` | Faltam 3 dias para o vencimento. |
+| `cobranca.vence_hoje` | A cobrança vence hoje. |
+| `cobranca.vencida` | Venceu e não foi paga. |
+| `cobranca.recebida` | A cobrança é marcada como recebida. |
+| `cliente.criado` | Um cliente novo é cadastrado. |
+| `cliente.status_alterado` | O status de um cliente muda. |
+| `entrega.status_alterado` | Uma entrega muda de etapa. |
+| `entrega.entregue` | Uma entrega é concluída. |
+
+Os três avisos de vencimento saem uma única vez por cobrança, sempre entre 8h e 20h (horário de Brasília).
+
+Exemplo com n8n + Evolution API:
+1. No n8n, crie um fluxo com um nó **Webhook** (POST) e copie a *Production URL*.
+2. No Konext, clique em **Novo webhook**, cole a URL e marque **Cobrança vence em 3 dias** e **Cobrança venceu**. Clique em **Enviar teste**.
+3. No n8n, envie a mensagem pela Evolution API usando os campos `data.cliente.contato.whatsapp`, `data.cobranca.valor` e `data.cobranca.vencimento`.
+
 ---
 
 ## Atualizar o sistema

@@ -14,6 +14,10 @@ type Estado = {
   backend: Backend | null;
   erroSalvar: string | null;
   usandoExemplos: boolean;
+  // Servidor pediu senha (primeiro acesso ou sessão expirada).
+  precisaEntrar: boolean;
+  // O servidor existe mas não respondeu ao abrir: não caímos no modo navegador para não perder nada.
+  erroInicial: string | null;
   iniciar: (backend: Backend) => Promise<void>;
   ir: (rota: Rota) => void;
   salvar: <C extends Colecao>(colecao: C, item: Dados[C][number]) => void;
@@ -68,6 +72,8 @@ export const useStore = create<Estado>((set, get) => {
     backend: null,
     erroSalvar: null,
     usandoExemplos: false,
+    precisaEntrar: false,
+    erroInicial: null,
 
     iniciar: async (backend) => {
       const salvos = await backend.carregar();

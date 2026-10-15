@@ -291,7 +291,7 @@ code {
 .app.recolhido .nav-item span,
 .app.recolhido .nav-grupo,
 .app.recolhido .busca-menu,
-.app.recolhido .rodape-sidebar span:last-child {
+.app.recolhido .rodape-sidebar > span:nth-child(2) {
   display: none;
 }
 
@@ -1798,6 +1798,62 @@ table.tabela {
   border: 1px solid var(--border);
   min-height: 420px;
   position: relative;
+}
+
+
+/* ---------- Entrar (servidor) ---------- */
+.tela-entrar {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: max(20px, env(safe-area-inset-top, 0px)) 16px max(20px, env(safe-area-inset-bottom, 0px));
+  background: var(--fundo);
+  background-color: var(--bg);
+  overflow-y: auto;
+}
+
+.cartao-entrar {
+  width: min(400px, 100%);
+  background: var(--preto);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.cartao-entrar h1 {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.cartao-entrar .btn {
+  justify-content: center;
+  min-height: 46px;
+}
+
+.campo-senha {
+  position: relative;
+}
+
+.campo-senha svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-3);
+  pointer-events: none;
+}
+
+.campo .campo-senha input {
+  padding-left: 38px;
+}
+
+.botao-sair {
+  margin-left: auto;
 }
 
 /* ---------- Notebook / tablet deitado (até 1100px) ---------- */

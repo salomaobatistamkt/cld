@@ -8,7 +8,9 @@
     "build": "node scripts/copiar-fontes.mjs && tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "fontes": "node scripts/copiar-fontes.mjs"
+    "fontes": "node scripts/copiar-fontes.mjs",
+    "build:servidor": "node scripts/copiar-fontes.mjs && vite build",
+    "start": "node --disable-warning=ExperimentalWarning server/servidor.mjs"
   },
   "dependencies": {
     "@excalidraw/excalidraw": "^0.18.1",
@@ -24,5 +26,8 @@
     "typescript": "^5.9.3",
     "vite": "^6.3.6",
     "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=22.13"
   }
 }

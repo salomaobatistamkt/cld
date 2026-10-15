@@ -2,6 +2,7 @@ import {
   Briefcase,
   ChevronLeft,
   ChevronRight,
+  LogOut,
   LayoutDashboard,
   Megaphone,
   MoreHorizontal,
@@ -16,6 +17,8 @@ import {
 import { lazy, type ReactNode, Suspense, useEffect, useMemo, useState } from 'react';
 
 import { Logo } from '@/components/Logo';
+import { sairDoServidor } from '@/lib/backend';
+import { iniciarSistema } from '@/lib/inicio';
 import { lerHash } from '@/lib/rotas';
 import { useStore } from '@/lib/store';
 import { useToast } from '@/lib/toast';
@@ -27,6 +30,7 @@ import { Campanhas } from '@/views/Campanhas';
 import { ClienteFicha } from '@/views/ClienteFicha';
 import { Clientes } from '@/views/Clientes';
 import { Configuracoes } from '@/views/Configuracoes';
+import { Entrar } from '@/views/Entrar';
 import { Entregas } from '@/views/Entregas';
 import { Painel } from '@/views/Painel';
 import { Processos } from '@/views/Processos';
@@ -49,7 +53,7 @@ const usarLarguraRecolhida = () => {
 };
 
 export const App = () => {
-  const { rota, ir, dados, pronto, erroSalvar, backend } = useStore();
+  const { rota, ir, dados, pronto, erroSalvar, backend, precisaEntrar, erroInicial } = useStore();
   const toast = useToast((estado) => estado.toast);
   const recolherAuto = usarLarguraRecolhida();
   const [recolhidoManual, setRecolhidoManual] = useState<boolean | null>(null);
@@ -99,6 +103,30 @@ export const App = () => {
     setMaisAberto(false);
     ir(item.ir);
   };
+
+  const sair = async () => {
+    await sairDoServidor();
+    window.location.reload();
+  };
+
+  if (!pronto && precisaEntrar) return <Entrar />;
+
+  if (!pronto && erroInicial) {
+    return (
+      <div className="tela-entrar">
+        <div className="cartao-entrar">
+          <Logo grande />
+          <div>
+            <h1>Servidor sem resposta</h1>
+            <p className="muted">Não consegui carregar os dados ({erroInicial}). Confira sua internet e tente de novo.</p>
+          </div>
+          <button type="button" className="btn primario" onClick={() => iniciarSistema()}>
+            Tentar de novo
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!pronto) {
     return (
@@ -169,6 +197,11 @@ export const App = () => {
         <div className="rodape-sidebar">
           <span className={`ponto-status${backend?.modo === 'servidor' ? ' online' : ''}`} />
           <span>{backend?.modo === 'servidor' ? 'Online' : 'Protótipo · neste navegador'}</span>
+          {backend?.modo === 'servidor' ? (
+            <button type="button" className="btn fantasma icone botao-sair" onClick={sair} aria-label="Sair" title="Sair">
+              <LogOut size={15} />
+            </button>
+          ) : null}
         </div>
       </aside>
 
@@ -206,6 +239,12 @@ export const App = () => {
                 <span>{item.rotulo}</span>
               </button>
             ))}
+            {backend?.modo === 'servidor' ? (
+              <button type="button" className="nav-item" onClick={sair}>
+                <LogOut size={19} />
+                <span>Sair</span>
+              </button>
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -219,6 +258,7 @@ export const App = () => {
 
       {toast ? <div className={`toast${toast.erro ? ' erro' : ''}`}>{toast.texto}</div> : null}
       {erroSalvar ? <div className="toast erro">Não foi possível salvar: {erroSalvar}</div> : null}
+      {precisaEntrar ? <Entrar /> : null}
     </div>
   );
 };

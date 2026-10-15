@@ -1,0 +1,8 @@
+node_modules
+dist
+public/fonts
+dados
+*.db
+*.db-*
+.env
+.git

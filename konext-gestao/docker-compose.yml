@@ -1,0 +1,18 @@
+# Para o Coolify (Build Pack: Docker Compose) ou para rodar direto com "docker compose up -d --build".
+services:
+  konext-gestao:
+    build: .
+    restart: unless-stopped
+    environment:
+      # Senha para entrar no sistema (obrigatória, mínimo 8 caracteres).
+      - KONEXT_SENHA=${KONEXT_SENHA:?Defina KONEXT_SENHA}
+      # Opcional: se ficar vazio, o servidor cria um segredo e guarda em /data.
+      - KONEXT_SEGREDO=${KONEXT_SEGREDO:-}
+    volumes:
+      - konext-dados:/data
+    expose:
+      - "3000"
+    mem_limit: 384m
+
+volumes:
+  konext-dados:

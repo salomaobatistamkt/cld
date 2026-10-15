@@ -80,13 +80,29 @@ export const criarBackendServidor = (): Backend => ({
   },
 });
 
-export const detectarServidor = async () => {
+export const detectarServidor = async (): Promise<{ servidor: boolean; autenticado: boolean }> => {
   try {
-    const resposta = await fetch('./api/saude', { credentials: 'same-origin' });
-    if (!resposta.ok) return false;
-    const corpo = (await resposta.json().catch(() => null)) as { app?: string } | null;
-    return corpo?.app === 'konext-gestao';
+    const resposta = await fetch('./api/saude', { credentials: 'same-origin', cache: 'no-store' });
+    if (!resposta.ok) return { servidor: false, autenticado: false };
+    const corpo = (await resposta.json().catch(() => null)) as { app?: string; autenticado?: boolean } | null;
+    return { servidor: corpo?.app === 'konext-gestao', autenticado: Boolean(corpo?.autenticado) };
   } catch {
-    return false;
+    return { servidor: false, autenticado: false };
   }
+};
+
+export const entrarNoServidor = async (senha: string) => {
+  const resposta = await fetch('./api/entrar', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ senha }),
+  });
+  if (resposta.ok) return null;
+  const corpo = (await resposta.json().catch(() => ({}))) as { erro?: string };
+  return corpo.erro ?? `Erro ${resposta.status}`;
+};
+
+export const sairDoServidor = async () => {
+  await fetch('./api/sair', { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: '{}' }).catch(() => undefined);
 };

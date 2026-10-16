@@ -1,4 +1,4 @@
-import { Building2, Check, Database, Download, ImagePlus, ListChecks, Megaphone, Pencil, Plug, Plus, Settings, Tags, Trash2, Upload, Wallet, Webhook as WebhookIcone, Workflow, X } from 'lucide-react';
+import { BarChart3, Building2, Check, Presentation, Database, Download, ImagePlus, ListChecks, Megaphone, Pencil, Plug, Plus, Settings, Tags, Trash2, Upload, Wallet, Webhook as WebhookIcone, Workflow, X } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 
 import { Campo, Confirmar, useItemAtivoVisivel } from '@/components/ui';
@@ -8,6 +8,7 @@ import { useToast } from '@/lib/toast';
 import { criarDadosExemplo } from '@/lib/seed';
 import { type Config, type Dados } from '@/lib/types';
 
+import { SecaoModelosRelatorio, SecaoPerformance } from './desempenho/ConfigPerformance';
 import { SecaoProcessosServico } from './ProcessosServico';
 import { SecaoWebhooks } from './Webhooks';
 
@@ -18,6 +19,8 @@ const SECOES: Secao[] = [
   { id: 'servicos', rotulo: 'Serviços que você vende', icone: <Tags size={17} />, descricao: 'A lista de tipos de serviço. Ela aparece quando você cadastra um serviço num cliente e serve de filtro nas entregas.' },
   { id: 'processo-servico', rotulo: 'Processo de cada serviço', icone: <ListChecks size={17} />, descricao: 'As etapas que todo cliente passa ao contratar cada serviço e a rotina que se repete depois (semanal ou mensal).' },
   { id: 'nomes-anuncios', rotulo: 'Nomes dos conjuntos', icone: <Megaphone size={17} />, descricao: 'Os nomes de conjunto oferecidos ao criar campanhas em Anúncios → Criar campanha. O número do anúncio (01, 02…) é gerado sozinho.' },
+  { id: 'performance', rotulo: 'Referências de performance', icone: <BarChart3 size={17} />, descricao: 'Limites usados para avaliar CTR, custo por resultado, volume e frequência em Desempenho, no portal do cliente e nas apresentações.' },
+  { id: 'modelos-relatorio', rotulo: 'Modelos de apresentação', icone: <Presentation size={17} />, descricao: 'Conjuntos de seções e métricas para o portal do cliente e as reuniões (captação de leads, crescimento de perfil…).' },
   { id: 'caixa', rotulo: 'Categorias do caixa', icone: <Wallet size={17} />, descricao: 'Como você classifica o dinheiro que entra e que sai. Aparecem ao registrar um lançamento no Caixa.' },
   { id: 'processos', rotulo: 'Áreas dos processos', icone: <Workflow size={17} />, descricao: 'Agrupam os processos da empresa na tela Processos (ex.: Comercial, Produção).' },
   { id: 'integracoes', rotulo: 'Integrações', icone: <Plug size={17} />, descricao: 'Conexão com o Meta Ads para ver as métricas das campanhas dos clientes.' },
@@ -377,6 +380,10 @@ export const Configuracoes = ({ aba = 'empresa' }: { aba?: string }) => {
               aoRenomear={(a, n) => mudar({ nomesConjunto: config.nomesConjunto.map((x) => (x === a ? n : x)) }, 'Renomeado')}
             />
           ) : null}
+
+          {secao.id === 'performance' ? <SecaoPerformance /> : null}
+
+          {secao.id === 'modelos-relatorio' ? <SecaoModelosRelatorio /> : null}
 
           {secao.id === 'integracoes' ? <IntegracaoMeta /> : null}
 

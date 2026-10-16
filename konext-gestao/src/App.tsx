@@ -1,5 +1,6 @@
 import {
   Activity,
+  BarChart3,
   Briefcase,
   CalendarCheck,
   ChevronLeft,
@@ -35,6 +36,8 @@ import { CriarCampanha } from '@/views/anuncios/CriarCampanha';
 import { BibliotecaCriativos } from '@/views/anuncios/Criativos';
 import { CentralExecucao } from '@/views/anuncios/Execucao';
 import { DiagnosticoMeta } from '@/views/anuncios/Diagnostico';
+import { ApresentarResultados } from '@/views/desempenho/ApresentarResultados';
+import { Desempenho } from '@/views/desempenho/Desempenho';
 import { Apresentacao } from '@/views/Apresentacao';
 import { Caixa } from '@/views/Caixa';
 import { Campanhas } from '@/views/Campanhas';
@@ -94,6 +97,7 @@ export const App = () => {
     rotina: { tela: 'rotina', rotulo: 'Rotina', icone: <CalendarCheck size={19} />, ir: { tela: 'rotina' } },
     quadros: { tela: 'quadros', rotulo: 'Estratégias', curto: 'Quadros', icone: <PenTool size={19} />, ir: { tela: 'quadros' } },
     campanhas: { tela: 'campanhas', rotulo: 'Campanhas', icone: <Megaphone size={19} />, ir: { tela: 'campanhas' } },
+    desempenho: { tela: 'desempenho', rotulo: 'Desempenho', icone: <BarChart3 size={19} />, ir: { tela: 'desempenho' } },
     anunciosCriar: { tela: 'anuncios-criar', rotulo: 'Criar campanha', curto: 'Criar', icone: <Rocket size={19} />, ir: { tela: 'anuncios-criar' } },
     anunciosExecucao: { tela: 'anuncios-execucao', rotulo: 'Central de execução', curto: 'Execução', icone: <Activity size={19} />, ir: { tela: 'anuncios-execucao' } },
     anunciosCriativos: { tela: 'anuncios-criativos', rotulo: 'Biblioteca de criativos', curto: 'Criativos', icone: <Images size={19} />, ir: { tela: 'anuncios-criativos' } },
@@ -107,16 +111,17 @@ export const App = () => {
   const grupos: Array<{ titulo: string; itens: ItemMenu[] }> = [
     { titulo: 'Visão geral', itens: [itens.painel] },
     { titulo: 'Clientes', itens: [itens.clientes, itens.entregas, itens.rotina, itens.quadros, itens.campanhas] },
-    { titulo: 'Anúncios', itens: [itens.anunciosCriar, itens.anunciosExecucao, itens.anunciosCriativos, itens.anunciosContas, itens.anunciosDiagnostico] },
+    { titulo: 'Anúncios', itens: [itens.desempenho, itens.anunciosCriar, itens.anunciosExecucao, itens.anunciosCriativos, itens.anunciosContas, itens.anunciosDiagnostico] },
     { titulo: 'Empresa', itens: [itens.caixa, itens.processos, itens.config] },
   ];
   const barraInferior = [itens.painel, itens.clientes, itens.entregas, itens.quadros];
-  const noMais = [itens.rotina, itens.campanhas, itens.anunciosCriar, itens.anunciosExecucao, itens.anunciosCriativos, itens.anunciosContas, itens.anunciosDiagnostico, itens.caixa, itens.processos, itens.config];
+  const noMais = [itens.rotina, itens.campanhas, itens.desempenho, itens.anunciosCriar, itens.anunciosExecucao, itens.anunciosCriativos, itens.anunciosContas, itens.anunciosDiagnostico, itens.caixa, itens.processos, itens.config];
 
   const ativo = (item: ItemMenu) =>
     item.tela === rota.tela ||
     (item.tela === 'clientes' && (rota.tela === 'cliente' || rota.tela === 'apresentacao')) ||
-    (item.tela === 'quadros' && rota.tela === 'quadro');
+    (item.tela === 'quadros' && rota.tela === 'quadro') ||
+    (item.tela === 'desempenho' && rota.tela === 'apresentar-resultados');
 
   const navegar = (item: ItemMenu) => {
     setMaisAberto(false);
@@ -183,6 +188,9 @@ export const App = () => {
         return <BibliotecaCriativos />;
       case 'anuncios-diagnostico':
         return <DiagnosticoMeta />;
+      case 'desempenho':
+      case 'apresentar-resultados':
+        return <Desempenho clienteId={rota.clienteId} />;
       case 'caixa':
         return <Caixa />;
       case 'processos':
@@ -286,6 +294,7 @@ export const App = () => {
         </Suspense>
       ) : null}
       {rota.tela === 'apresentacao' ? <Apresentacao clienteId={rota.clienteId} /> : null}
+      {rota.tela === 'apresentar-resultados' ? <ApresentarResultados clienteId={rota.clienteId} /> : null}
 
       {toast ? <div className={`toast${toast.erro ? ' erro' : ''}`}>{toast.texto}</div> : null}
       {erroSalvar ? <div className="toast erro">Não foi possível salvar: {erroSalvar}</div> : null}

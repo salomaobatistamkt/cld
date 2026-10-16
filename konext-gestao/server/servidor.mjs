@@ -12,6 +12,7 @@ import { promisify } from 'node:util';
 
 import { criarAnuncios } from './anuncios.mjs';
 import { criarCampanhas } from './campanhas.mjs';
+import { criarMetricas } from './metricas.mjs';
 import { criarWebhooks } from './webhooks.mjs';
 
 const gzipAsync = promisify(gzip);
@@ -333,6 +334,25 @@ const anuncios = criarAnuncios({
   log,
 });
 
+const metricas = criarMetricas({
+  db,
+  graph,
+  ErroMeta,
+  normalizarConta,
+  ler: lerRegistro,
+  listar: listarRegistros,
+  lerConfig: () => {
+    try {
+      return JSON.parse(lerChave('config') || 'null');
+    } catch {
+      return null;
+    }
+  },
+  cifrar,
+  decifrar,
+  log,
+});
+
 const rotuloResultado = (indicador = '') => {
   if (indicador.includes('messaging_conversation_started')) return 'Conversas no WhatsApp';
   if (indicador.includes('lead')) return 'Leads';
@@ -466,6 +486,21 @@ const api = async (req, res, caminho) => {
     return responder(res, status, corpo);
   }
 
+  // Portal de resultados do cliente: o token individual (aleatório e revogável) é a autorização.
+  // Só leitura, e o servidor só devolve dados da conta do cliente dono do token.
+  const portal = caminho.match(/^\/api\/publico\/resultados\/([\w-]{20,64})$/);
+  if (portal && metodo === 'GET') {
+    const cabecalhos = { 'x-robots-tag': 'noindex, nofollow', 'referrer-policy': 'no-referrer' };
+    if (!metricas.podeAcessar(ipDe(req))) return responder(res, 429, { erro: 'Muitas consultas seguidas. Espere um minuto.' }, cabecalhos);
+    try {
+      return responder(res, 200, await metricas.relatorioPublico(portal[1], new URL(req.url, 'http://local')), cabecalhos);
+    } catch (falha) {
+      if (falha instanceof ErroMeta) return responder(res, falha.status, { erro: [400, 404].includes(falha.status) ? falha.message : 'Os resultados estão indisponíveis agora. Tente de novo em alguns minutos.' }, cabecalhos);
+      throw falha;
+    }
+  }
+  if (caminho.startsWith('/api/publico/')) return responder(res, 404, { erro: 'Não encontrado' });
+
   // Pedidos que mudam algo precisam vir como JSON do próprio site (proteção contra CSRF).
   // Exceção: partes de arquivo, que exigem um cabeçalho próprio (outro site não consegue enviá-lo).
   const ehParteDeArquivo = metodo === 'PUT' && /^\/api\/anuncios\/midias\/[\w-]+\/parte$/.test(caminho) && req.headers['x-konext-upload'] === '1';
@@ -563,6 +598,18 @@ const api = async (req, res, caminho) => {
     try {
       const contexto = { req, res, metodo, rota: caminho.slice('/api/anuncios'.length), lerCorpo: (limite) => lerCorpo(req, limite), responder };
       const tratado = (await anuncios.rotas(contexto)) || (await campanhasMeta.rotas(contexto));
+      if (!tratado) responder(res, 404, { erro: 'Rota não encontrada' });
+    } catch (falha) {
+      if (falha instanceof ErroMeta) return responder(res, falha.status, { erro: falha.message, detalhe: falha.detalhe });
+      throw falha;
+    }
+    return;
+  }
+
+  // ----- Métricas e portais de resultados -----
+  if (caminho.startsWith('/api/metricas/')) {
+    try {
+      const tratado = await metricas.rotasAdmin({ req, res, metodo, rota: caminho.slice('/api/metricas'.length), lerCorpo: (limite) => lerCorpo(req, limite), responder });
       if (!tratado) responder(res, 404, { erro: 'Rota não encontrada' });
     } catch (falha) {
       if (falha instanceof ErroMeta) return responder(res, falha.status, { erro: falha.message, detalhe: falha.detalhe });
@@ -680,6 +727,13 @@ const servidor = createServer(async (req, res) => {
   try {
     if (caminho === '/api' || caminho.startsWith('/api/')) return await api(req, res, caminho);
     if (req.method !== 'GET' && req.method !== 'HEAD') return responder(res, 405, { erro: 'Método não permitido' });
+    if (caminho.startsWith('/resultados/')) {
+      // Página do portal: os arquivos do site são relativos, então /resultados/assets/x.js → /assets/x.js.
+      res.setHeader('referrer-policy', 'no-referrer');
+      res.setHeader('x-robots-tag', 'noindex, nofollow');
+      if (extname(caminho)) return await arquivo(req, res, caminho.slice('/resultados'.length));
+      return await arquivo(req, res, '/');
+    }
     return await arquivo(req, res, caminho);
   } catch (falha) {
     const status = falha?.status || 500;

@@ -1,3 +1,5 @@
+import { type ModeloRelatorio, type ParametrosPerformance, type Secao } from './metricas';
+
 export type StatusCliente = 'lead' | 'onboarding' | 'ativo' | 'pausado' | 'encerrado';
 
 export type Acesso = {
@@ -37,6 +39,8 @@ export type Cliente = {
   metaInstagramId?: string;
   metaInstagramUsuario?: string;
   metaValidacao?: { contaId: string; contaNome: string; moeda: string; fuso: string; em: string };
+  // O que o portal de resultados e a apresentação mostram para este cliente.
+  relatorio?: { modeloId?: string; secoes?: Secao[]; metricas?: string[]; titulo?: string; mensagem?: string };
   criadoEm: string;
 };
 
@@ -133,6 +137,9 @@ export type Config = {
   processosServico: Record<string, ProcessoServico>;
   // Nomes de conjunto oferecidos ao criar campanhas (Anúncios → Criar campanha).
   nomesConjunto: string[];
+  // Referências de performance (Desempenho) e modelos de relatório/apresentação.
+  performance?: ParametrosPerformance;
+  modelosRelatorio?: ModeloRelatorio[];
 };
 
 // Etapa feita uma vez, no começo do serviço (vira uma entrega do cliente).
@@ -203,4 +210,6 @@ export type Rota =
   | { tela: 'anuncios-criativos' }
   | { tela: 'anuncios-diagnostico' }
   | { tela: 'config'; aba?: string }
-  | { tela: 'apresentacao'; clienteId: string };
+  | { tela: 'apresentacao'; clienteId: string }
+  | { tela: 'desempenho'; clienteId?: string }
+  | { tela: 'apresentar-resultados'; clienteId: string };

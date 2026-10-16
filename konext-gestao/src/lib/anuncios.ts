@@ -98,6 +98,7 @@ export type ConfigAprendida = {
   optimization_goal: string;
   cta: { type: string };
   ctaCopiado: boolean;
+  regulacao?: Record<string, unknown> | null;
 };
 
 export type ModoOrcamento = 'conjunto' | 'campanha_diario' | 'campanha_total';

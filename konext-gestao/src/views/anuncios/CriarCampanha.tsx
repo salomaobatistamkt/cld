@@ -400,6 +400,7 @@ export const CriarCampanha = () => {
                   <small className="ok-texto">
                     <CheckCircle2 size={13} /> Vai usar: destino {config.destination_type}, otimização {config.optimization_goal}, botão {config.cta.type}
                     {config.ctaCopiado ? '' : ' (botão padrão: a referência não tinha)'}.
+                    {config.regulacao ? ' Anunciante verificado (Brasil): copiado.' : ' Anunciante verificado (Brasil): será buscado em outro conjunto da conta.'}
                   </small>
                 ) : null}
                 {!referenciaId && referencias !== null ? (

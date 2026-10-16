@@ -391,6 +391,56 @@ export const criarCampanhas = ({ db, graph, graphEnviar, ErroMeta, normalizarCon
       .map((c) => ({ id: c.id, nome: c.name, objetivo: c.objective, status: STATUS_META[c.effective_status] || c.effective_status }));
   };
 
+  // ---------- Regulação do Brasil (anunciante verificado) ----------
+  // A Meta exige, em conjuntos que alcançam o Brasil, o beneficiário e o pagador verificados.
+  // O Konext não inventa esses IDs: copia de um conjunto que já existe na conta.
+  const CAMPOS_REGULACAO = ['regional_regulated_categories', 'regional_regulation_identities'];
+  const temValor = (v) => v !== undefined && v !== null && v !== '' && !(Array.isArray(v) && !v.length) && !(typeof v === 'object' && !Array.isArray(v) && !Object.keys(v).length);
+  const regulacaoDe = (cj) => {
+    if (!cj || !temValor(cj.regional_regulation_identities)) return null;
+    const r = {};
+    for (const f of CAMPOS_REGULACAO) if (temValor(cj[f])) r[f] = cj[f];
+    if (!r.regional_regulated_categories) r.regional_regulated_categories = ['BRAZIL_REGULATION'];
+    return r;
+  };
+  const lerRegulacaoDoConjunto = async (adsetId) => {
+    const lido = {};
+    for (const f of CAMPOS_REGULACAO) {
+      try {
+        Object.assign(lido, await graph(adsetId, { fields: f }));
+      } catch {
+        // campo indisponível nesta versão/conta: ignora
+      }
+    }
+    return regulacaoDe(lido);
+  };
+  const cacheRegulacao = new Map();
+  const regulacaoDaConta = async (act) => {
+    const guardado = cacheRegulacao.get(act);
+    if (guardado && Date.now() - guardado.em < 10 * 60 * 1000) return guardado.valor;
+    let valor = null;
+    try {
+      const lidos = await graph(`${act}/adsets`, { fields: `id,created_time,${CAMPOS_REGULACAO.join(',')}`, limit: '50' }, undefined, { maxPaginas: 1 });
+      const comRegulacao = (lidos.data || [])
+        .filter((cj) => regulacaoDe(cj))
+        .sort((a, b) => String(b.created_time || '').localeCompare(String(a.created_time || '')));
+      valor = regulacaoDe(comRegulacao[0]);
+    } catch (falha) {
+      if (falha?.detalhe?.codigo !== 100) throw falha;
+    }
+    if (valor) cacheRegulacao.set(act, { em: Date.now(), valor });
+    return valor;
+  };
+  const ehErroRegulacao = (falha) =>
+    falha?.detalhe?.subcodigo === 3858634 || /anunciante verificado|verified advertiser|beneficiar|universal_payer|regional_regulat/i.test(`${falha?.detalhe?.mensagem || ''} ${falha?.message || ''}`);
+  const erroSemRegulacao = () =>
+    new ErroMeta(
+      'A Meta exige o anunciante verificado (beneficiário e pagador) para anúncios no Brasil, e o Konext não encontrou nenhum conjunto nesta conta com isso preenchido para copiar. ' +
+        'Abra o Gerenciador de Anúncios desta conta, edite (ou crie) um conjunto qualquer, preencha “Beneficiário” e “Pagador” na seção de anunciante verificado e salve. Depois clique em “Tentar de novo o que falhou”.',
+      409,
+      { codigo: 100, subcodigo: 3858634 },
+    );
+
   // Aprende os parâmetros de uma campanha que já funciona na conta.
   const aprenderReferencia = async (act, campanhaId, modelo) => {
     const c = await graph(campanhaId, { fields: 'id,name,objective,account_id' });
@@ -434,6 +484,7 @@ export const criarCampanhas = ({ db, graph, graphEnviar, ErroMeta, normalizarCon
       cta: cta ? { type: cta.type, ...(cta.value && modelo === 'whatsapp' ? { value: { app_destination: cta.value.app_destination || 'WHATSAPP' } } : {}) } : padrao.cta,
       link: modelo === 'whatsapp' ? link || padrao.link : null,
       ctaCopiado: Boolean(cta),
+      regulacao: await lerRegulacaoDoConjunto(cj.id),
     };
   };
 
@@ -654,8 +705,21 @@ export const criarCampanhas = ({ db, graph, graphEnviar, ErroMeta, normalizarCon
         end_time: horario(plano.orcamento.fim, true),
       };
       if (plano.orcamento.modo === 'conjunto') Object.assign(params, { daily_budget: String(centavos(item.valor)), bid_strategy: c.bid_strategy });
-      const r = await comAdaptacoes((p) => graphEnviar(`${plano.contaId}/adsets`, p), params);
-      return { metaId: r.id };
+      // Anunciante verificado (Brasil): da referência ou de outro conjunto da conta.
+      let regulacao = c.regulacao || (await regulacaoDaConta(plano.contaId));
+      if (regulacao) Object.assign(params, regulacao);
+      try {
+        const r = await comAdaptacoes((p) => graphEnviar(`${plano.contaId}/adsets`, p), params);
+        return { metaId: r.id };
+      } catch (falha) {
+        if (!(falha instanceof ErroMeta) || falha.detalhe?.incerto || !ehErroRegulacao(falha)) throw falha;
+        if (regulacao) throw falha;
+        cacheRegulacao.delete(plano.contaId);
+        regulacao = await regulacaoDaConta(plano.contaId);
+        if (!regulacao) throw erroSemRegulacao();
+        const r = await comAdaptacoes((p) => graphEnviar(`${plano.contaId}/adsets`, p), { ...params, ...regulacao });
+        return { metaId: r.id };
+      }
     }
     if (obj.tipo === 'criativo') {
       const midiaObj = porChave(`midia:${item.midiaId}`);

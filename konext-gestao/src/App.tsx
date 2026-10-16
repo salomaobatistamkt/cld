@@ -5,12 +5,14 @@ import {
   ChevronRight,
   LogOut,
   LayoutDashboard,
+  Link2,
   Megaphone,
   MoreHorizontal,
   Package,
   PenTool,
   Search,
   Settings,
+  Stethoscope,
   Wallet,
   Workflow,
   X,
@@ -25,6 +27,8 @@ import { useStore } from '@/lib/store';
 import { useToast } from '@/lib/toast';
 import { type Rota } from '@/lib/types';
 import { diasAte } from '@/lib/util';
+import { ContasAnuncios } from '@/views/anuncios/Contas';
+import { DiagnosticoMeta } from '@/views/anuncios/Diagnostico';
 import { Apresentacao } from '@/views/Apresentacao';
 import { Caixa } from '@/views/Caixa';
 import { Campanhas } from '@/views/Campanhas';
@@ -84,6 +88,8 @@ export const App = () => {
     rotina: { tela: 'rotina', rotulo: 'Rotina', icone: <CalendarCheck size={19} />, ir: { tela: 'rotina' } },
     quadros: { tela: 'quadros', rotulo: 'Estratégias', curto: 'Quadros', icone: <PenTool size={19} />, ir: { tela: 'quadros' } },
     campanhas: { tela: 'campanhas', rotulo: 'Campanhas', icone: <Megaphone size={19} />, ir: { tela: 'campanhas' } },
+    anunciosContas: { tela: 'anuncios-contas', rotulo: 'Contas de anúncios', curto: 'Contas', icone: <Link2 size={19} />, ir: { tela: 'anuncios-contas' } },
+    anunciosDiagnostico: { tela: 'anuncios-diagnostico', rotulo: 'Diagnóstico Meta', curto: 'Diagnóstico', icone: <Stethoscope size={19} />, ir: { tela: 'anuncios-diagnostico' } },
     caixa: { tela: 'caixa', rotulo: 'Caixa', icone: <Wallet size={19} />, ir: { tela: 'caixa' } },
     processos: { tela: 'processos', rotulo: 'Processos', icone: <Workflow size={19} />, ir: { tela: 'processos' } },
     config: { tela: 'config', rotulo: 'Configurações', icone: <Settings size={19} />, ir: { tela: 'config' } },
@@ -92,10 +98,11 @@ export const App = () => {
   const grupos: Array<{ titulo: string; itens: ItemMenu[] }> = [
     { titulo: 'Visão geral', itens: [itens.painel] },
     { titulo: 'Clientes', itens: [itens.clientes, itens.entregas, itens.rotina, itens.quadros, itens.campanhas] },
+    { titulo: 'Anúncios', itens: [itens.anunciosContas, itens.anunciosDiagnostico] },
     { titulo: 'Empresa', itens: [itens.caixa, itens.processos, itens.config] },
   ];
   const barraInferior = [itens.painel, itens.clientes, itens.entregas, itens.quadros];
-  const noMais = [itens.rotina, itens.campanhas, itens.caixa, itens.processos, itens.config];
+  const noMais = [itens.rotina, itens.campanhas, itens.anunciosContas, itens.anunciosDiagnostico, itens.caixa, itens.processos, itens.config];
 
   const ativo = (item: ItemMenu) =>
     item.tela === rota.tela ||
@@ -157,6 +164,10 @@ export const App = () => {
         return <Campanhas />;
       case 'rotina':
         return <Rotina />;
+      case 'anuncios-contas':
+        return <ContasAnuncios />;
+      case 'anuncios-diagnostico':
+        return <DiagnosticoMeta />;
       case 'caixa':
         return <Caixa />;
       case 'processos':

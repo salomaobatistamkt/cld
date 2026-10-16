@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { gzip } from 'node:zlib';
 import { promisify } from 'node:util';
 
+import { criarAnuncios } from './anuncios.mjs';
 import { criarWebhooks } from './webhooks.mjs';
 
 const gzipAsync = promisify(gzip);
@@ -199,38 +200,69 @@ const tokenMeta = () => {
 };
 
 class ErroMeta extends Error {
-  constructor(mensagem, status = 502) {
+  constructor(mensagem, status = 502, detalhe = null) {
     super(mensagem);
     this.status = status;
+    // O que a Meta respondeu (código, subcódigo, mensagem). Nunca inclui o token.
+    this.detalhe = detalhe;
   }
 }
 
-// Traduz os códigos de erro da Graph API para algo que dá para agir.
+const limparTextoMeta = (texto) => String(texto || '').replace(/EAA[A-Za-z0-9]+/g, '[token]').slice(0, 400);
+
+// Traduz os códigos de erro da Graph API para algo que dá para agir, guardando o original.
 const traduzirErroMeta = (erro) => {
   const codigo = Number(erro?.code);
-  if ([102, 190, 463, 467].includes(codigo))
-    return new ErroMeta('O token do Meta expirou ou é inválido. Gere um novo e salve em Configurações → Integrações.', 400);
+  const detalhe = {
+    codigo: Number.isFinite(codigo) ? codigo : null,
+    subcodigo: erro?.error_subcode ?? null,
+    tipo: erro?.type ?? null,
+    mensagem: limparTextoMeta(erro?.error_user_msg || erro?.message),
+    titulo: limparTextoMeta(erro?.error_user_title),
+    rastreio: erro?.fbtrace_id ?? null,
+  };
+  const com = (texto, status) => new ErroMeta(`${texto} (Meta: ${detalhe.mensagem || 'sem detalhe'} · código ${detalhe.codigo ?? '?'}${detalhe.subcodigo ? `/${detalhe.subcodigo}` : ''})`, status, detalhe);
+  if ([102, 190, 463, 467].includes(codigo)) return com('O token do Meta expirou ou é inválido. Gere um novo e salve em Configurações → Integrações.', 400);
   if ([10, 200, 272, 294].includes(codigo) || (codigo >= 200 && codigo < 300))
-    return new ErroMeta('Sem permissão nesta conta de anúncios. Confira se o usuário do sistema tem acesso a ela e se o token tem ads_read.', 403);
-  if ([4, 17, 32, 613].includes(codigo) || (codigo >= 80000 && codigo <= 80014))
-    return new ErroMeta('A Meta limitou as consultas por alguns minutos. Tente de novo daqui a pouco.', 429);
-  if (codigo === 100) return new ErroMeta('Conta de anúncios não encontrada. Confira o ID (act_…) na ficha do cliente.', 400);
-  return new ErroMeta(`A Meta respondeu com erro: ${erro?.message || 'desconhecido'}`, 502);
+    return com('Sem permissão para isso. Confira se o usuário do sistema tem acesso a este ativo e se o token tem a permissão necessária.', 403);
+  if ([4, 17, 32, 613].includes(codigo) || (codigo >= 80000 && codigo <= 80014)) return com('A Meta limitou as consultas por alguns minutos. Tente de novo daqui a pouco.', 429);
+  if (codigo === 100) return com('A Meta recusou o pedido (ID inexistente, sem acesso ou campo inválido).', 400);
+  return com('A Meta respondeu com erro.', 502);
 };
 
-const graph = async (caminho, params, token = tokenMeta()) => {
+// Uso dos limites da API informado pela Meta na última resposta (para a tela de diagnóstico).
+const usoMeta = { app: null, contas: null, negocio: null, em: null };
+const lerUso = (resposta) => {
+  const json = (nome) => {
+    try {
+      const valor = resposta.headers.get(nome);
+      return valor ? JSON.parse(valor) : null;
+    } catch {
+      return null;
+    }
+  };
+  const app = json('x-app-usage');
+  const contas = json('x-ad-account-usage');
+  const negocio = json('x-business-use-case-usage');
+  if (app || contas || negocio) Object.assign(usoMeta, { app: app ?? usoMeta.app, contas: contas ?? usoMeta.contas, negocio: negocio ?? usoMeta.negocio, em: new Date().toISOString() });
+};
+
+const graph = async (caminho, params, token = tokenMeta(), opcoes = {}) => {
   if (!token) throw new ErroMeta('O Meta Ads ainda não está conectado. Vá em Configurações → Integrações.', 400);
   const url = new URL(`${GRAPH}/${caminho}`);
   for (const [k, v] of Object.entries(params || {})) url.searchParams.set(k, typeof v === 'string' ? v : JSON.stringify(v));
   const itens = [];
   let proxima = url.toString();
-  for (let pagina = 0; proxima && pagina < 20; pagina += 1) {
+  const maxPaginas = opcoes.maxPaginas ?? 20;
+  for (let pagina = 0; proxima && pagina < maxPaginas; pagina += 1) {
     let resposta;
     try {
       resposta = await fetch(proxima, { headers: { authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(25000) });
-    } catch {
-      throw new ErroMeta('Não foi possível falar com a Meta agora. Tente de novo em instantes.', 504);
+    } catch (falha) {
+      const causa = falha?.name === 'TimeoutError' ? 'a Meta demorou mais de 25s' : falha?.cause?.code || falha?.message || 'erro de rede';
+      throw new ErroMeta(`Não foi possível falar com a Meta agora (${causa}). Tente de novo em instantes.`, 504, { codigo: null, mensagem: String(causa) });
     }
+    lerUso(resposta);
     const corpo = await resposta.json().catch(() => ({}));
     if (!resposta.ok || corpo.error) throw traduzirErroMeta(corpo.error);
     if (!Array.isArray(corpo.data)) return corpo;
@@ -245,6 +277,23 @@ const normalizarConta = (conta) => {
   if (!/^\d{3,25}$/.test(limpa)) throw new ErroMeta('ID da conta de anúncios inválido. Use o formato act_123456789.', 400);
   return `act_${limpa}`;
 };
+
+const lerRegistro = (colecao, id) => {
+  const linha = db.prepare('SELECT dados FROM registros WHERE colecao = ? AND id = ?').get(colecao, id);
+  return linha ? JSON.parse(linha.dados) : null;
+};
+const listarRegistros = (colecao) => db.prepare('SELECT dados FROM registros WHERE colecao = ? ORDER BY rowid').all(colecao).map((l) => JSON.parse(l.dados));
+const anuncios = criarAnuncios({
+  graph,
+  ErroMeta,
+  normalizarConta,
+  usoMeta,
+  tokenMeta,
+  ler: lerRegistro,
+  listar: listarRegistros,
+  gravar: (colecao, item) => sql.gravar.run(colecao, item.id, JSON.stringify(item), new Date().toISOString()),
+  log,
+});
 
 const rotuloResultado = (indicador = '') => {
   if (indicador.includes('messaging_conversation_started')) return 'Conversas no WhatsApp';
@@ -295,7 +344,7 @@ const lerCampanhasMeta = async (conta, de, ate) => {
     graph(`${act}/campaigns`, { fields: 'id,name,status,effective_status,objective', limit: '500' }),
     graph(`${act}/insights`, { ...base, fields: [...CAMPOS_INSIGHTS, 'results', 'cost_per_result'].join(',') }).catch((falha) => {
       // Contas/versões sem "results": lê o resto e deixa os resultados em branco.
-      if (falha instanceof ErroMeta && falha.status === 400 && !falha.message.includes('token')) {
+      if (falha instanceof ErroMeta && falha.detalhe?.codigo === 100) {
         return graph(`${act}/insights`, { ...base, fields: CAMPOS_INSIGHTS.join(',') });
       }
       throw falha;
@@ -463,10 +512,22 @@ const api = async (req, res, caminho) => {
         return responder(res, 200, { campanhas });
       }
     } catch (falha) {
-      if (falha instanceof ErroMeta) return responder(res, falha.status, { erro: falha.message });
+      if (falha instanceof ErroMeta) return responder(res, falha.status, { erro: falha.message, detalhe: falha.detalhe });
       throw falha;
     }
     return responder(res, 404, { erro: 'Rota não encontrada' });
+  }
+
+  // ----- Anúncios (Meta Marketing API) -----
+  if (caminho.startsWith('/api/anuncios/')) {
+    try {
+      const tratado = await anuncios.rotas({ metodo, rota: caminho.slice('/api/anuncios'.length), lerCorpo: (limite) => lerCorpo(req, limite), responder, res });
+      if (!tratado) responder(res, 404, { erro: 'Rota não encontrada' });
+    } catch (falha) {
+      if (falha instanceof ErroMeta) return responder(res, falha.status, { erro: falha.message, detalhe: falha.detalhe });
+      throw falha;
+    }
+    return;
   }
 
   // ----- Webhooks de saída -----

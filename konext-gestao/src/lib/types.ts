@@ -31,6 +31,12 @@ export type Cliente = {
   metaContaId: string;
   // Anotações feitas durante as reuniões (aparecem no modo apresentação).
   notasReuniao: string;
+  // Ativos confirmados na Meta (Anúncios → Contas). Só valem para a conta em metaValidacao.contaId.
+  metaPaginaId?: string;
+  metaPaginaNome?: string;
+  metaInstagramId?: string;
+  metaInstagramUsuario?: string;
+  metaValidacao?: { contaId: string; contaNome: string; moeda: string; fuso: string; em: string };
   criadoEm: string;
 };
 
@@ -189,5 +195,7 @@ export type Rota =
   | { tela: 'processos'; id?: string }
   | { tela: 'campanhas' }
   | { tela: 'rotina' }
+  | { tela: 'anuncios-contas' }
+  | { tela: 'anuncios-diagnostico' }
   | { tela: 'config'; aba?: string }
   | { tela: 'apresentacao'; clienteId: string };

@@ -1,0 +1,1096 @@
+{
+  "name": "Monitor de Custo por Resultado (CPR) - Konext",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🚨 MONITOR DE CUSTO POR RESULTADO — a cada 30 min (06h às 23h30)\nMensagens: pausa se custo/conversa > **cpr_msg_max**. Visitas ao perfil: pausa se custo/visita > **cpr_visita_max**. Sem resultado e gasto ≥ mínimo: pausa. Janela de 3 dias (inclui hoje) e comparação com 15 dias.\nAtingiu o teto → pausa **na mesma rodada** e avisa o cliente (grupo → ou Contato do cliente) + cópia ao gestor.\nSe você reativar manualmente uma campanha que o monitor pausou, ela fica liberada por **ignorar_apos_reativacao_horas**.\nClientes: Planilha Geral › Clientes (Status = Ativo e Monitorar Custo ≠ Não).",
+        "height": 200,
+        "width": 1500,
+        "color": 3
+      },
+      "id": "313e1b09-a4dd-5949-92b7-06a80a0dc64a",
+      "name": "Aviso CPR",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        14400,
+        1900
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 */30 6-23 * * *"
+            }
+          ]
+        }
+      },
+      "id": "90ddf360-cd1e-5281-a442-6ad95cb38ffd",
+      "name": "A cada 30 min (06h-23h30)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        14624,
+        2288
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5f756e6f-e550-4b82-b469-28f58b699098",
+              "name": "modo_teste",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "f1244644-e43a-40fe-ba92-04537a4a7065",
+              "name": "numero_gestor",
+              "value": "5584994104701",
+              "type": "string"
+            },
+            {
+              "id": "62759f31-a993-4ed6-a6fa-2f376c8392a7",
+              "name": "cpr_msg_meta",
+              "value": 8,
+              "type": "number"
+            },
+            {
+              "id": "b2d26376-0bcd-4e37-9813-39147a499061",
+              "name": "cpr_msg_max",
+              "value": 10,
+              "type": "number"
+            },
+            {
+              "id": "9181b6e1-3750-45ac-842a-58234ed826e2",
+              "name": "cpr_visita_max",
+              "value": 0.5,
+              "type": "number"
+            },
+            {
+              "id": "3bd33f2e-5b24-47af-9557-c1a8d4e324ff",
+              "name": "gasto_min_sem_resultado_msg",
+              "value": 10,
+              "type": "number"
+            },
+            {
+              "id": "c36c60cc-0b98-47d6-8f43-5d2fa19ad5d6",
+              "name": "gasto_min_sem_resultado_visita",
+              "value": 3,
+              "type": "number"
+            },
+            {
+              "id": "f9c0b1b8-2e8c-44b1-987a-911ab8277768",
+              "name": "janela_curta_dias",
+              "value": 3,
+              "type": "number"
+            },
+            {
+              "id": "4388c643-fadb-41cc-8fef-8c59b4d7e5ad",
+              "name": "janela_longa_dias",
+              "value": 15,
+              "type": "number"
+            },
+            {
+              "id": "8a31ed7d-382d-4ec2-8014-e180fcb555d6",
+              "name": "reaviso_horas",
+              "value": 6,
+              "type": "number"
+            },
+            {
+              "id": "c775001b-42ca-4377-98d0-cbec919a1aac",
+              "name": "acao_mensagens",
+              "value": "onsite_conversion.messaging_conversation_started_7d",
+              "type": "string"
+            },
+            {
+              "id": "73f9bc26-49d7-4c83-9d0e-a8c29c82fb0d",
+              "name": "acao_visitas",
+              "value": "instagram_profile_visit",
+              "type": "string"
+            },
+            {
+              "id": "86996be2-9e6a-5138-82be-bef3186ccbf4",
+              "name": "preferir_grupo",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "eee3e633-81ed-5337-b371-13db3d2b4c88",
+              "name": "avisar_cliente",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "e05ea471-0b2f-5aa1-9281-ec4094e30deb",
+              "name": "ignorar_apos_reativacao_horas",
+              "value": 24,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7f420a98-866a-5c5e-a566-edb41f254615",
+      "name": "Config (CPR)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        14848,
+        2288
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1IywT4jszZAVuBCBk3p_8DgsUeffoTCkkiBojdQOybZk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Clientes",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "b0e84b11-0c03-50c2-a5a5-83c31354a739",
+      "name": "Clientes Geral (CPR)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        15072,
+        2288
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1AR75HoQXFCE7ancGQTLjekHP2eCDt1_-GjuaVgP0iKc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "IDS GRUPOS - CLIENTES KONEXT"
+        },
+        "options": {}
+      },
+      "id": "c673be3b-2948-52af-9622-80f7ba5d8194",
+      "name": "Grupos WhatsApp (CPR)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        15296,
+        2288
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===== utilitários padrão Konext (iguais em todos os fluxos) =====\nconst n_ = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');\nconst pick = (row, nomes) => {\n  const m = {};\n  for (const k of Object.keys(row || {})) m[n_(k)] = row[k];\n  for (const nome of nomes) { const v = m[n_(nome)]; if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim(); }\n  return '';\n};\nconst dig = v => String(v ?? '').replace(/\\D/g, '');\nconst sim = (v, padrao) => { const t = n_(v); if (!t) return padrao; return ['sim', 's', 'yes', 'y', 'true', '1', 'ativo'].includes(t); };\nconst nao = v => ['nao', 'n', 'no', 'false', '0', 'inativo'].includes(n_(v));\nconst money = v => {\n  let s = String(v ?? '').replace(/[^\\d,.\\-]/g, '');\n  if (!s) return null;\n  const c = s.lastIndexOf(','), p = s.lastIndexOf('.');\n  if (c > -1 && p > -1) s = c > p ? s.replace(/\\./g, '').replace(',', '.') : s.replace(/,/g, '');\n  else if (c > -1) s = s.replace(',', '.');\n  else if (/^\\d{1,3}(\\.\\d{3})+$/.test(s)) s = s.replace(/\\./g, '');\n  const n = parseFloat(s); return isNaN(n) ? null : n;\n};\n// Número de WhatsApp ou ID de grupo -> formato aceito pela Evolution API\nconst jid = v => {\n  const s = String(v ?? '').trim();\n  if (!s) return '';\n  if (/@g\\.us$/i.test(s)) return s.replace(/\\s/g, '');\n  const d = s.replace(/\\D/g, '');\n  if (!d) return '';\n  if (d.startsWith('120363') && d.length >= 15) return d + '@g.us';\n  return d.length <= 11 ? '55' + d : d;\n};\n\nconst cfg = $('Config (CPR)').first().json;\nconst preferirGrupo = !(cfg.preferir_grupo === false || cfg.preferir_grupo === 'false');\nconst grupos = $('Grupos WhatsApp (CPR)').all().map(i => i.json || {}).filter(g => !g.error)\n  .map(g => ({ nome: pick(g, ['Grupo', 'Nome do Grupo', 'Nome']), id: pick(g, ['ID', 'ID do Grupo']).replace(/\\s/g, ''), ativo: !nao(pick(g, ['Ativo'])) }))\n  .filter(g => g.ativo && /@g\\.us$/i.test(g.id))\n  .map(g => ({ ...g, chave: n_(g.nome) }));\n// Procura o grupo do cliente pelo nome / apelidos (só aceita quando há UM grupo compatível)\nconst acharGrupo = (cliente, apelidos) => {\n  const cands = [cliente, ...apelidos].map(n_).filter(c => c.length >= 4);\n  let m = grupos.filter(g => cands.some(c => g.chave.includes(c)));\n  if (m.length === 1) return m[0];\n  if (m.length > 1) return null;\n  const primeiro = n_(String(cliente).trim().split(/\\s+/)[0]);\n  if (primeiro.length >= 4) { m = grupos.filter(g => g.chave.includes(primeiro)); if (m.length === 1) return m[0]; }\n  return null;\n};\n// Destino: grupo do cliente (coluna \"ID do Grupo\" ou planilha de grupos) e, se não houver, o \"Contato do cliente\".\n// O \"Contato do cliente\" também pode conter direto um ID de grupo (120363...@g.us).\nconst montarDestino = (cliente, apelidos, contatoRaw, grupoRaw) => {\n  const contato = jid(contatoRaw);\n  const fixo = jid(grupoRaw);\n  const g = fixo.endsWith('@g.us') ? { id: fixo, nome: '(ID do Grupo na planilha)' } : acharGrupo(cliente, apelidos);\n  let destino = '', destino_desc = '';\n  const porGrupo = () => { destino = g.id; destino_desc = 'grupo ' + g.nome; };\n  const porContato = () => { destino = contato; destino_desc = (contato.endsWith('@g.us') ? 'grupo ' : 'WhatsApp ') + contato; };\n  if (preferirGrupo) { if (g) porGrupo(); else if (contato) porContato(); }\n  else { if (contato) porContato(); else if (g) porGrupo(); }\n  return { contato, grupo: g ? g.id : '', grupo_nome: g ? g.nome : '', destino, destino_desc };\n};\nconst clientes = []; const vistos = new Set();\nfor (const it of $('Clientes Geral (CPR)').all()) {\n  const r = it.json || {};\n  if (r.error) continue;\n  if (!sim(pick(r, ['Status', 'Ativo']), false)) continue;           // Status = Ativo\n  const conta = dig(pick(r, ['ID da Conta', 'Conta de Anuncio', 'Conta de Anúncio', 'Conta']));\n  const cliente = pick(r, ['Cliente', 'Clientes', 'Nome do cliente', 'Nome']);\n  if (!conta || vistos.has(conta)) continue;\n  vistos.add(conta);\n  const apelidos = pick(r, ['Apelido', 'Apelidos']).split(',').map(s => s.trim()).filter(Boolean);\n  clientes.push({\n    row_number: r.row_number, cliente: cliente || ('Conta ' + conta), conta, apelidos,\n    ...montarDestino(cliente, apelidos, pick(r, ['Contato do cliente', 'Contato', 'WhatsApp do cliente', 'Telefone']), pick(r, ['ID do Grupo', 'Grupo WhatsApp', 'Grupo do cliente'])),\n    valor_base: money(pick(r, ['Valor Base'])),\n    reativar: sim(pick(r, ['Reativar na Segunda', 'Reativar toda segunda', 'Reativar toda segunda-feira', 'Reativar']), true),\n    monitorar: sim(pick(r, ['Monitorar Custo']), true),\n    pagina: dig(pick(r, ['ID da Página', 'ID da Pagina'])),\n    ig_id: dig(pick(r, ['ID Instagram', 'ID do Instagram'])),\n    ig_user: pick(r, ['Instagram (usuário)', 'Usuário do Instagram', 'Instagram']).replace(/^@/, ''),\n    whatsapp_campanha: jid(pick(r, ['WhatsApp da Campanha', 'WhatsApp'])),\n  });\n}\n\nreturn clientes.filter(c => c.monitorar).map(c => ({ json: c }));"
+      },
+      "id": "ee2a8e2e-818e-5c7d-822a-9bec3f6f6c6c",
+      "name": "Normalizar Clientes (CPR)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        15520,
+        2288
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "89e24ce7-e9a2-5f14-aa07-e22d16689c8c",
+      "name": "Loop Clientes (CPR)",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        15744,
+        2288
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v26.0/act_{{ $('Loop Clientes (CPR)').item.json.conta }}/adsets",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "id,campaign_id,optimization_goal,campaign{name}"
+            },
+            {
+              "name": "effective_status",
+              "value": "=[\"ACTIVE\",\"WITH_ISSUES\"]"
+            },
+            {
+              "name": "limit",
+              "value": "500"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0979706f-3c7c-509a-aa53-f1504387a632",
+      "name": "Conjuntos Ativos (CPR)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        15968,
+        2388
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "20Mw7Bs7oVlElweC",
+          "name": "Facebook Graph account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v26.0/act_{{ $('Loop Clientes (CPR)').item.json.conta }}/insights",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "level",
+              "value": "campaign"
+            },
+            {
+              "name": "fields",
+              "value": "campaign_id,campaign_name,impressions,reach,frequency,spend,actions"
+            },
+            {
+              "name": "time_range",
+              "value": "={{ JSON.stringify({since: $now.minus({days: Number($('Config (CPR)').first().json.janela_curta_dias) - 1}).toFormat('yyyy-MM-dd'), until: $now.toFormat('yyyy-MM-dd')}) }}"
+            },
+            {
+              "name": "limit",
+              "value": "500"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "027027a4-16ac-565b-95b6-4f43340233ac",
+      "name": "Insights Curto (CPR)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        16192,
+        2388
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "20Mw7Bs7oVlElweC",
+          "name": "Facebook Graph account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v26.0/act_{{ $('Loop Clientes (CPR)').item.json.conta }}/insights",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "level",
+              "value": "campaign"
+            },
+            {
+              "name": "fields",
+              "value": "campaign_id,campaign_name,impressions,reach,frequency,spend,actions"
+            },
+            {
+              "name": "time_range",
+              "value": "={{ JSON.stringify({since: $now.minus({days: Number($('Config (CPR)').first().json.janela_longa_dias) - 1}).toFormat('yyyy-MM-dd'), until: $now.toFormat('yyyy-MM-dd')}) }}"
+            },
+            {
+              "name": "limit",
+              "value": "500"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e966f5af-b56e-5bbd-adda-bb05f71671af",
+      "name": "Insights Longo (CPR)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        16416,
+        2388
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "20Mw7Bs7oVlElweC",
+          "name": "Facebook Graph account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const cfg = $('Config (CPR)').first().json;\nconst cli = $('Loop Clientes (CPR)').item.json;\nconst idConta = String(cli.conta);\nconst num = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };\nconst erroDe = r => {\n  if (!r) return 'sem resposta';\n  if (r.error || !Array.isArray(r.data)) {\n    let e = r.error;\n    if (e && typeof e === 'object') e = e.message || JSON.stringify(e);\n    return String(e ?? JSON.stringify(r)).slice(0, 250);\n  }\n  return null;\n};\nconst teste = cfg.modo_teste === true || cfg.modo_teste === 'true';\n\n// --- controle de alertas repetidos (memória do workflow; só persiste com o workflow ativo)\nconst sd = $getWorkflowStaticData('global');\nsd.alertas = sd.alertas || {};\nconst agora = Date.now();\nconst janelaMs = num(cfg.reaviso_horas) * 3600 * 1000;\nfor (const k of Object.keys(sd.alertas)) if (agora - sd.alertas[k] > 48 * 3600 * 1000) delete sd.alertas[k];\nconst pode = k => !sd.alertas[k] || (agora - sd.alertas[k]) > janelaMs;\n\nconst base = { cliente: cli.cliente, id_conta: idConta, destino: cli.destino, destino_desc: cli.destino_desc, mensagem_erro: '', violacoes: [] };\n// campanhas pausadas pelo monitor e reativadas manualmente ficam liberadas por um tempo\nsd.cpr_pausadas = sd.cpr_pausadas || {};\nfor (const k of Object.keys(sd.cpr_pausadas)) if (agora - sd.cpr_pausadas[k] > 72 * 3600 * 1000) delete sd.cpr_pausadas[k];\nconst liberadaMs = num(cfg.ignorar_apos_reativacao_horas) * 3600 * 1000;\n\nconst rSets = $('Conjuntos Ativos (CPR)').first().json;\nconst r3 = $('Insights Curto (CPR)').first().json;\nconst r15 = $input.item.json;\n\nconst falhas = [['conjuntos', rSets], ['insights curto', r3], ['insights longo', r15]]\n  .map(([n, r]) => { const e = erroDe(r); return e ? `${n}: ${e}` : null; }).filter(Boolean);\nif (falhas.length) {\n  const k = 'erro:' + idConta;\n  if (!pode(k)) return { json: { ...base, acao: 'nada' } };\n  sd.alertas[k] = agora;\n  return { json: { ...base, acao: 'erro', mensagem_erro: falhas.join(' | ').slice(0, 600) } };\n}\n\n// --- campanhas ativas + tipo, a partir dos conjuntos ativos (conjunto ativo => campanha ativa)\nconst goals = {}, nomes = {};\nfor (const s of rSets.data) {\n  (goals[s.campaign_id] = goals[s.campaign_id] || new Set()).add(s.optimization_goal);\n  nomes[s.campaign_id] = (s.campaign && s.campaign.name) || s.campaign_id;\n}\nconst TIPOS = {\n  mensagens: { nome: 'Mensagens', resultado: 'Conversas iniciadas', meta: num(cfg.cpr_msg_meta), max: num(cfg.cpr_msg_max), gastoMin: num(cfg.gasto_min_sem_resultado_msg) },\n  visitas:   { nome: 'Visitas ao perfil', resultado: 'Visitas ao perfil', meta: null, max: num(cfg.cpr_visita_max), gastoMin: num(cfg.gasto_min_sem_resultado_visita) },\n};\nconst tipoDe = id => {\n  const g = goals[id]; if (!g) return null;\n  if (g.has('CONVERSATIONS')) return 'mensagens';\n  if (g.has('VISIT_INSTAGRAM_PROFILE')) return 'visitas';\n  return null;\n};\nconst resultOf = (actions, tipo) => {\n  if (!Array.isArray(actions)) return 0;\n  const hit = actions.find(x => tipo === 'mensagens'\n    ? x.action_type === cfg.acao_mensagens\n    : (x.action_type === cfg.acao_visitas || /profile_visit/i.test(x.action_type)));\n  return hit ? num(hit.value) : 0;\n};\nconst por = arr => Object.fromEntries(arr.map(i => [i.campaign_id, i]));\nconst m3 = por(r3.data), m15 = por(r15.data);\n\nconst dCurta = num(cfg.janela_curta_dias), dLonga = num(cfg.janela_longa_dias);\nconst fmt = d => $now.minus({ days: d }).toFormat('dd/MM');\nconst violacoes = [];\nfor (const [campId, campNome] of Object.entries(nomes)) {\n  const tipo = tipoDe(campId); if (!tipo) continue;\n  if (!teste && sd.cpr_pausadas[campId] && (agora - sd.cpr_pausadas[campId]) < liberadaMs) continue; // reativada manualmente\n  const t = TIPOS[tipo];\n  const i3 = m3[campId]; if (!i3) continue;\n  const i15 = m15[campId] || {};\n  const spend3 = num(i3.spend), res3 = resultOf(i3.actions, tipo);\n  const cpr3 = res3 > 0 ? spend3 / res3 : null;\n  let violou = false, codigo = '';\n  if (res3 > 0 && cpr3 > t.max) { violou = true; codigo = 'cpr_acima'; }\n  else if (res3 === 0 && spend3 >= t.gastoMin) { violou = true; codigo = 'sem_resultado'; }\n  if (!violou) continue;\n  // Modo real: sem limite de repetição (se a pausa falhar, tenta de novo na próxima rodada).\n  // Modo teste: limita a 1 aviso por campanha a cada \"reaviso_horas\", para não lotar o WhatsApp.\n  if (teste) {\n    const k = 'teste:camp:' + campId;\n    if (!pode(k)) continue;\n    sd.alertas[k] = agora;\n  }\n  const spend15 = num(i15.spend), res15 = resultOf(i15.actions, tipo);\n  violacoes.push({\n    campanha_id: campId, campanha_nome: campNome, tipo, tipo_nome: t.nome, resultado_nome: t.resultado,\n    limite_meta: t.meta, limite_max: t.max, gasto_min: t.gastoMin, codigo,\n    spend3, res3, cpr3, imp3: num(i3.impressions), reach3: num(i3.reach), freq3: num(i3.frequency),\n    spend15, res15, cpr15: res15 > 0 ? spend15 / res15 : null,\n    imp15: num(i15.impressions), reach15: num(i15.reach), freq15: num(i15.frequency),\n    d_curta: dCurta, d_longa: dLonga,\n    desde_curta: fmt(dCurta - 1), desde_longa: fmt(dLonga - 1), ate: fmt(0),\n  });\n}\nif (!violacoes.length) return { json: { ...base, acao: 'nada' } };\nreturn { json: { ...base, acao: 'pausar', violacoes } };"
+      },
+      "id": "441c0485-18ad-5bb3-ac98-40025015e9e1",
+      "name": "Avaliar Campanhas (CPR)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        16640,
+        2388
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "cd56e668-569e-5540-87da-d0e6d639b608",
+                    "leftValue": "={{ $json.acao }}",
+                    "rightValue": "erro",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Erro na API"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "aa753217-2b60-5772-aa1d-dd6a78f68bd3",
+                    "leftValue": "={{ $json.acao }}",
+                    "rightValue": "pausar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Pausar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "901e9fc4-fe4a-5a1e-aa80-85807bd1a0c2",
+                    "leftValue": "={{ $json.acao }}",
+                    "rightValue": "nada",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Nada a fazer"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e8cd422d-4783-509b-a320-0018742a2bda",
+      "name": "O que fazer? (CPR)",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        16864,
+        2388
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "Salomão - Konext IA",
+        "remoteJid": "={{ String($('Config (CPR)').first().json.numero_gestor) }}",
+        "messageText": "=⚠️ *Monitor de custo — problema na conta*\n\nCliente: *{{ $json.cliente }}*\nConta: {{ $json.id_conta }}\n\n{{ $json.mensagem_erro }}\n\n❗ Esta conta NÃO foi avaliada nesta rodada. Verifique a planilha, o token e as permissões.",
+        "options_message": {}
+      },
+      "id": "b12140a5-c452-5f5e-a62c-14a25251cb40",
+      "name": "Alertar Gestor (Erro CPR)",
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        17088,
+        2160
+      ],
+      "credentials": {
+        "evolutionApi": {
+          "id": "vOwgKK5sUixGQyyu",
+          "name": "Salomão Konext"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "violacoes",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "id": "35ce1de8-9495-57b1-a341-5a9f3f540e9b",
+      "name": "Separar Violações",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        17088,
+        2388
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "47db08ec-4bb7-5826-9024-3f44b5ce303c",
+              "leftValue": "={{ $('Config (CPR)').first().json.modo_teste }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "96dda036-ae0f-5dbe-a59a-68c497c8d940",
+      "name": "Modo teste?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        17312,
+        2388
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v26.0/{{ $json.violacoes.campanha_id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "PAUSED"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cda31610-6a7a-5bde-a150-5de6b8855e19",
+      "name": "Pausar Campanha (CPR)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        17536,
+        2548
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "20Mw7Bs7oVlElweC",
+          "name": "Facebook Graph account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v26.0/{{ $('Separar Violações').item.json.violacoes.campanha_id }}/insights",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "level",
+              "value": "ad"
+            },
+            {
+              "name": "fields",
+              "value": "ad_id,ad_name,impressions,reach,frequency,spend,actions"
+            },
+            {
+              "name": "time_range",
+              "value": "={{ JSON.stringify({since: $now.minus({days: Number($('Config (CPR)').first().json.janela_curta_dias) - 1}).toFormat('yyyy-MM-dd'), until: $now.toFormat('yyyy-MM-dd')}) }}"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0ca10b99-25b6-50b2-814b-65ed66570928",
+      "name": "Insights dos Anúncios",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        17760,
+        2388
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "20Mw7Bs7oVlElweC",
+          "name": "Facebook Graph account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v26.0/{{ $('Separar Violações').item.json.violacoes.campanha_id }}/ads",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "id,name,preview_shareable_link"
+            },
+            {
+              "name": "limit",
+              "value": "200"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "952722b9-ec38-5f96-88d8-863c04c618b7",
+      "name": "Dados dos Anúncios",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        17984,
+        2388
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "20Mw7Bs7oVlElweC",
+          "name": "Facebook Graph account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const cfg = $('Config (CPR)').first().json;\nconst src = $('Separar Violações').item.json;\nconst v = src.violacoes;\nconst act = src.id_conta;\nconst num = x => { const n = parseFloat(x); return isNaN(n) ? 0 : n; };\nconst milhar = s => s.replace(/\\B(?=(\\d{3})+(?!\\d))/g, '.');\nconst brl = n => 'R$ ' + milhar(n.toFixed(2).replace('.', ','));\nconst int = n => milhar(Math.round(n).toString());\nconst dec = n => n.toFixed(2).replace('.', ',');\nconst cprTxt = n => (n === null || n === undefined) ? 'sem resultados' : brl(n);\n\nlet pausa = null;\ntry { pausa = $('Pausar Campanha (CPR)').item.json; } catch (e) {}\nconst simulacao = cfg.modo_teste === true || cfg.modo_teste === 'true';\nlet status;\nif (simulacao) status = '🧪 SIMULAÇÃO — nada foi pausado (modo de teste ligado)';\nelse if (pausa && (pausa.success === true || pausa.success === 'true')) status = '⏸️ Campanha PAUSADA com sucesso';\nelse {\n  let e = pausa && pausa.error; if (e && typeof e === 'object') e = e.message || JSON.stringify(e);\n  status = '❌ FALHA AO PAUSAR — pause manualmente! ' + String(e ?? '').slice(0, 200);\n}\n\nconst limiteTxt = v.limite_meta !== null\n  ? `meta ${brl(v.limite_meta)} / máximo tolerado ${brl(v.limite_max)}`\n  : `limite ${brl(v.limite_max)}`;\nconst motivo = v.codigo === 'cpr_acima'\n  ? `O custo por resultado dos últimos ${v.d_curta} dias (*${brl(v.cpr3)}*) ficou acima do máximo permitido (${limiteTxt}).`\n  : `A campanha investiu *${brl(v.spend3)}* nos últimos ${v.d_curta} dias sem nenhum resultado (limite sem resultado: ${brl(v.gasto_min)}).`;\n\nconst bloco = (titulo, de, imp, reach, freq, res, cpr, spend) =>\n`📊 *${titulo}* (${de} a ${v.ate})\n• Impressões: ${int(imp)}\n• Alcance: ${int(reach)}\n• Frequência: ${dec(freq)}\n• Resultados (${v.resultado_nome}): ${int(res)}\n• Custo por resultado: ${cprTxt(cpr)}\n• Investido: ${brl(spend)}`;\n\n// anúncios\nconst ins = Array.isArray($('Insights dos Anúncios').item.json.data) ? $('Insights dos Anúncios').item.json.data : [];\nconst info = Array.isArray($input.item.json.data) ? $input.item.json.data : [];\nconst infoPorId = Object.fromEntries(info.map(a => [a.id, a]));\nconst resultOf = actions => {\n  if (!Array.isArray(actions)) return 0;\n  const hit = actions.find(x => v.tipo === 'mensagens'\n    ? x.action_type === cfg.acao_mensagens\n    : (x.action_type === cfg.acao_visitas || /profile_visit/i.test(x.action_type)));\n  return hit ? num(hit.value) : 0;\n};\nconst ads = ins.map(i => {\n  const spend = num(i.spend), res = resultOf(i.actions);\n  return { id: i.ad_id, nome: i.ad_name, spend, res, cpr: res > 0 ? spend / res : null, imp: num(i.impressions), prev: (infoPorId[i.ad_id] || {}).preview_shareable_link };\n}).sort((x, y) => y.spend - x.spend);\n\nconst TOP = 8;\nconst linhasAds = ads.slice(0, TOP).map((ad, n) => {\n  let t = `${n + 1}) *${ad.nome}*\\n   🆔 ${ad.id}\\n   💰 ${brl(ad.spend)} | 🎯 ${int(ad.res)} resultado(s) | CPR: ${cprTxt(ad.cpr)}\\n   🔗 https://adsmanager.facebook.com/adsmanager/manage/ads?act=${act}&selected_ad_ids=${ad.id}`;\n  if (ad.prev) t += `\\n   👁️ Prévia: ${ad.prev}`;\n  return t;\n});\nif (ads.length > TOP) linhasAds.push(`… e mais ${ads.length - TOP} anúncio(s) com entrega no período.`);\n\nconst cab = simulacao ? '🧪 *SIMULAÇÃO — esta campanha SERIA pausada*' : '🚨 *CAMPANHA PAUSADA — custo por resultado acima do limite*';\nlet msg = `${cab}\n\n👤 *Cliente:* ${src.cliente}\n📣 *Campanha:* ${v.campanha_nome}\n🆔 *ID:* ${v.campanha_id}\n🎯 *Tipo / resultado:* ${v.tipo_nome} → ${v.resultado_nome}\n🔗 https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${act}&selected_campaign_ids=${v.campanha_id}\n\n📌 *Por que:* ${motivo}\n\n${bloco('Últimos ' + v.d_curta + ' dias', v.desde_curta, v.imp3, v.reach3, v.freq3, v.res3, v.cpr3, v.spend3)}\n\n${bloco('Últimos ' + v.d_longa + ' dias', v.desde_longa, v.imp15, v.reach15, v.freq15, v.res15, v.cpr15, v.spend15)}\n\n${status}\n\n🎨 *Anúncios com entrega nos últimos ${v.d_curta} dias:*\n${linhasAds.length ? linhasAds.join('\\n\\n') : '(nenhum anúncio com entrega encontrado)'}`;\nif (msg.length > 3900) msg = msg.slice(0, 3850) + '\\n… (mensagem cortada)';\n\n// memória: pausada pelo monitor (para não repausar se você reativar manualmente) e controle de alertas de falha\nconst sd = $getWorkflowStaticData('global');\nsd.cpr_pausadas = sd.cpr_pausadas || {}; sd.alertas = sd.alertas || {};\nconst pausaOk = !simulacao && pausa && (pausa.success === true || pausa.success === 'true');\nlet enviar = true;\nif (pausaOk) sd.cpr_pausadas[v.campanha_id] = Date.now();\nelse if (!simulacao) {\n  const k = 'falha:' + v.campanha_id;\n  if (sd.alertas[k] && (Date.now() - sd.alertas[k]) < Number(cfg.reaviso_horas) * 3600 * 1000) enviar = false;\n  else sd.alertas[k] = Date.now();\n}\nreturn { json: { mensagem: msg, enviar, simulacao, pausa_ok: pausaOk, destino: src.destino || '', destino_desc: src.destino_desc || '', cliente: src.cliente } };"
+      },
+      "id": "3b897dfb-b9d7-5bb2-b8d6-19e6c01abeaa",
+      "name": "Montar Mensagem",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        18208,
+        2388
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Config (CPR)').first().json;\nconst gestor = String(cfg.numero_gestor);\nconst avisarCliente = !(cfg.avisar_cliente === false || cfg.avisar_cliente === 'false');\nconst envios = [];\nfor (const it of $input.all()) {\n  const m = it.json || {};\n  if (!m.enviar) continue;\n  if (avisarCliente && !m.simulacao && m.destino) envios.push({ para: m.destino, texto: m.mensagem });\n  let nota = '';\n  if (!m.simulacao) nota = m.destino ? (avisarCliente ? `\\n\\n📨 Aviso enviado ao cliente: ${m.destino_desc}` : '') : '\\n\\n📵 Cliente sem grupo e sem \"Contato do cliente\" na Planilha Geral — o cliente NÃO foi avisado.';\n  if (m.destino !== gestor || m.simulacao) envios.push({ para: gestor, texto: (m.mensagem + nota).slice(0, 4000) });\n}\nreturn envios.length ? envios.map(e => ({ json: e })) : [{ json: { skip: true } }];"
+      },
+      "id": "f348861b-e19a-573c-bf05-bf30a74c7ec3",
+      "name": "Montar Envios (CPR)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        18432,
+        2388
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "aa2696d4-33c2-5188-b3d7-215ced127619",
+              "leftValue": "={{ $json.skip !== true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5339f6e0-2ccf-5b86-b9fc-e77e2f0933e2",
+      "name": "Tem envios? (CPR)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        18656,
+        2388
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "Salomão - Konext IA",
+        "remoteJid": "={{ $json.para }}",
+        "messageText": "={{ $json.texto }}",
+        "options_message": {}
+      },
+      "id": "8c24a3a0-60f1-5081-9b4c-7a25e5b0eb5f",
+      "name": "Enviar WhatsApp (CPR)",
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        18880,
+        2300
+      ],
+      "credentials": {
+        "evolutionApi": {
+          "id": "vOwgKK5sUixGQyyu",
+          "name": "Salomão Konext"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { total: $input.all().length } }];"
+      },
+      "id": "1fc20d31-7d51-5955-8859-08d5b237f435",
+      "name": "Concluir Campanhas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        19104,
+        2388
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
+      },
+      "id": "1f128cd2-2665-5d33-8c06-3d325ea021c9",
+      "name": "Aguardar (CPR)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        19328,
+        2560
+      ],
+      "webhookId": "6cead703-02cb-5758-af76-09b76d1f7a3c"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "A cada 30 min (06h-23h30)": {
+      "main": [
+        [
+          {
+            "node": "Config (CPR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config (CPR)": {
+      "main": [
+        [
+          {
+            "node": "Clientes Geral (CPR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clientes Geral (CPR)": {
+      "main": [
+        [
+          {
+            "node": "Grupos WhatsApp (CPR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Grupos WhatsApp (CPR)": {
+      "main": [
+        [
+          {
+            "node": "Normalizar Clientes (CPR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar Clientes (CPR)": {
+      "main": [
+        [
+          {
+            "node": "Loop Clientes (CPR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conjuntos Ativos (CPR)": {
+      "main": [
+        [
+          {
+            "node": "Insights Curto (CPR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insights Curto (CPR)": {
+      "main": [
+        [
+          {
+            "node": "Insights Longo (CPR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insights Longo (CPR)": {
+      "main": [
+        [
+          {
+            "node": "Avaliar Campanhas (CPR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avaliar Campanhas (CPR)": {
+      "main": [
+        [
+          {
+            "node": "O que fazer? (CPR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alertar Gestor (Erro CPR)": {
+      "main": [
+        [
+          {
+            "node": "Aguardar (CPR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar Violações": {
+      "main": [
+        [
+          {
+            "node": "Modo teste?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pausar Campanha (CPR)": {
+      "main": [
+        [
+          {
+            "node": "Insights dos Anúncios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insights dos Anúncios": {
+      "main": [
+        [
+          {
+            "node": "Dados dos Anúncios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dados dos Anúncios": {
+      "main": [
+        [
+          {
+            "node": "Montar Mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Mensagem": {
+      "main": [
+        [
+          {
+            "node": "Montar Envios (CPR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Envios (CPR)": {
+      "main": [
+        [
+          {
+            "node": "Tem envios? (CPR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar WhatsApp (CPR)": {
+      "main": [
+        [
+          {
+            "node": "Concluir Campanhas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Concluir Campanhas": {
+      "main": [
+        [
+          {
+            "node": "Aguardar (CPR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aguardar (CPR)": {
+      "main": [
+        [
+          {
+            "node": "Loop Clientes (CPR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Clientes (CPR)": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Conjuntos Ativos (CPR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "O que fazer? (CPR)": {
+      "main": [
+        [
+          {
+            "node": "Alertar Gestor (Erro CPR)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Separar Violações",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aguardar (CPR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modo teste?": {
+      "main": [
+        [
+          {
+            "node": "Insights dos Anúncios",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pausar Campanha (CPR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tem envios? (CPR)": {
+      "main": [
+        [
+          {
+            "node": "Enviar WhatsApp (CPR)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Concluir Campanhas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "xoXKLJ1VssOlH2Nk",
+  "tags": []
+}

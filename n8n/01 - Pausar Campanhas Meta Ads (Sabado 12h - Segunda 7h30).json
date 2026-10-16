@@ -1,0 +1,2414 @@
+{
+  "name": "Pausar Campanhas Meta Ads (Sábado 12h / Segunda 7h30) - Konext",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🔴 SÁBADO 12:00 — PAUSAR CAMPANHAS\nClientes = **Planilha Geral Konext › Clientes** (Status = Ativo). Pausa as campanhas ativas, grava cada uma na aba **Campanhas Pausadas** da *Planilha_Pausa_Campanhas* **e** na memória do fluxo (garantia da reativação), avisa o cliente (grupo do cliente → ou Contato do cliente) e manda um resumo para o gestor.\nPara tirar um cliente da pausa: Ativo = Não na aba CLIENTES da Planilha_Pausa_Campanhas.",
+        "height": 170,
+        "width": 1500,
+        "color": 3
+      },
+      "id": "9d4b1da2-8ddb-5b7c-8529-c62015fcd0ac",
+      "name": "Nota Sábado",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -220
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 🟢 SEGUNDA 07:30 — REATIVAR\nReativa SOMENTE as campanhas que este fluxo pausou no sábado (aba Campanhas Pausadas dos últimos 7 dias + memória do fluxo). Clientes com **Reativar na Segunda = Não** na Planilha Geral ficam pausados (vazio = Sim). Se não houver nada para reativar, o gestor recebe um aviso (o fluxo nunca termina em silêncio).",
+        "height": 150,
+        "width": 1500,
+        "color": 4
+      },
+      "id": "2b77d96b-bcdd-5505-b9f1-795b49487132",
+      "name": "Nota Segunda",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        1000
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 12 * * 6"
+            }
+          ]
+        }
+      },
+      "id": "e8febbd0-f92e-5e83-be43-1b7f6f75e4bc",
+      "name": "Sábado às 12:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "54b5bca9-3933-5be0-a741-26cfdb6bdabc",
+              "name": "numero_gestor",
+              "value": "5584994104701",
+              "type": "string"
+            },
+            {
+              "id": "12489675-2243-5636-9402-a079d2bbb805",
+              "name": "preferir_grupo",
+              "value": true,
+              "type": "boolean"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "152b5e52-b5c9-5402-8d93-9d83c513f7d3",
+      "name": "Config (Sáb)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        200,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "documentId": {
+          "__rl": true,
+          "value": "1w0y2bu6_gA3Ye-u0GYYZT56voGixcD1InqKiB5dhzwY",
+          "mode": "id"
+        },
+        "title": "Campanhas Pausadas",
+        "options": {}
+      },
+      "id": "2282f93b-250c-5b48-9724-1d27dcb451b3",
+      "name": "Criar aba de log (Sáb)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        400,
+        200
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1IywT4jszZAVuBCBk3p_8DgsUeffoTCkkiBojdQOybZk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Clientes",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "4c853fc3-cbba-5bca-99cf-e8605961bbc3",
+      "name": "Clientes Geral (Sáb)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        600,
+        200
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1AR75HoQXFCE7ancGQTLjekHP2eCDt1_-GjuaVgP0iKc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "IDS GRUPOS - CLIENTES KONEXT"
+        },
+        "options": {}
+      },
+      "id": "f14cfc62-9e51-57b9-a128-bccd5c135753",
+      "name": "Grupos WhatsApp (Sáb)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        800,
+        200
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1w0y2bu6_gA3Ye-u0GYYZT56voGixcD1InqKiB5dhzwY",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "CLIENTES",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "5fc368fc-e93f-53e1-a98e-2cd8b17dc44f",
+      "name": "Painel Pausa (Sáb)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1000,
+        200
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===== utilitários padrão Konext (iguais em todos os fluxos) =====\nconst n_ = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');\nconst pick = (row, nomes) => {\n  const m = {};\n  for (const k of Object.keys(row || {})) m[n_(k)] = row[k];\n  for (const nome of nomes) { const v = m[n_(nome)]; if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim(); }\n  return '';\n};\nconst dig = v => String(v ?? '').replace(/\\D/g, '');\nconst sim = (v, padrao) => { const t = n_(v); if (!t) return padrao; return ['sim', 's', 'yes', 'y', 'true', '1', 'ativo'].includes(t); };\nconst nao = v => ['nao', 'n', 'no', 'false', '0', 'inativo'].includes(n_(v));\nconst money = v => {\n  let s = String(v ?? '').replace(/[^\\d,.\\-]/g, '');\n  if (!s) return null;\n  const c = s.lastIndexOf(','), p = s.lastIndexOf('.');\n  if (c > -1 && p > -1) s = c > p ? s.replace(/\\./g, '').replace(',', '.') : s.replace(/,/g, '');\n  else if (c > -1) s = s.replace(',', '.');\n  else if (/^\\d{1,3}(\\.\\d{3})+$/.test(s)) s = s.replace(/\\./g, '');\n  const n = parseFloat(s); return isNaN(n) ? null : n;\n};\n// Número de WhatsApp ou ID de grupo -> formato aceito pela Evolution API\nconst jid = v => {\n  const s = String(v ?? '').trim();\n  if (!s) return '';\n  if (/@g\\.us$/i.test(s)) return s.replace(/\\s/g, '');\n  const d = s.replace(/\\D/g, '');\n  if (!d) return '';\n  if (d.startsWith('120363') && d.length >= 15) return d + '@g.us';\n  return d.length <= 11 ? '55' + d : d;\n};\n\nconst cfg = $('Config (Sáb)').first().json;\nconst preferirGrupo = !(cfg.preferir_grupo === false || cfg.preferir_grupo === 'false');\nconst grupos = $('Grupos WhatsApp (Sáb)').all().map(i => i.json || {}).filter(g => !g.error)\n  .map(g => ({ nome: pick(g, ['Grupo', 'Nome do Grupo', 'Nome']), id: pick(g, ['ID', 'ID do Grupo']).replace(/\\s/g, ''), ativo: !nao(pick(g, ['Ativo'])) }))\n  .filter(g => g.ativo && /@g\\.us$/i.test(g.id))\n  .map(g => ({ ...g, chave: n_(g.nome) }));\n// Procura o grupo do cliente pelo nome / apelidos (só aceita quando há UM grupo compatível)\nconst acharGrupo = (cliente, apelidos) => {\n  const cands = [cliente, ...apelidos].map(n_).filter(c => c.length >= 4);\n  let m = grupos.filter(g => cands.some(c => g.chave.includes(c)));\n  if (m.length === 1) return m[0];\n  if (m.length > 1) return null;\n  const primeiro = n_(String(cliente).trim().split(/\\s+/)[0]);\n  if (primeiro.length >= 4) { m = grupos.filter(g => g.chave.includes(primeiro)); if (m.length === 1) return m[0]; }\n  return null;\n};\n// Destino: grupo do cliente (coluna \"ID do Grupo\" ou planilha de grupos) e, se não houver, o \"Contato do cliente\".\n// O \"Contato do cliente\" também pode conter direto um ID de grupo (120363...@g.us).\nconst montarDestino = (cliente, apelidos, contatoRaw, grupoRaw) => {\n  const contato = jid(contatoRaw);\n  const fixo = jid(grupoRaw);\n  const g = fixo.endsWith('@g.us') ? { id: fixo, nome: '(ID do Grupo na planilha)' } : acharGrupo(cliente, apelidos);\n  let destino = '', destino_desc = '';\n  const porGrupo = () => { destino = g.id; destino_desc = 'grupo ' + g.nome; };\n  const porContato = () => { destino = contato; destino_desc = (contato.endsWith('@g.us') ? 'grupo ' : 'WhatsApp ') + contato; };\n  if (preferirGrupo) { if (g) porGrupo(); else if (contato) porContato(); }\n  else { if (contato) porContato(); else if (g) porGrupo(); }\n  return { contato, grupo: g ? g.id : '', grupo_nome: g ? g.nome : '', destino, destino_desc };\n};\nconst clientes = []; const vistos = new Set();\nfor (const it of $('Clientes Geral (Sáb)').all()) {\n  const r = it.json || {};\n  if (r.error) continue;\n  if (!sim(pick(r, ['Status', 'Ativo']), false)) continue;           // Status = Ativo\n  const conta = dig(pick(r, ['ID da Conta', 'Conta de Anuncio', 'Conta de Anúncio', 'Conta']));\n  const cliente = pick(r, ['Cliente', 'Clientes', 'Nome do cliente', 'Nome']);\n  if (!conta || vistos.has(conta)) continue;\n  vistos.add(conta);\n  const apelidos = pick(r, ['Apelido', 'Apelidos']).split(',').map(s => s.trim()).filter(Boolean);\n  clientes.push({\n    row_number: r.row_number, cliente: cliente || ('Conta ' + conta), conta, apelidos,\n    ...montarDestino(cliente, apelidos, pick(r, ['Contato do cliente', 'Contato', 'WhatsApp do cliente', 'Telefone']), pick(r, ['ID do Grupo', 'Grupo WhatsApp', 'Grupo do cliente'])),\n    valor_base: money(pick(r, ['Valor Base'])),\n    reativar: sim(pick(r, ['Reativar na Segunda', 'Reativar toda segunda', 'Reativar toda segunda-feira', 'Reativar']), true),\n    monitorar: sim(pick(r, ['Monitorar Custo']), true),\n    pagina: dig(pick(r, ['ID da Página', 'ID da Pagina'])),\n    ig_id: dig(pick(r, ['ID Instagram', 'ID do Instagram'])),\n    ig_user: pick(r, ['Instagram (usuário)', 'Usuário do Instagram', 'Instagram']).replace(/^@/, ''),\n    whatsapp_campanha: jid(pick(r, ['WhatsApp da Campanha', 'WhatsApp'])),\n  });\n}\n\n// Ativo = Não na aba CLIENTES da Planilha_Pausa_Campanhas -> cliente fora da pausa de sábado\nconst foraDaPausa = new Set($('Painel Pausa (Sáb)').all().map(i => i.json || {})\n  .filter(r => !r.error && nao(pick(r, ['Ativo']))).map(r => dig(pick(r, ['Conta de Anuncio', 'ID da Conta']))).filter(Boolean));\nconst sd = $getWorkflowStaticData('global');\nsd.exec_sab = { [String($execution.id)]: {} };\nreturn clientes.filter(c => !foraDaPausa.has(c.conta)).map(c => ({ json: c }));"
+      },
+      "id": "ee6abb80-a348-5ffb-9e84-2f12421016d3",
+      "name": "Normalizar Clientes (Sáb)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "f4342260-35cb-515e-bef4-326febdca955",
+      "name": "Loop Clientes (Sáb)",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1400,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v26.0/act_{{ $json.conta }}/campaigns",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "id,name,effective_status"
+            },
+            {
+              "name": "effective_status",
+              "value": "=[\"ACTIVE\",\"WITH_ISSUES\"]"
+            },
+            {
+              "name": "limit",
+              "value": "500"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fdacc2c2-f505-5d39-b9b2-a10db01b2fd5",
+      "name": "Buscar Campanhas Ativas",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1620,
+        300
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "20Mw7Bs7oVlElweC",
+          "name": "Facebook Graph account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const errTxt = e => { if (e && typeof e === 'object') e = e.message || e.error_user_msg || e.description || JSON.stringify(e); return String(e ?? '').slice(0, 300); };\n\nconst cli = $('Loop Clientes (Sáb)').item.json;\nconst r = $input.item.json;\nconst sd = $getWorkflowStaticData('global'); const ek = String($execution.id);\nsd.exec_sab = sd.exec_sab || {}; sd.exec_sab[ek] = sd.exec_sab[ek] || {};\nconst base = { cliente: cli.cliente, id_conta: cli.conta, destino: cli.destino, destino_desc: cli.destino_desc, reativar: cli.reativar };\nif (r.error || !Array.isArray(r.data)) {\n  const msg = errTxt(r.error ?? JSON.stringify(r));\n  sd.exec_sab[ek][cli.conta] = { cliente: cli.cliente, status: 'Falhou', pausadas: 0, falhas: 0, aviso: '-', obs: 'Erro ao buscar campanhas: ' + msg };\n  return { json: { ...base, erro: 'sim', mensagem_erro: msg, total: 0, campanhas: [] } };\n}\nconst campanhas = r.data.map(c => ({ id: String(c.id), nome: c.name }));\nsd.exec_sab[ek][cli.conta] = { cliente: cli.cliente, status: campanhas.length ? 'Pausando' : 'Sem campanhas ativas', pausadas: 0, falhas: 0, aviso: '-', obs: '' };\nreturn { json: { ...base, erro: campanhas.length ? 'pausar' : 'vazio', mensagem_erro: '', total: campanhas.length, campanhas } };"
+      },
+      "id": "5f5868ee-6309-5ced-a716-e4fc0eb1d32f",
+      "name": "Consolidar Campanhas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1840,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "0c1a9584-e05a-5fe7-b015-650544c9c8d3",
+                    "leftValue": "={{ $json.erro }}",
+                    "rightValue": "sim",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Erro na busca"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "1be37341-71bc-5445-8407-433d7f730189",
+                    "leftValue": "={{ $json.erro }}",
+                    "rightValue": "vazio",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Sem campanhas ativas"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e62390cf-b029-5f37-96ce-7ed30d9fefb3",
+                    "leftValue": "={{ $json.erro }}",
+                    "rightValue": "pausar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Pausar"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7ce575cf-6058-59fe-ab9c-ac0d45d15f40",
+      "name": "Resultado da Busca",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        2060,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "Salomão - Konext IA",
+        "remoteJid": "={{ String($('Config (Sáb)').first().json.numero_gestor) }}",
+        "messageText": "=⚠️ *Falha ao buscar campanhas (Sábado)*\n\nCliente: *{{ $json.cliente }}*\nConta: {{ $json.id_conta }}\n\nErro: {{ $json.mensagem_erro }}\n\n❗ As campanhas desta conta *NÃO foram pausadas*. Verifique manualmente (token do Facebook / acesso à conta).",
+        "options_message": {}
+      },
+      "id": "deab9f87-c762-57a0-91ab-35ab960c89b6",
+      "name": "Alertar Gestor (Busca Sáb)",
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        2300,
+        60
+      ],
+      "credentials": {
+        "evolutionApi": {
+          "id": "vOwgKK5sUixGQyyu",
+          "name": "Salomão Konext"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "campanhas",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "id": "b188f997-b1f1-57c1-9e82-25b9729d5852",
+      "name": "Separar Campanhas (Sáb)",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        2300,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v26.0/{{ $json.campanhas.id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "PAUSED"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 700
+            }
+          }
+        }
+      },
+      "id": "b9c5655d-4f57-5241-b3b5-99004eb5947e",
+      "name": "Pausar Campanha",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2520,
+        400
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "20Mw7Bs7oVlElweC",
+          "name": "Facebook Graph account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const errTxt = e => { if (e && typeof e === 'object') e = e.message || e.error_user_msg || e.description || JSON.stringify(e); return String(e ?? '').slice(0, 300); };\n\nconst src = $('Separar Campanhas (Sáb)').item.json;\nconst r = $input.item.json;\nconst ok = r.success === true || r.success === 'true';\nif (ok) {\n  // memória do fluxo: garante a reativação de segunda mesmo se a planilha falhar\n  const sd = $getWorkflowStaticData('global');\n  sd.pausadas = sd.pausadas || {};\n  sd.pausadas[String(src.campanhas.id)] = { conta: String(src.id_conta), cliente: src.cliente, nome: src.campanhas.nome, ts: Date.now() };\n}\nreturn { json: {\n  'Data': $now.toFormat('dd/MM/yyyy HH:mm'),\n  'Cliente': src.cliente,\n  'ID da Conta': String(src.id_conta),\n  'ID Campanha': String(src.campanhas.id),\n  'Nome Campanha': src.campanhas.nome,\n  'Status': ok ? 'Pausada' : 'Falha ao pausar',\n  'Reativada em': '',\n  'Erro': ok ? '' : errTxt(r.error ?? JSON.stringify(r))\n} };"
+      },
+      "id": "ee871d9e-6fbc-5bf8-90f0-63823cb5030c",
+      "name": "Montar Resultado (Sáb)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2740,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1w0y2bu6_gA3Ye-u0GYYZT56voGixcD1InqKiB5dhzwY",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Campanhas Pausadas",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Data": "={{ $json[\"Data\"] }}",
+            "Cliente": "={{ $json[\"Cliente\"] }}",
+            "ID da Conta": "={{ $json[\"ID da Conta\"] }}",
+            "ID Campanha": "={{ $json[\"ID Campanha\"] }}",
+            "Nome Campanha": "={{ $json[\"Nome Campanha\"] }}",
+            "Status": "={{ $json[\"Status\"] }}",
+            "Reativada em": "={{ $json[\"Reativada em\"] }}",
+            "Erro": "={{ $json[\"Erro\"] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Data",
+              "displayName": "Data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Cliente",
+              "displayName": "Cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ID da Conta",
+              "displayName": "ID da Conta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ID Campanha",
+              "displayName": "ID Campanha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Nome Campanha",
+              "displayName": "Nome Campanha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reativada em",
+              "displayName": "Reativada em",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Erro",
+              "displayName": "Erro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "b9fa4943-72f4-5783-9132-e8c19ebd98c8",
+      "name": "Registrar no Log (Sáb)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2960,
+        400
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const cli = $('Loop Clientes (Sáb)').first().json;\nconst cfg = $('Config (Sáb)').first().json;\nconst itens = $('Montar Resultado (Sáb)').all().map(i => i.json);\nconst ok = itens.filter(i => i['Status'] === 'Pausada');\nconst falhas = itens.filter(i => i['Status'] !== 'Pausada');\nconst logErros = $input.all().filter(i => i.json && i.json.error).length;\nconst nome = cli.cliente;\nconst retorno = cli.reativar ? 'Elas voltam a ser veiculadas na *segunda-feira, às 7h30*.' : 'Avisaremos assim que forem reativadas.';\nconst mensagem = `Olá! 👋\\n\\nPassando para avisar que as campanhas da conta *${nome}* foram *pausadas* neste sábado, às 12h. ⏸️\\n\\n📊 Campanhas pausadas: *${ok.length}*\\n\\n${retorno}\\n\\nQualquer dúvida, é só chamar!\\n\\n— Equipe Konext`;\nlet alerta = '';\nif (falhas.length || logErros || (ok.length && !cli.destino)) {\n  alerta = `⚠️ *Atenção — Pausa de sábado*\\n\\nCliente: *${nome}*\\nConta: ${cli.conta}\\n✅ Pausadas: ${ok.length}\\n❌ Falhas: ${falhas.length}`;\n  if (falhas.length) alerta += '\\n\\n' + falhas.slice(0, 5).map(f => `• ${f['Nome Campanha']} (${f['ID Campanha']}): ${f['Erro']}`).join('\\n');\n  if (logErros) alerta += `\\n\\n📝 A aba \"Campanhas Pausadas\" não pôde ser gravada (${logErros} linha(s)). A reativação de segunda continua garantida pela memória do fluxo, mas crie/confira a aba.`;\n  if (ok.length && !cli.destino) alerta += '\\n\\n📵 Cliente sem grupo e sem \"Contato do cliente\" na Planilha Geral: *não foi avisado*.';\n}\nconst envios = [];\nif (ok.length && cli.destino) envios.push({ para: cli.destino, texto: mensagem, tipo: 'cliente' });\nif (alerta) envios.push({ para: String(cfg.numero_gestor), texto: alerta, tipo: 'gestor' });\nconst sd = $getWorkflowStaticData('global'); const ek = String($execution.id);\nconst rec = ((sd.exec_sab || {})[ek] || {})[cli.conta];\nif (rec) {\n  rec.status = falhas.length ? (ok.length ? 'Pausado parcialmente' : 'Falhou') : 'Pausado';\n  rec.pausadas = ok.length; rec.falhas = falhas.length;\n  if (falhas.length) rec.obs = falhas.slice(0, 2).map(f => f['Erro']).join(' / ');\n}\nreturn [{ json: { cliente: nome, conta: cli.conta, destino: cli.destino, qtd_ok: ok.length, qtd_falhas: falhas.length, envios, tem_envios: envios.length > 0 } }];"
+      },
+      "id": "f016db88-8d02-5002-bb02-80d77ee6fe04",
+      "name": "Resumo Sábado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3180,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const cli = $('Loop Clientes (Sáb)').first().json;\nconst sd = $getWorkflowStaticData('global'); const ek = String($execution.id);\nconst rec = ((sd.exec_sab || {})[ek] || {})[cli.conta] || {};\nreturn [{ json: {\n  'Cliente': cli.cliente,\n  'Conta de Anuncio': cli.conta,\n  'Status da Pausa': rec.status || '-',\n  'Campanhas Pausadas': String(rec.pausadas ?? 0),\n  'Aviso Sábado 12h': rec.aviso || '-',\n  'Última Execução': $now.toFormat('dd/MM/yyyy HH:mm'),\n  'Observação / Erro': [cli.destino ? 'Aviso para: ' + cli.destino_desc : 'Sem grupo/contato na Planilha Geral', rec.obs].filter(Boolean).join(' | ')\n} }];"
+      },
+      "id": "c6d3036b-c28e-5104-b45f-008f927e547f",
+      "name": "Linha Painel (Sáb)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4600,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1w0y2bu6_gA3Ye-u0GYYZT56voGixcD1InqKiB5dhzwY",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "CLIENTES",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Cliente": "={{ $json[\"Cliente\"] }}",
+            "Conta de Anuncio": "={{ $json[\"Conta de Anuncio\"] }}",
+            "Status da Pausa": "={{ $json[\"Status da Pausa\"] }}",
+            "Campanhas Pausadas": "={{ $json[\"Campanhas Pausadas\"] }}",
+            "Aviso Sábado 12h": "={{ $json[\"Aviso Sábado 12h\"] }}",
+            "Última Execução": "={{ $json[\"Última Execução\"] }}",
+            "Observação / Erro": "={{ $json[\"Observação / Erro\"] }}"
+          },
+          "matchingColumns": [
+            "Conta de Anuncio"
+          ],
+          "schema": [
+            {
+              "id": "Cliente",
+              "displayName": "Cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Conta de Anuncio",
+              "displayName": "Conta de Anuncio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status da Pausa",
+              "displayName": "Status da Pausa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Campanhas Pausadas",
+              "displayName": "Campanhas Pausadas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Aviso Sábado 12h",
+              "displayName": "Aviso Sábado 12h",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Última Execução",
+              "displayName": "Última Execução",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Observação / Erro",
+              "displayName": "Observação / Erro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "f2362f2d-4afe-52c2-a6ed-40237e768f3f",
+      "name": "Atualizar Painel (Sáb)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        4820,
+        200
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
+      },
+      "id": "df925168-80ea-53d1-894d-4e39c33c2135",
+      "name": "Aguardar (Sáb)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        5040,
+        200
+      ],
+      "webhookId": "eefdf910-20a6-519d-b393-55940a3391b0"
+    },
+    {
+      "parameters": {
+        "jsCode": "const sd = $getWorkflowStaticData('global'); const ek = String($execution.id);\nconst lista = Object.values((sd.exec_sab || {})[ek] || {});\nif (sd.exec_sab) delete sd.exec_sab[ek];\nif (!lista.length) return [{ json: { mensagem: '⏸️ *Pausa de sábado*\\n\\nNenhum cliente foi processado. Confira na Planilha Geral se há clientes com Status = Ativo e ID da Conta preenchido.' } }];\nconst ic = s => s === 'Pausado' ? '✅' : (s === 'Sem campanhas ativas' ? '➖' : '⚠️');\nconst linhas = lista.map(x => `${ic(x.status)} *${x.cliente}* — ${x.status}: ${x.pausadas} pausada(s)${x.falhas ? `, ${x.falhas} falha(s)` : ''} | aviso: ${x.aviso}${x.obs ? ' — ' + x.obs : ''}`);\nconst total = lista.reduce((a, x) => a + (x.pausadas || 0), 0);\nreturn [{ json: { mensagem: `⏸️ *Resumo — Pausa de sábado (Konext)*\\n\\n${linhas.join('\\n')}\\n\\nTotal de campanhas pausadas: ${total}\\nReativação programada: segunda-feira às 7h30.` } }];"
+      },
+      "id": "dd2c1aa7-ca05-5dfc-8312-41554846bda9",
+      "name": "Resumo Final (Sáb)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1620,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "Salomão - Konext IA",
+        "remoteJid": "={{ String($('Config (Sáb)').first().json.numero_gestor) }}",
+        "messageText": "={{ $json.mensagem }}",
+        "options_message": {}
+      },
+      "id": "86ff9854-decb-5085-9200-b97afe5c7027",
+      "name": "Enviar Resumo ao Gestor (Sáb)",
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        1840,
+        0
+      ],
+      "credentials": {
+        "evolutionApi": {
+          "id": "vOwgKK5sUixGQyyu",
+          "name": "Salomão Konext"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "72283cd2-de1c-56e3-9dec-8911c81a4832",
+              "leftValue": "={{ $json.tem_envios === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "59cd5ccf-bf0c-5b3d-a4ac-b016f9813380",
+      "name": "Tem envios? (Sáb)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3400,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "envios",
+        "include": "noOtherFields",
+        "options": {}
+      },
+      "id": "733f94d4-5853-53f7-b5fb-b37130b70f56",
+      "name": "Separar Envios (Sáb)",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        3620,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "Salomão - Konext IA",
+        "remoteJid": "={{ $json.para }}",
+        "messageText": "={{ $json.texto }}",
+        "options_message": {}
+      },
+      "id": "e3770236-7b43-58b6-bd0d-7a7483c506f1",
+      "name": "Enviar WhatsApp (Sáb)",
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        3840,
+        280
+      ],
+      "credentials": {
+        "evolutionApi": {
+          "id": "vOwgKK5sUixGQyyu",
+          "name": "Salomão Konext"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===== utilitários padrão Konext (iguais em todos os fluxos) =====\nconst n_ = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');\nconst pick = (row, nomes) => {\n  const m = {};\n  for (const k of Object.keys(row || {})) m[n_(k)] = row[k];\n  for (const nome of nomes) { const v = m[n_(nome)]; if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim(); }\n  return '';\n};\nconst dig = v => String(v ?? '').replace(/\\D/g, '');\nconst sim = (v, padrao) => { const t = n_(v); if (!t) return padrao; return ['sim', 's', 'yes', 'y', 'true', '1', 'ativo'].includes(t); };\nconst nao = v => ['nao', 'n', 'no', 'false', '0', 'inativo'].includes(n_(v));\nconst money = v => {\n  let s = String(v ?? '').replace(/[^\\d,.\\-]/g, '');\n  if (!s) return null;\n  const c = s.lastIndexOf(','), p = s.lastIndexOf('.');\n  if (c > -1 && p > -1) s = c > p ? s.replace(/\\./g, '').replace(',', '.') : s.replace(/,/g, '');\n  else if (c > -1) s = s.replace(',', '.');\n  else if (/^\\d{1,3}(\\.\\d{3})+$/.test(s)) s = s.replace(/\\./g, '');\n  const n = parseFloat(s); return isNaN(n) ? null : n;\n};\n// Número de WhatsApp ou ID de grupo -> formato aceito pela Evolution API\nconst jid = v => {\n  const s = String(v ?? '').trim();\n  if (!s) return '';\n  if (/@g\\.us$/i.test(s)) return s.replace(/\\s/g, '');\n  const d = s.replace(/\\D/g, '');\n  if (!d) return '';\n  if (d.startsWith('120363') && d.length >= 15) return d + '@g.us';\n  return d.length <= 11 ? '55' + d : d;\n};\n\nconst errTxt = e => { if (e && typeof e === 'object') e = e.message || e.error_user_msg || e.description || JSON.stringify(e); return String(e ?? '').slice(0, 300); };\n\nconst res = $('Resumo Sábado').first().json;\nconst primeiro = $input.first().json || {};\nconst veioDoEnvio = primeiro.tem_envios === undefined;   // pelo \"false\" do IF chega o próprio resumo\nconst env = veioDoEnvio ? $('Separar Envios (Sáb)').all().map(i => i.json) : [];\nconst resps = veioDoEnvio ? $input.all().map(i => i.json || {}) : [];\nlet avisoCliente = res.qtd_ok > 0 ? (res.destino ? 'NÃO ENVIADO' : 'SEM DESTINO') : '-';\nconst falhas = [];\nenv.forEach((e, i) => {\n  const r = resps[i] || {};\n  const erro = r.error ? errTxt(r.error) : '';\n  if (e.tipo === 'cliente') avisoCliente = erro ? 'ERRO' : 'OK';\n  if (erro) falhas.push(`• ${e.tipo === 'cliente' ? 'Cliente' : 'Gestor'} (${e.para}): ${erro}`);\n});\nconst sd = $getWorkflowStaticData('global'); const ek = String($execution.id);\nconst rec = ((sd.exec_sab || {})[ek] || {})[res.conta];\nif (rec) { rec.aviso = avisoCliente; if (falhas.length) rec.obs = [rec.obs, 'Falha no WhatsApp'].filter(Boolean).join(' | '); }\nconst alerta = falhas.length ? `⚠️ *Falha ao enviar WhatsApp (Sábado)*\\n\\nCliente: *${res.cliente}*\\n${falhas.join('\\n')}\\n\\nAs campanhas foram pausadas normalmente.` : '';\nreturn [{ json: { alerta } }];"
+      },
+      "id": "84749555-3bed-5951-9e11-2bb830ff01fa",
+      "name": "Checar Envios (Sáb)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4060,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6bdf2f44-59fc-5707-acb0-1517e8425ce5",
+              "leftValue": "={{ $json.alerta }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "dd52dd68-2ab4-51b3-9fd2-d06f60e20187",
+      "name": "Falha no envio? (Sáb)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4280,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "Salomão - Konext IA",
+        "remoteJid": "={{ String($('Config (Sáb)').first().json.numero_gestor) }}",
+        "messageText": "={{ $json.alerta }}",
+        "options_message": {}
+      },
+      "id": "36e18293-82c7-5e20-af83-f372566f6794",
+      "name": "Alertar Gestor Falha (Sáb)",
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        4500,
+        280
+      ],
+      "credentials": {
+        "evolutionApi": {
+          "id": "vOwgKK5sUixGQyyu",
+          "name": "Salomão Konext"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 30 7 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "299e1d87-151a-515e-95ad-a1d0168ef83e",
+      "name": "Segunda às 07:30",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        1400
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2219ef68-a962-56b3-b9c8-8380b370c787",
+              "name": "numero_gestor",
+              "value": "5584994104701",
+              "type": "string"
+            },
+            {
+              "id": "c9cff313-e5ee-5ded-976a-0f6bcbcc82b2",
+              "name": "preferir_grupo",
+              "value": true,
+              "type": "boolean"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "40a9e727-aa85-50d9-8588-ec808112581a",
+      "name": "Config (Seg)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        200,
+        1400
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1IywT4jszZAVuBCBk3p_8DgsUeffoTCkkiBojdQOybZk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Clientes",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "a8903614-b081-5dd3-9d9a-728f026aacb2",
+      "name": "Clientes Geral (Seg)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        400,
+        1400
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1AR75HoQXFCE7ancGQTLjekHP2eCDt1_-GjuaVgP0iKc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "IDS GRUPOS - CLIENTES KONEXT"
+        },
+        "options": {}
+      },
+      "id": "e42a89ad-c44d-54ee-a6e2-11146671b107",
+      "name": "Grupos WhatsApp (Seg)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        600,
+        1400
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1w0y2bu6_gA3Ye-u0GYYZT56voGixcD1InqKiB5dhzwY",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Campanhas Pausadas",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "51edda8e-2386-5f3e-b7eb-45d97d02012f",
+      "name": "Campanhas Pausadas (Log)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        800,
+        1400
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===== utilitários padrão Konext (iguais em todos os fluxos) =====\nconst n_ = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');\nconst pick = (row, nomes) => {\n  const m = {};\n  for (const k of Object.keys(row || {})) m[n_(k)] = row[k];\n  for (const nome of nomes) { const v = m[n_(nome)]; if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim(); }\n  return '';\n};\nconst dig = v => String(v ?? '').replace(/\\D/g, '');\nconst sim = (v, padrao) => { const t = n_(v); if (!t) return padrao; return ['sim', 's', 'yes', 'y', 'true', '1', 'ativo'].includes(t); };\nconst nao = v => ['nao', 'n', 'no', 'false', '0', 'inativo'].includes(n_(v));\nconst money = v => {\n  let s = String(v ?? '').replace(/[^\\d,.\\-]/g, '');\n  if (!s) return null;\n  const c = s.lastIndexOf(','), p = s.lastIndexOf('.');\n  if (c > -1 && p > -1) s = c > p ? s.replace(/\\./g, '').replace(',', '.') : s.replace(/,/g, '');\n  else if (c > -1) s = s.replace(',', '.');\n  else if (/^\\d{1,3}(\\.\\d{3})+$/.test(s)) s = s.replace(/\\./g, '');\n  const n = parseFloat(s); return isNaN(n) ? null : n;\n};\n// Número de WhatsApp ou ID de grupo -> formato aceito pela Evolution API\nconst jid = v => {\n  const s = String(v ?? '').trim();\n  if (!s) return '';\n  if (/@g\\.us$/i.test(s)) return s.replace(/\\s/g, '');\n  const d = s.replace(/\\D/g, '');\n  if (!d) return '';\n  if (d.startsWith('120363') && d.length >= 15) return d + '@g.us';\n  return d.length <= 11 ? '55' + d : d;\n};\n\nconst cfg = $('Config (Seg)').first().json;\nconst preferirGrupo = !(cfg.preferir_grupo === false || cfg.preferir_grupo === 'false');\nconst grupos = $('Grupos WhatsApp (Seg)').all().map(i => i.json || {}).filter(g => !g.error)\n  .map(g => ({ nome: pick(g, ['Grupo', 'Nome do Grupo', 'Nome']), id: pick(g, ['ID', 'ID do Grupo']).replace(/\\s/g, ''), ativo: !nao(pick(g, ['Ativo'])) }))\n  .filter(g => g.ativo && /@g\\.us$/i.test(g.id))\n  .map(g => ({ ...g, chave: n_(g.nome) }));\n// Procura o grupo do cliente pelo nome / apelidos (só aceita quando há UM grupo compatível)\nconst acharGrupo = (cliente, apelidos) => {\n  const cands = [cliente, ...apelidos].map(n_).filter(c => c.length >= 4);\n  let m = grupos.filter(g => cands.some(c => g.chave.includes(c)));\n  if (m.length === 1) return m[0];\n  if (m.length > 1) return null;\n  const primeiro = n_(String(cliente).trim().split(/\\s+/)[0]);\n  if (primeiro.length >= 4) { m = grupos.filter(g => g.chave.includes(primeiro)); if (m.length === 1) return m[0]; }\n  return null;\n};\n// Destino: grupo do cliente (coluna \"ID do Grupo\" ou planilha de grupos) e, se não houver, o \"Contato do cliente\".\n// O \"Contato do cliente\" também pode conter direto um ID de grupo (120363...@g.us).\nconst montarDestino = (cliente, apelidos, contatoRaw, grupoRaw) => {\n  const contato = jid(contatoRaw);\n  const fixo = jid(grupoRaw);\n  const g = fixo.endsWith('@g.us') ? { id: fixo, nome: '(ID do Grupo na planilha)' } : acharGrupo(cliente, apelidos);\n  let destino = '', destino_desc = '';\n  const porGrupo = () => { destino = g.id; destino_desc = 'grupo ' + g.nome; };\n  const porContato = () => { destino = contato; destino_desc = (contato.endsWith('@g.us') ? 'grupo ' : 'WhatsApp ') + contato; };\n  if (preferirGrupo) { if (g) porGrupo(); else if (contato) porContato(); }\n  else { if (contato) porContato(); else if (g) porGrupo(); }\n  return { contato, grupo: g ? g.id : '', grupo_nome: g ? g.nome : '', destino, destino_desc };\n};\nconst clientes = []; const vistos = new Set();\nfor (const it of $('Clientes Geral (Seg)').all()) {\n  const r = it.json || {};\n  if (r.error) continue;\n  if (!sim(pick(r, ['Status', 'Ativo']), false)) continue;           // Status = Ativo\n  const conta = dig(pick(r, ['ID da Conta', 'Conta de Anuncio', 'Conta de Anúncio', 'Conta']));\n  const cliente = pick(r, ['Cliente', 'Clientes', 'Nome do cliente', 'Nome']);\n  if (!conta || vistos.has(conta)) continue;\n  vistos.add(conta);\n  const apelidos = pick(r, ['Apelido', 'Apelidos']).split(',').map(s => s.trim()).filter(Boolean);\n  clientes.push({\n    row_number: r.row_number, cliente: cliente || ('Conta ' + conta), conta, apelidos,\n    ...montarDestino(cliente, apelidos, pick(r, ['Contato do cliente', 'Contato', 'WhatsApp do cliente', 'Telefone']), pick(r, ['ID do Grupo', 'Grupo WhatsApp', 'Grupo do cliente'])),\n    valor_base: money(pick(r, ['Valor Base'])),\n    reativar: sim(pick(r, ['Reativar na Segunda', 'Reativar toda segunda', 'Reativar toda segunda-feira', 'Reativar']), true),\n    monitorar: sim(pick(r, ['Monitorar Custo']), true),\n    pagina: dig(pick(r, ['ID da Página', 'ID da Pagina'])),\n    ig_id: dig(pick(r, ['ID Instagram', 'ID do Instagram'])),\n    ig_user: pick(r, ['Instagram (usuário)', 'Usuário do Instagram', 'Instagram']).replace(/^@/, ''),\n    whatsapp_campanha: jid(pick(r, ['WhatsApp da Campanha', 'WhatsApp'])),\n  });\n}\n\nconst sd = $getWorkflowStaticData('global');\nsd.pausadas = sd.pausadas || {};\nconst agoraMs = Date.now();\nfor (const [id, p] of Object.entries(sd.pausadas)) if (!p || agoraMs - (p.ts || 0) > 8 * 86400000) delete sd.pausadas[id];\nconst limite = $now.minus({ days: 7 });\nconst logs = $input.all().map(i => i.json || {})\n  .filter(l => !l.error && dig(pick(l, ['ID Campanha'])) && n_(pick(l, ['Status'])) === 'pausada')\n  .filter(l => { const d = DateTime.fromFormat(pick(l, ['Data']), 'dd/MM/yyyy HH:mm', { zone: $now.zoneName }); return !d.isValid || d >= limite; });\nsd.exec_seg = { [String($execution.id)]: {} };\nconst out = []; const semReativar = []; const contasAtivas = new Set(clientes.map(c => c.conta));\nfor (const c of clientes) {\n  const mapa = new Map();\n  for (const l of logs) {\n    if (dig(pick(l, ['ID da Conta'])) !== c.conta) continue;\n    const id = dig(pick(l, ['ID Campanha']));\n    const prev = mapa.get(id);\n    mapa.set(id, { id, nome: pick(l, ['Nome Campanha']) || (prev && prev.nome) || id, rows: [...(prev ? prev.rows : []), l.row_number].filter(Boolean) });\n  }\n  for (const [id, p] of Object.entries(sd.pausadas)) {\n    if (String(p.conta) !== c.conta || mapa.has(id)) continue;\n    mapa.set(id, { id, nome: p.nome || id, rows: [] });\n  }\n  if (!mapa.size) continue;\n  if (!c.reativar) { semReativar.push(`${c.cliente} (${mapa.size})`); continue; }\n  out.push({ json: { ...c, total: mapa.size, campanhas: [...mapa.values()] } });\n}\nconst orfas = new Set([...logs.map(l => dig(pick(l, ['ID da Conta']))), ...Object.values(sd.pausadas).map(p => String(p.conta))].filter(c => c && !contasAtivas.has(c)));\nif (!out.length) return [{ json: { vazio: true, sem_reativar: semReativar.join(', '), orfas: [...orfas].join(', '), total_logs: logs.length } }];\nreturn out;"
+      },
+      "id": "f03b11d2-c955-593d-b045-bc24aa430058",
+      "name": "Agrupar por Cliente",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        1400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "646c3705-f54b-52d2-ab03-37dc1f72d495",
+              "leftValue": "={{ $json.vazio !== true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8cb6793d-8c36-57da-bd63-68a60ccf26bd",
+      "name": "Tem campanhas? (Seg)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1200,
+        1400
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "Salomão - Konext IA",
+        "remoteJid": "={{ String($('Config (Seg)').first().json.numero_gestor) }}",
+        "messageText": "=☀️ *Reativação de segunda (Konext)*\n\nNenhuma campanha para reativar hoje: não há campanhas pausadas no sábado registradas na aba \"Campanhas Pausadas\" nem na memória do fluxo.{{ $json.sem_reativar ? '\\n\\n⏸️ Mantidas pausadas (Reativar na Segunda = Não): ' + $json.sem_reativar : '' }}{{ $json.orfas ? '\\n\\n❓ Contas pausadas que não estão ativas na Planilha Geral: ' + $json.orfas : '' }}",
+        "options_message": {}
+      },
+      "id": "0b8d7d88-1b53-56d1-9dda-ed0bde441fad",
+      "name": "Avisar Gestor (Nada Seg)",
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        1420,
+        1600
+      ],
+      "credentials": {
+        "evolutionApi": {
+          "id": "vOwgKK5sUixGQyyu",
+          "name": "Salomão Konext"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "a65d4e35-6050-5842-8b46-37dc73581c22",
+      "name": "Loop Clientes (Seg)",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1420,
+        1400
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "campanhas",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "id": "846a6b7a-3fe4-5dda-92f5-b3e3ff017d90",
+      "name": "Separar Campanhas (Seg)",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1640,
+        1500
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v26.0/{{ $json.campanhas.id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "ACTIVE"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 700
+            }
+          }
+        }
+      },
+      "id": "a12d02bd-5229-55d4-bd10-457e3f1b762f",
+      "name": "Reativar Campanha",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1860,
+        1500
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "20Mw7Bs7oVlElweC",
+          "name": "Facebook Graph account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const errTxt = e => { if (e && typeof e === 'object') e = e.message || e.error_user_msg || e.description || JSON.stringify(e); return String(e ?? '').slice(0, 300); };\n\nconst src = $('Separar Campanhas (Seg)').item.json;\nconst r = $input.item.json;\nconst ok = r.success === true || r.success === 'true';\nif (ok) { const sd = $getWorkflowStaticData('global'); if (sd.pausadas) delete sd.pausadas[String(src.campanhas.id)]; }\nreturn { json: {\n  rows: src.campanhas.rows || [],\n  'Status': ok ? 'Reativada' : 'Falha ao reativar',\n  'Reativada em': ok ? $now.toFormat('dd/MM/yyyy HH:mm') : '',\n  'Erro': ok ? '' : errTxt(r.error ?? JSON.stringify(r)),\n  nome_campanha: src.campanhas.nome,\n  id_campanha: src.campanhas.id\n} };"
+      },
+      "id": "cc703f0d-4194-52d4-a069-6c593d1583ad",
+      "name": "Montar Resultado (Seg)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2080,
+        1500
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const linhas = [];\nfor (const it of $input.all()) {\n  const j = it.json || {};\n  for (const rn of (j.rows || [])) linhas.push({ json: { row_number: rn, 'Status': j['Status'], 'Reativada em': j['Reativada em'], 'Erro': j['Erro'] } });\n}\nreturn linhas.length ? linhas : [{ json: { sem_linha: true } }];"
+      },
+      "id": "5a58859c-612d-5256-855b-c4a6a0d88e65",
+      "name": "Linhas do Log (Seg)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2300,
+        1500
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e37944d5-c7ca-5864-bff4-e6b68d654267",
+              "leftValue": "={{ $json.sem_linha !== true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f4693c67-8199-5c36-b1ff-f13e3cf2f2a9",
+      "name": "Tem linha no log? (Seg)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2520,
+        1500
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1w0y2bu6_gA3Ye-u0GYYZT56voGixcD1InqKiB5dhzwY",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Campanhas Pausadas",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "={{ $json[\"Status\"] }}",
+            "Reativada em": "={{ $json[\"Reativada em\"] }}",
+            "Erro": "={{ $json[\"Erro\"] }}",
+            "row_number": "={{ $json[\"row_number\"] }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reativada em",
+              "displayName": "Reativada em",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Erro",
+              "displayName": "Erro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "bfec0625-dd88-5aaf-9630-e8ebe8ce058c",
+      "name": "Atualizar Log (Seg)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2740,
+        1420
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const cli = $('Loop Clientes (Seg)').first().json;\nconst cfg = $('Config (Seg)').first().json;\nconst itens = $('Montar Resultado (Seg)').all().map(i => i.json);\nconst ok = itens.filter(i => i['Status'] === 'Reativada');\nconst falhas = itens.filter(i => i['Status'] !== 'Reativada');\nconst logErros = $input.all().filter(i => i.json && i.json.error).length;\nconst nome = cli.cliente;\nconst mensagem = `Bom dia! ☀️\\n\\nPassando para avisar que as campanhas da conta *${nome}* foram *reativadas* e já estão voltando a ser veiculadas. 🚀\\n\\n📊 Campanhas reativadas: *${ok.length}*\\n\\nQualquer dúvida, é só chamar!\\n\\n— Equipe Konext`;\nlet alerta = '';\nif (falhas.length || logErros || (ok.length && !cli.destino)) {\n  alerta = `⚠️ *Atenção — Reativação de segunda*\\n\\nCliente: *${nome}*\\nConta: ${cli.conta}\\n✅ Reativadas: ${ok.length}\\n❌ Falhas: ${falhas.length}`;\n  if (falhas.length) alerta += '\\n\\n' + falhas.slice(0, 5).map(f => `• ${f.nome_campanha} (${f.id_campanha}): ${f['Erro']}`).join('\\n');\n  if (logErros) alerta += `\\n\\n📝 ${logErros} linha(s) da aba \"Campanhas Pausadas\" não foram atualizadas.`;\n  if (ok.length && !cli.destino) alerta += '\\n\\n📵 Cliente sem grupo e sem \"Contato do cliente\" na Planilha Geral: *não foi avisado*.';\n  if (falhas.length) alerta += '\\n\\nReative manualmente no Gerenciador de Anúncios.';\n}\nconst envios = [];\nif (ok.length && cli.destino) envios.push({ para: cli.destino, texto: mensagem, tipo: 'cliente' });\nif (alerta) envios.push({ para: String(cfg.numero_gestor), texto: alerta, tipo: 'gestor' });\nconst sd = $getWorkflowStaticData('global'); const ek = String($execution.id);\nsd.exec_seg = sd.exec_seg || {}; sd.exec_seg[ek] = sd.exec_seg[ek] || {};\nsd.exec_seg[ek][cli.conta] = { cliente: nome, status: falhas.length ? (ok.length ? 'Reativado parcialmente' : 'Falha na reativação') : 'Reativado',\n  reativadas: ok.length, falhas: falhas.length, aviso: '-', obs: falhas.slice(0, 2).map(f => f['Erro']).join(' / ') };\nreturn [{ json: { cliente: nome, conta: cli.conta, destino: cli.destino, qtd_ok: ok.length, qtd_falhas: falhas.length, envios, tem_envios: envios.length > 0 } }];"
+      },
+      "id": "98be6b67-fe92-5435-af5b-93b1198ac68e",
+      "name": "Resumo Segunda",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2960,
+        1500
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const cli = $('Loop Clientes (Seg)').first().json;\nconst sd = $getWorkflowStaticData('global'); const ek = String($execution.id);\nconst rec = ((sd.exec_seg || {})[ek] || {})[cli.conta] || {};\nreturn [{ json: {\n  'Cliente': cli.cliente,\n  'Conta de Anuncio': cli.conta,\n  'Status da Pausa': rec.status || '-',\n  'Aviso Segunda 7h30': rec.aviso || '-',\n  'Última Execução': $now.toFormat('dd/MM/yyyy HH:mm'),\n  'Observação / Erro': [cli.destino ? 'Aviso para: ' + cli.destino_desc : 'Sem grupo/contato na Planilha Geral', rec.obs].filter(Boolean).join(' | ')\n} }];"
+      },
+      "id": "ae4b299c-448f-5682-b38d-b3853a15cf8b",
+      "name": "Linha Painel (Seg)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4380,
+        1400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1w0y2bu6_gA3Ye-u0GYYZT56voGixcD1InqKiB5dhzwY",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "CLIENTES",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Cliente": "={{ $json[\"Cliente\"] }}",
+            "Conta de Anuncio": "={{ $json[\"Conta de Anuncio\"] }}",
+            "Status da Pausa": "={{ $json[\"Status da Pausa\"] }}",
+            "Aviso Segunda 7h30": "={{ $json[\"Aviso Segunda 7h30\"] }}",
+            "Última Execução": "={{ $json[\"Última Execução\"] }}",
+            "Observação / Erro": "={{ $json[\"Observação / Erro\"] }}"
+          },
+          "matchingColumns": [
+            "Conta de Anuncio"
+          ],
+          "schema": [
+            {
+              "id": "Cliente",
+              "displayName": "Cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Conta de Anuncio",
+              "displayName": "Conta de Anuncio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status da Pausa",
+              "displayName": "Status da Pausa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Aviso Segunda 7h30",
+              "displayName": "Aviso Segunda 7h30",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Última Execução",
+              "displayName": "Última Execução",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Observação / Erro",
+              "displayName": "Observação / Erro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "101c2979-d0aa-55be-90d8-bb31e99cd7f0",
+      "name": "Atualizar Painel (Seg)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        4600,
+        1400
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
+      },
+      "id": "8d166ed4-4c57-55e5-bf03-0289bd03a9b6",
+      "name": "Aguardar (Seg)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        4820,
+        1400
+      ],
+      "webhookId": "196b82bf-df18-5e32-bbc4-9a4cbf408114"
+    },
+    {
+      "parameters": {
+        "jsCode": "const sd = $getWorkflowStaticData('global'); const ek = String($execution.id);\nconst lista = Object.values((sd.exec_seg || {})[ek] || {});\nif (sd.exec_seg) delete sd.exec_seg[ek];\nif (!lista.length) return [];\nconst ic = s => s === 'Reativado' ? '✅' : '⚠️';\nconst linhas = lista.map(x => `${ic(x.status)} *${x.cliente}* — ${x.status}: ${x.reativadas} reativada(s)${x.falhas ? `, ${x.falhas} falha(s)` : ''} | aviso: ${x.aviso}${x.obs ? ' — ' + x.obs : ''}`);\nreturn [{ json: { mensagem: `☀️ *Resumo — Reativação de segunda (Konext)*\\n\\n${linhas.join('\\n')}` } }];"
+      },
+      "id": "02f035ef-02b1-5d43-988b-550bf467e389",
+      "name": "Resumo Final (Seg)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1640,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "Salomão - Konext IA",
+        "remoteJid": "={{ String($('Config (Seg)').first().json.numero_gestor) }}",
+        "messageText": "={{ $json.mensagem }}",
+        "options_message": {}
+      },
+      "id": "d5ed6987-afe6-54e9-89f9-05d865056266",
+      "name": "Enviar Resumo ao Gestor (Seg)",
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        1860,
+        1200
+      ],
+      "credentials": {
+        "evolutionApi": {
+          "id": "vOwgKK5sUixGQyyu",
+          "name": "Salomão Konext"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8d26fba8-d307-54ec-bad2-f659963dcdb0",
+              "leftValue": "={{ $json.tem_envios === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "71debeb8-f5b6-5498-9fb7-363e04cac740",
+      "name": "Tem envios? (Seg)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3180,
+        1500
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "envios",
+        "include": "noOtherFields",
+        "options": {}
+      },
+      "id": "8a04b34a-a8f8-5895-b365-f70bbfb53537",
+      "name": "Separar Envios (Seg)",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        3400,
+        1380
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "Salomão - Konext IA",
+        "remoteJid": "={{ $json.para }}",
+        "messageText": "={{ $json.texto }}",
+        "options_message": {}
+      },
+      "id": "4837ea25-04d7-5f2d-9c21-1cc01a90e4d8",
+      "name": "Enviar WhatsApp (Seg)",
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        3620,
+        1380
+      ],
+      "credentials": {
+        "evolutionApi": {
+          "id": "vOwgKK5sUixGQyyu",
+          "name": "Salomão Konext"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===== utilitários padrão Konext (iguais em todos os fluxos) =====\nconst n_ = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');\nconst pick = (row, nomes) => {\n  const m = {};\n  for (const k of Object.keys(row || {})) m[n_(k)] = row[k];\n  for (const nome of nomes) { const v = m[n_(nome)]; if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim(); }\n  return '';\n};\nconst dig = v => String(v ?? '').replace(/\\D/g, '');\nconst sim = (v, padrao) => { const t = n_(v); if (!t) return padrao; return ['sim', 's', 'yes', 'y', 'true', '1', 'ativo'].includes(t); };\nconst nao = v => ['nao', 'n', 'no', 'false', '0', 'inativo'].includes(n_(v));\nconst money = v => {\n  let s = String(v ?? '').replace(/[^\\d,.\\-]/g, '');\n  if (!s) return null;\n  const c = s.lastIndexOf(','), p = s.lastIndexOf('.');\n  if (c > -1 && p > -1) s = c > p ? s.replace(/\\./g, '').replace(',', '.') : s.replace(/,/g, '');\n  else if (c > -1) s = s.replace(',', '.');\n  else if (/^\\d{1,3}(\\.\\d{3})+$/.test(s)) s = s.replace(/\\./g, '');\n  const n = parseFloat(s); return isNaN(n) ? null : n;\n};\n// Número de WhatsApp ou ID de grupo -> formato aceito pela Evolution API\nconst jid = v => {\n  const s = String(v ?? '').trim();\n  if (!s) return '';\n  if (/@g\\.us$/i.test(s)) return s.replace(/\\s/g, '');\n  const d = s.replace(/\\D/g, '');\n  if (!d) return '';\n  if (d.startsWith('120363') && d.length >= 15) return d + '@g.us';\n  return d.length <= 11 ? '55' + d : d;\n};\n\nconst errTxt = e => { if (e && typeof e === 'object') e = e.message || e.error_user_msg || e.description || JSON.stringify(e); return String(e ?? '').slice(0, 300); };\n\nconst res = $('Resumo Segunda').first().json;\nconst primeiro = $input.first().json || {};\nconst veioDoEnvio = primeiro.tem_envios === undefined;   // pelo \"false\" do IF chega o próprio resumo\nconst env = veioDoEnvio ? $('Separar Envios (Seg)').all().map(i => i.json) : [];\nconst resps = veioDoEnvio ? $input.all().map(i => i.json || {}) : [];\nlet avisoCliente = res.qtd_ok > 0 ? (res.destino ? 'NÃO ENVIADO' : 'SEM DESTINO') : '-';\nconst falhas = [];\nenv.forEach((e, i) => {\n  const r = resps[i] || {};\n  const erro = r.error ? errTxt(r.error) : '';\n  if (e.tipo === 'cliente') avisoCliente = erro ? 'ERRO' : 'OK';\n  if (erro) falhas.push(`• ${e.tipo === 'cliente' ? 'Cliente' : 'Gestor'} (${e.para}): ${erro}`);\n});\nconst sd = $getWorkflowStaticData('global'); const ek = String($execution.id);\nconst rec = ((sd.exec_seg || {})[ek] || {})[res.conta];\nif (rec) { rec.aviso = avisoCliente; if (falhas.length) rec.obs = [rec.obs, 'Falha no WhatsApp'].filter(Boolean).join(' | '); }\nconst alerta = falhas.length ? `⚠️ *Falha ao enviar WhatsApp (Segunda)*\\n\\nCliente: *${res.cliente}*\\n${falhas.join('\\n')}\\n\\nAs campanhas foram reativadas normalmente.` : '';\nreturn [{ json: { alerta } }];"
+      },
+      "id": "1c4b18b8-8f37-58ad-8143-f600bb46e3b3",
+      "name": "Checar Envios (Seg)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3840,
+        1500
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cfd5e8a1-b24c-5167-a597-cb9363a7a46d",
+              "leftValue": "={{ $json.alerta }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d5b52296-9b19-542f-b299-8aa2167de012",
+      "name": "Falha no envio? (Seg)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4060,
+        1500
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "Salomão - Konext IA",
+        "remoteJid": "={{ String($('Config (Seg)').first().json.numero_gestor) }}",
+        "messageText": "={{ $json.alerta }}",
+        "options_message": {}
+      },
+      "id": "87a24f5e-8a76-54a4-9b35-737121e8126c",
+      "name": "Alertar Gestor Falha (Seg)",
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        4280,
+        1380
+      ],
+      "credentials": {
+        "evolutionApi": {
+          "id": "vOwgKK5sUixGQyyu",
+          "name": "Salomão Konext"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Sábado às 12:00": {
+      "main": [
+        [
+          {
+            "node": "Config (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config (Sáb)": {
+      "main": [
+        [
+          {
+            "node": "Criar aba de log (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar aba de log (Sáb)": {
+      "main": [
+        [
+          {
+            "node": "Clientes Geral (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clientes Geral (Sáb)": {
+      "main": [
+        [
+          {
+            "node": "Grupos WhatsApp (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Grupos WhatsApp (Sáb)": {
+      "main": [
+        [
+          {
+            "node": "Painel Pausa (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Painel Pausa (Sáb)": {
+      "main": [
+        [
+          {
+            "node": "Normalizar Clientes (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar Clientes (Sáb)": {
+      "main": [
+        [
+          {
+            "node": "Loop Clientes (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Campanhas Ativas": {
+      "main": [
+        [
+          {
+            "node": "Consolidar Campanhas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consolidar Campanhas": {
+      "main": [
+        [
+          {
+            "node": "Resultado da Busca",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar Campanhas (Sáb)": {
+      "main": [
+        [
+          {
+            "node": "Pausar Campanha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pausar Campanha": {
+      "main": [
+        [
+          {
+            "node": "Montar Resultado (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Resultado (Sáb)": {
+      "main": [
+        [
+          {
+            "node": "Registrar no Log (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar no Log (Sáb)": {
+      "main": [
+        [
+          {
+            "node": "Resumo Sábado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alertar Gestor (Busca Sáb)": {
+      "main": [
+        [
+          {
+            "node": "Linha Painel (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Linha Painel (Sáb)": {
+      "main": [
+        [
+          {
+            "node": "Atualizar Painel (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualizar Painel (Sáb)": {
+      "main": [
+        [
+          {
+            "node": "Aguardar (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aguardar (Sáb)": {
+      "main": [
+        [
+          {
+            "node": "Loop Clientes (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resumo Final (Sáb)": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resumo ao Gestor (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Clientes (Sáb)": {
+      "main": [
+        [
+          {
+            "node": "Resumo Final (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Buscar Campanhas Ativas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resultado da Busca": {
+      "main": [
+        [
+          {
+            "node": "Alertar Gestor (Busca Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Linha Painel (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Separar Campanhas (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resumo Sábado": {
+      "main": [
+        [
+          {
+            "node": "Tem envios? (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tem envios? (Sáb)": {
+      "main": [
+        [
+          {
+            "node": "Separar Envios (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Checar Envios (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar Envios (Sáb)": {
+      "main": [
+        [
+          {
+            "node": "Enviar WhatsApp (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar WhatsApp (Sáb)": {
+      "main": [
+        [
+          {
+            "node": "Checar Envios (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Checar Envios (Sáb)": {
+      "main": [
+        [
+          {
+            "node": "Falha no envio? (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Falha no envio? (Sáb)": {
+      "main": [
+        [
+          {
+            "node": "Alertar Gestor Falha (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Linha Painel (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alertar Gestor Falha (Sáb)": {
+      "main": [
+        [
+          {
+            "node": "Linha Painel (Sáb)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Segunda às 07:30": {
+      "main": [
+        [
+          {
+            "node": "Config (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config (Seg)": {
+      "main": [
+        [
+          {
+            "node": "Clientes Geral (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clientes Geral (Seg)": {
+      "main": [
+        [
+          {
+            "node": "Grupos WhatsApp (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Grupos WhatsApp (Seg)": {
+      "main": [
+        [
+          {
+            "node": "Campanhas Pausadas (Log)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Campanhas Pausadas (Log)": {
+      "main": [
+        [
+          {
+            "node": "Agrupar por Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agrupar por Cliente": {
+      "main": [
+        [
+          {
+            "node": "Tem campanhas? (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar Campanhas (Seg)": {
+      "main": [
+        [
+          {
+            "node": "Reativar Campanha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reativar Campanha": {
+      "main": [
+        [
+          {
+            "node": "Montar Resultado (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Resultado (Seg)": {
+      "main": [
+        [
+          {
+            "node": "Linhas do Log (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Linhas do Log (Seg)": {
+      "main": [
+        [
+          {
+            "node": "Tem linha no log? (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualizar Log (Seg)": {
+      "main": [
+        [
+          {
+            "node": "Resumo Segunda",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Linha Painel (Seg)": {
+      "main": [
+        [
+          {
+            "node": "Atualizar Painel (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualizar Painel (Seg)": {
+      "main": [
+        [
+          {
+            "node": "Aguardar (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aguardar (Seg)": {
+      "main": [
+        [
+          {
+            "node": "Loop Clientes (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resumo Final (Seg)": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resumo ao Gestor (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tem campanhas? (Seg)": {
+      "main": [
+        [
+          {
+            "node": "Loop Clientes (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Avisar Gestor (Nada Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Clientes (Seg)": {
+      "main": [
+        [
+          {
+            "node": "Resumo Final (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Separar Campanhas (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tem linha no log? (Seg)": {
+      "main": [
+        [
+          {
+            "node": "Atualizar Log (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resumo Segunda",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resumo Segunda": {
+      "main": [
+        [
+          {
+            "node": "Tem envios? (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tem envios? (Seg)": {
+      "main": [
+        [
+          {
+            "node": "Separar Envios (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Checar Envios (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar Envios (Seg)": {
+      "main": [
+        [
+          {
+            "node": "Enviar WhatsApp (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar WhatsApp (Seg)": {
+      "main": [
+        [
+          {
+            "node": "Checar Envios (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Checar Envios (Seg)": {
+      "main": [
+        [
+          {
+            "node": "Falha no envio? (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Falha no envio? (Seg)": {
+      "main": [
+        [
+          {
+            "node": "Alertar Gestor Falha (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Linha Painel (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alertar Gestor Falha (Seg)": {
+      "main": [
+        [
+          {
+            "node": "Linha Painel (Seg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "Rxli4y3qKjvudClB",
+  "tags": []
+}

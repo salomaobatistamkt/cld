@@ -1,0 +1,892 @@
+{
+  "name": "Sincronizar Base de Clientes - Konext",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "b52e779d-dcf6-4de5-9c53-529a6ecd2c2a",
+      "name": "Executar manualmente",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        2656,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      },
+      "id": "eb578f15-b62a-44b6-bac7-43dda213ecd9",
+      "name": "Todo dia 6h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        2656,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "18e74dfa-ec37-47f4-b46d-7b2610437851",
+              "name": "planilha_id",
+              "value": "1IywT4jszZAVuBCBk3p_8DgsUeffoTCkkiBojdQOybZk",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "21821a05-be5d-4674-9375-556c7acac094",
+      "name": "Config (Sync)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2896,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1IywT4jszZAVuBCBk3p_8DgsUeffoTCkkiBojdQOybZk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Clientes",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "978f31fa-9c0e-4468-ae16-c976d9f1f18a",
+      "name": "Ler Clientes",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3136,
+        240
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const n_ = s => String(s ?? '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');\nconst pick = (row, nomes) => { const m = {}; for (const k of Object.keys(row)) m[n_(k)] = row[k];\n  for (const nome of nomes) { const v = m[n_(nome)]; if (v !== undefined && String(v).trim() !== '') return String(v).trim(); } return ''; };\nconst dig = v => String(v ?? '').replace(/\\D/g, '');\nconst out = [];\nfor (const it of $input.all()) {\n  const r = it.json || {};\n  if (r.error || !r.row_number) continue;\n  if (n_(pick(r, ['Status'])) !== 'ativo') continue; // Status = Ativo\n  const conta = dig(pick(r, ['ID da Conta']));\n  const cliente = pick(r, ['Cliente']);\n  if (!conta || !cliente) continue;\n  out.push({ json: { row_number: r.row_number, cliente, conta, pagina: dig(pick(r, ['ID da Página'])),\n    ig_id: dig(pick(r, ['ID Instagram'])), ig_user: pick(r, ['Instagram (usuário)']).replace(/^@/, '') } });\n}\nreturn out;"
+      },
+      "id": "084e3459-08ef-4d5f-be0c-e9a430165ca3",
+      "name": "Preparar Clientes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3376,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "fbd95afd-d96f-40df-9a0e-3fa4d4a4cf20",
+      "name": "Loop Clientes",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        3616,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v26.0/act_{{ $('Loop Clientes').item.json.conta }}/promote_pages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "id,name"
+            },
+            {
+              "name": "limit",
+              "value": "25"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "64815516-4b56-4926-90a3-1440e1ab42c2",
+      "name": "Páginas",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3856,
+        320
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "20Mw7Bs7oVlElweC",
+          "name": "Facebook Graph account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v26.0/act_{{ $('Loop Clientes').item.json.conta }}/instagram_accounts",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "id,username"
+            },
+            {
+              "name": "limit",
+              "value": "25"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "56a4722f-0906-47bd-9122-8517e469ca7f",
+      "name": "Instagram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4064,
+        320
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "20Mw7Bs7oVlElweC",
+          "name": "Facebook Graph account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v26.0/act_{{ $('Loop Clientes').item.json.conta }}/saved_audiences",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "id,name"
+            },
+            {
+              "name": "limit",
+              "value": "500"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e40ca6e3-86b9-4a27-a16a-583129e2e21f",
+      "name": "Salvos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4288,
+        320
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "20Mw7Bs7oVlElweC",
+          "name": "Facebook Graph account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v26.0/act_{{ $('Loop Clientes').item.json.conta }}/customaudiences",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "id,name"
+            },
+            {
+              "name": "limit",
+              "value": "500"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b7835aa7-2c67-469e-b23d-0739ab2655ff",
+      "name": "Personalizados",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4512,
+        320
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "20Mw7Bs7oVlElweC",
+          "name": "Facebook Graph account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const cl = $('Loop Clientes').item.json;\nconst pg = $('Páginas').item.json, ig = $('Instagram').item.json, sv = $('Salvos').item.json, cu = $input.item.json;\nconst norm = s => String(s ?? '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\\s+/g, ' ').trim();\nconst arr = x => Array.isArray(x.data) ? x.data : [];\nconst agora = $now.toFormat('yyyy-MM-dd HH:mm');\nconst obs = [];\nlet pagina = cl.pagina, ig_id = cl.ig_id, ig_user = cl.ig_user;\nconst pages = arr(pg), igs = arr(ig);\nif (pg.error) obs.push('Erro ao ler Páginas (sem acesso à conta?)');\nelse if (!pagina) {\n  if (pages.length === 1) pagina = String(pages[0].id);\n  else obs.push(pages.length ? 'Várias Páginas — cole o ID certo: ' + pages.map(x => `${x.name} (${x.id})`).join('; ') : 'Nenhuma Página vinculada à conta');\n}\nif (!ig.error && !ig_id) {\n  if (igs.length === 1) { ig_id = String(igs[0].id); ig_user = String(igs[0].username || ''); }\n  else obs.push(igs.length ? 'Vários Instagram — cole ID e usuário: ' + igs.map(x => `@${x.username} (${x.id})`).join('; ') : 'Nenhum Instagram vinculado (ok se não usar objetivo Tráfego)');\n}\nif (ig.error) obs.push('Erro ao ler Instagram da conta');\nif (sv.error) obs.push('Erro ao ler públicos salvos');\nif (cu.error) obs.push('Erro ao ler públicos personalizados');\nconst cat = name => {\n  const n = norm(name), t = new Set(n.split(' '));\n  if (n.startsWith('rmkt') || t.has('rmkt') || t.has('remarketing')) return 'RMKT';\n  const suf = t.has('mulheres') ? ' Mulheres' : t.has('homens') ? ' Homens' : '';\n  if (t.has('aberto')) return 'Aberto' + suf;\n  if ([...t].some(x => x.startsWith('comprador'))) return 'Compradores' + suf;\n  return 'Outro';\n};\nconst linha = (tipo, a) => ({ 'Cliente': cl.cliente, 'ID da Conta': cl.conta, 'Tipo': tipo, 'Nome no Meta': String(a.name ?? ''),\n  'ID do Público': String(a.id), 'Categoria (auto)': cat(a.name), 'Última sincronização': agora });\nconst publicos = [...arr(sv).map(a => linha('Salvo', a)), ...arr(cu).map(a => linha('Personalizado', a))];\nreturn { json: {\n  update: { row_number: cl.row_number, 'ID da Página': pagina || '', 'ID Instagram': ig_id || '', 'Instagram (usuário)': ig_user || '',\n            'Última sincronização': agora, 'Observações': obs.join(' | ') },\n  publicos } };"
+      },
+      "id": "e792458e-4a5c-4948-b118-fa330ffc0b11",
+      "name": "Montar Sync",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4736,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const cl = $('Loop Clientes').item.json;\nreturn { json: { ...$input.item.json.update, 'ID da Conta': cl.conta } };"
+      },
+      "id": "40d0eb62-573e-4fc8-b047-e6b8214bcff6",
+      "name": "Linha do Cliente",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4944,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1IywT4jszZAVuBCBk3p_8DgsUeffoTCkkiBojdQOybZk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Clientes",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID da Conta": "={{ $json['ID da Conta'] }}",
+            "ID da Página": "={{ $json['ID da Página'] }}",
+            "ID Instagram": "={{ $json['ID Instagram'] }}",
+            "Instagram (usuário)": "={{ $json['Instagram (usuário)'] }}",
+            "Última sincronização": "={{ $json['Última sincronização'] }}",
+            "Observações": "={{ $json['Observações'] }}"
+          },
+          "matchingColumns": [
+            "ID da Conta"
+          ],
+          "schema": [
+            {
+              "id": "Cliente",
+              "displayName": "Cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Apelido",
+              "displayName": "Apelido",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ID da Conta",
+              "displayName": "ID da Conta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contato do cliente",
+              "displayName": "Contato do cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ID da Página",
+              "displayName": "ID da Página",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ID Instagram",
+              "displayName": "ID Instagram",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Instagram (usuário)",
+              "displayName": "Instagram (usuário)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "WhatsApp da Campanha",
+              "displayName": "WhatsApp da Campanha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Valor Base",
+              "displayName": "Valor Base",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Reativar na Segunda",
+              "displayName": "Reativar na Segunda",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Monitorar Custo",
+              "displayName": "Monitorar Custo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Última sincronização",
+              "displayName": "Última sincronização",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Observações",
+              "displayName": "Observações",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "1af7be90-0c9c-4038-b63b-a169b81d5698",
+      "name": "Atualizar Cliente",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        5168,
+        320
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const pubs = $('Montar Sync').first().json.publicos || [];\nreturn pubs.length ? pubs.map(p => ({ json: p })) : [{ json: { skip: true } }];"
+      },
+      "id": "e2f8c615-84b5-4b3b-a1c1-7b0ebbb4febf",
+      "name": "Preparar Públicos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5392,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "fb6eacd6-9a58-468c-94f5-1e7626b775a1",
+              "leftValue": "={{ $json.skip === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e6e4d1ae-3953-466c-a8db-3316b07e353f",
+      "name": "Sem públicos?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        5616,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1IywT4jszZAVuBCBk3p_8DgsUeffoTCkkiBojdQOybZk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Públicos",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Cliente": "={{ $json['Cliente'] }}",
+            "ID da Conta": "={{ $json['ID da Conta'] }}",
+            "Tipo": "={{ $json['Tipo'] }}",
+            "Nome no Meta": "={{ $json['Nome no Meta'] }}",
+            "ID do Público": "={{ $json['ID do Público'] }}",
+            "Categoria (auto)": "={{ $json['Categoria (auto)'] }}",
+            "Última sincronização": "={{ $json['Última sincronização'] }}"
+          },
+          "matchingColumns": [
+            "ID do Público"
+          ],
+          "schema": [
+            {
+              "id": "Cliente",
+              "displayName": "Cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ID da Conta",
+              "displayName": "ID da Conta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Tipo",
+              "displayName": "Tipo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Nome no Meta",
+              "displayName": "Nome no Meta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ID do Público",
+              "displayName": "ID do Público",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Categoria (auto)",
+              "displayName": "Categoria (auto)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Categoria (manual)",
+              "displayName": "Categoria (manual)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Usar",
+              "displayName": "Usar",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Última sincronização",
+              "displayName": "Última sincronização",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "4c21c596-b4da-4df9-926f-18be830a4924",
+      "name": "Gravar Públicos",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        5824,
+        400
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "## 🔄 Sincronizar Base (Meta → Planilha Geral Konext)\nPara cada cliente com **Status = Ativo** e **ID da Conta**, busca na Meta: Página, Instagram, públicos salvos e personalizados, e grava nas abas *Clientes* e *Públicos*. Roda todo dia às 6h e quando você clicar em *Executar*. A 'Categoria (manual)' e a coluna 'Usar' nunca são apagadas.",
+        "height": 190,
+        "width": 520,
+        "color": 5
+      },
+      "id": "78e7c63c-7d29-4cd2-b055-c100b25b2e69",
+      "name": "Nota Sync",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2624,
+        -112
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Executar manualmente": {
+      "main": [
+        [
+          {
+            "node": "Config (Sync)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Todo dia 6h": {
+      "main": [
+        [
+          {
+            "node": "Config (Sync)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config (Sync)": {
+      "main": [
+        [
+          {
+            "node": "Ler Clientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler Clientes": {
+      "main": [
+        [
+          {
+            "node": "Preparar Clientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Clientes": {
+      "main": [
+        [
+          {
+            "node": "Loop Clientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Clientes": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Páginas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Páginas": {
+      "main": [
+        [
+          {
+            "node": "Instagram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram": {
+      "main": [
+        [
+          {
+            "node": "Salvos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salvos": {
+      "main": [
+        [
+          {
+            "node": "Personalizados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Personalizados": {
+      "main": [
+        [
+          {
+            "node": "Montar Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Sync": {
+      "main": [
+        [
+          {
+            "node": "Linha do Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Linha do Cliente": {
+      "main": [
+        [
+          {
+            "node": "Atualizar Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualizar Cliente": {
+      "main": [
+        [
+          {
+            "node": "Preparar Públicos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Públicos": {
+      "main": [
+        [
+          {
+            "node": "Sem públicos?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sem públicos?": {
+      "main": [
+        [
+          {
+            "node": "Loop Clientes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gravar Públicos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gravar Públicos": {
+      "main": [
+        [
+          {
+            "node": "Loop Clientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "meta": {
+    "instanceId": "ed2207a9f87dda41070fd42865979625bf409a760b14046e500eca15021ff5eb"
+  },
+  "id": "gauIzvIvSSHZBtJq",
+  "tags": []
+}

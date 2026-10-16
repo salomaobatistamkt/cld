@@ -1,15 +1,18 @@
 import {
+  Activity,
   Briefcase,
   CalendarCheck,
   ChevronLeft,
   ChevronRight,
   LogOut,
+  Images,
   LayoutDashboard,
   Link2,
   Megaphone,
   MoreHorizontal,
   Package,
   PenTool,
+  Rocket,
   Search,
   Settings,
   Stethoscope,
@@ -28,6 +31,9 @@ import { useToast } from '@/lib/toast';
 import { type Rota } from '@/lib/types';
 import { diasAte } from '@/lib/util';
 import { ContasAnuncios } from '@/views/anuncios/Contas';
+import { CriarCampanha } from '@/views/anuncios/CriarCampanha';
+import { BibliotecaCriativos } from '@/views/anuncios/Criativos';
+import { CentralExecucao } from '@/views/anuncios/Execucao';
 import { DiagnosticoMeta } from '@/views/anuncios/Diagnostico';
 import { Apresentacao } from '@/views/Apresentacao';
 import { Caixa } from '@/views/Caixa';
@@ -88,6 +94,9 @@ export const App = () => {
     rotina: { tela: 'rotina', rotulo: 'Rotina', icone: <CalendarCheck size={19} />, ir: { tela: 'rotina' } },
     quadros: { tela: 'quadros', rotulo: 'Estratégias', curto: 'Quadros', icone: <PenTool size={19} />, ir: { tela: 'quadros' } },
     campanhas: { tela: 'campanhas', rotulo: 'Campanhas', icone: <Megaphone size={19} />, ir: { tela: 'campanhas' } },
+    anunciosCriar: { tela: 'anuncios-criar', rotulo: 'Criar campanha', curto: 'Criar', icone: <Rocket size={19} />, ir: { tela: 'anuncios-criar' } },
+    anunciosExecucao: { tela: 'anuncios-execucao', rotulo: 'Central de execução', curto: 'Execução', icone: <Activity size={19} />, ir: { tela: 'anuncios-execucao' } },
+    anunciosCriativos: { tela: 'anuncios-criativos', rotulo: 'Biblioteca de criativos', curto: 'Criativos', icone: <Images size={19} />, ir: { tela: 'anuncios-criativos' } },
     anunciosContas: { tela: 'anuncios-contas', rotulo: 'Contas de anúncios', curto: 'Contas', icone: <Link2 size={19} />, ir: { tela: 'anuncios-contas' } },
     anunciosDiagnostico: { tela: 'anuncios-diagnostico', rotulo: 'Diagnóstico Meta', curto: 'Diagnóstico', icone: <Stethoscope size={19} />, ir: { tela: 'anuncios-diagnostico' } },
     caixa: { tela: 'caixa', rotulo: 'Caixa', icone: <Wallet size={19} />, ir: { tela: 'caixa' } },
@@ -98,11 +107,11 @@ export const App = () => {
   const grupos: Array<{ titulo: string; itens: ItemMenu[] }> = [
     { titulo: 'Visão geral', itens: [itens.painel] },
     { titulo: 'Clientes', itens: [itens.clientes, itens.entregas, itens.rotina, itens.quadros, itens.campanhas] },
-    { titulo: 'Anúncios', itens: [itens.anunciosContas, itens.anunciosDiagnostico] },
+    { titulo: 'Anúncios', itens: [itens.anunciosCriar, itens.anunciosExecucao, itens.anunciosCriativos, itens.anunciosContas, itens.anunciosDiagnostico] },
     { titulo: 'Empresa', itens: [itens.caixa, itens.processos, itens.config] },
   ];
   const barraInferior = [itens.painel, itens.clientes, itens.entregas, itens.quadros];
-  const noMais = [itens.rotina, itens.campanhas, itens.anunciosContas, itens.anunciosDiagnostico, itens.caixa, itens.processos, itens.config];
+  const noMais = [itens.rotina, itens.campanhas, itens.anunciosCriar, itens.anunciosExecucao, itens.anunciosCriativos, itens.anunciosContas, itens.anunciosDiagnostico, itens.caixa, itens.processos, itens.config];
 
   const ativo = (item: ItemMenu) =>
     item.tela === rota.tela ||
@@ -166,6 +175,12 @@ export const App = () => {
         return <Rotina />;
       case 'anuncios-contas':
         return <ContasAnuncios />;
+      case 'anuncios-criar':
+        return <CriarCampanha />;
+      case 'anuncios-execucao':
+        return <CentralExecucao id={rota.id} />;
+      case 'anuncios-criativos':
+        return <BibliotecaCriativos />;
       case 'anuncios-diagnostico':
         return <DiagnosticoMeta />;
       case 'caixa':

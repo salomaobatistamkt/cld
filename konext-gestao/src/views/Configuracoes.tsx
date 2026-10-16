@@ -17,6 +17,7 @@ const SECOES: Secao[] = [
   { id: 'empresa', rotulo: 'Empresa', icone: <Building2 size={17} />, descricao: 'Nome e logo que aparecem no menu e nas apresentações para clientes.' },
   { id: 'servicos', rotulo: 'Serviços que você vende', icone: <Tags size={17} />, descricao: 'A lista de tipos de serviço. Ela aparece quando você cadastra um serviço num cliente e serve de filtro nas entregas.' },
   { id: 'processo-servico', rotulo: 'Processo de cada serviço', icone: <ListChecks size={17} />, descricao: 'As etapas que todo cliente passa ao contratar cada serviço e a rotina que se repete depois (semanal ou mensal).' },
+  { id: 'nomes-anuncios', rotulo: 'Nomes dos conjuntos', icone: <Megaphone size={17} />, descricao: 'Os nomes de conjunto oferecidos ao criar campanhas em Anúncios → Criar campanha. O número do anúncio (01, 02…) é gerado sozinho.' },
   { id: 'caixa', rotulo: 'Categorias do caixa', icone: <Wallet size={17} />, descricao: 'Como você classifica o dinheiro que entra e que sai. Aparecem ao registrar um lançamento no Caixa.' },
   { id: 'processos', rotulo: 'Áreas dos processos', icone: <Workflow size={17} />, descricao: 'Agrupam os processos da empresa na tela Processos (ex.: Comercial, Produção).' },
   { id: 'integracoes', rotulo: 'Integrações', icone: <Plug size={17} />, descricao: 'Conexão com o Meta Ads para ver as métricas das campanhas dos clientes.' },
@@ -364,6 +365,16 @@ export const Configuracoes = ({ aba = 'empresa' }: { aba?: string }) => {
               uso={(item) => dados.processos.filter((p) => p.area === item).length}
               aoMudar={(areasProcesso) => mudar({ areasProcesso })}
               aoRenomear={(a, n) => renomear('areasProcesso', a, n)}
+            />
+          ) : null}
+
+          {secao.id === 'nomes-anuncios' ? (
+            <ListaItens
+              itens={config.nomesConjunto}
+              exemplo="✅CJ - Aberto Mulheres"
+              uso={() => 0}
+              aoMudar={(nomesConjunto) => mudar({ nomesConjunto })}
+              aoRenomear={(a, n) => mudar({ nomesConjunto: config.nomesConjunto.map((x) => (x === a ? n : x)) }, 'Renomeado')}
             />
           ) : null}
 

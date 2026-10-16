@@ -206,6 +206,7 @@ export const criarDadosExemplo = (hoje = hojeISO()): Dados => {
       categoriasSaida: ['Ferramentas', 'Equipe', 'Infraestrutura', 'Impostos', 'Marketing próprio', 'Outros'],
       areasProcesso: ['Comercial', 'Atendimento', 'Produção', 'Financeiro', 'Estratégia'],
       processosServico: processosPadrao(),
+      nomesConjunto: ['✅CJ - Aberto', '✅CJ - Compradores Envolvidos', '✅CJ - Remarketing'],
     },
   };
 };

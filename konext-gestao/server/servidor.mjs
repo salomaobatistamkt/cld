@@ -11,6 +11,7 @@ import { gzip } from 'node:zlib';
 import { promisify } from 'node:util';
 
 import { criarAnuncios } from './anuncios.mjs';
+import { criarCampanhas } from './campanhas.mjs';
 import { criarWebhooks } from './webhooks.mjs';
 
 const gzipAsync = promisify(gzip);
@@ -272,6 +273,42 @@ const graph = async (caminho, params, token = tokenMeta(), opcoes = {}) => {
   return { data: itens };
 };
 
+// Envia (POST) para a Meta. Uma resposta de erro da Meta é definitiva: nada foi criado.
+// Já uma falha de rede ou timeout deixa o resultado DESCONHECIDO (detalhe.incerto), e quem
+// chamou precisa conferir na Meta antes de tentar de novo.
+const graphEnviar = async (caminho, params = {}, opcoes = {}) => {
+  const token = tokenMeta();
+  if (!token) throw new ErroMeta('O Meta Ads ainda não está conectado. Vá em Configurações → Integrações.', 400);
+  const base = opcoes.video ? GRAPH.replace('://graph.', '://graph-video.') : GRAPH;
+  let corpo;
+  if (opcoes.multipart) {
+    corpo = new FormData();
+    for (const [k, v] of Object.entries(params)) {
+      if (v instanceof Blob) corpo.append(k, v, opcoes.nomeArquivo || 'arquivo');
+      else if (v !== undefined && v !== null) corpo.append(k, typeof v === 'string' ? v : JSON.stringify(v));
+    }
+  } else {
+    corpo = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== null) corpo.set(k, typeof v === 'string' ? v : JSON.stringify(v));
+  }
+  let resposta;
+  try {
+    resposta = await fetch(`${base}/${caminho}`, { method: 'POST', headers: { authorization: `Bearer ${token}` }, body: corpo, signal: AbortSignal.timeout(opcoes.timeout ?? (Number(process.env.KONEXT_META_TIMEOUT_MS) || 60000)) });
+  } catch (falha) {
+    const causa = falha?.name === 'TimeoutError' ? 'a Meta não respondeu a tempo' : falha?.cause?.code || falha?.message || 'erro de rede';
+    throw new ErroMeta(`Resultado desconhecido: ${causa}. O sistema vai conferir na Meta antes de tentar de novo.`, 504, { codigo: null, mensagem: String(causa), incerto: true });
+  }
+  lerUso(resposta);
+  const json = await resposta.json().catch(() => null);
+  if (!json) throw new ErroMeta('A Meta devolveu uma resposta ilegível.', 502, { codigo: null, mensagem: `HTTP ${resposta.status}`, incerto: resposta.ok });
+  if (!resposta.ok || json.error) {
+    const erro = traduzirErroMeta(json.error);
+    erro.detalhe.transitorio = Boolean(json.error?.is_transient);
+    throw erro;
+  }
+  return json;
+};
+
 const normalizarConta = (conta) => {
   const limpa = String(conta || '').trim().replace(/^act_/, '');
   if (!/^\d{3,25}$/.test(limpa)) throw new ErroMeta('ID da conta de anúncios inválido. Use o formato act_123456789.', 400);
@@ -283,6 +320,7 @@ const lerRegistro = (colecao, id) => {
   return linha ? JSON.parse(linha.dados) : null;
 };
 const listarRegistros = (colecao) => db.prepare('SELECT dados FROM registros WHERE colecao = ? ORDER BY rowid').all(colecao).map((l) => JSON.parse(l.dados));
+const campanhasMeta = criarCampanhas({ db, graph, graphEnviar, ErroMeta, normalizarConta, ler: lerRegistro, pastaDados: PASTA_DADOS, log });
 const anuncios = criarAnuncios({
   graph,
   ErroMeta,
@@ -429,7 +467,9 @@ const api = async (req, res, caminho) => {
   }
 
   // Pedidos que mudam algo precisam vir como JSON do próprio site (proteção contra CSRF).
-  if (metodo !== 'GET' && metodo !== 'DELETE' && !(req.headers['content-type'] || '').includes('application/json')) {
+  // Exceção: partes de arquivo, que exigem um cabeçalho próprio (outro site não consegue enviá-lo).
+  const ehParteDeArquivo = metodo === 'PUT' && /^\/api\/anuncios\/midias\/[\w-]+\/parte$/.test(caminho) && req.headers['x-konext-upload'] === '1';
+  if (!ehParteDeArquivo && metodo !== 'GET' && metodo !== 'DELETE' && !(req.headers['content-type'] || '').includes('application/json')) {
     return responder(res, 415, { erro: 'Envie JSON' });
   }
 
@@ -521,7 +561,8 @@ const api = async (req, res, caminho) => {
   // ----- Anúncios (Meta Marketing API) -----
   if (caminho.startsWith('/api/anuncios/')) {
     try {
-      const tratado = await anuncios.rotas({ metodo, rota: caminho.slice('/api/anuncios'.length), lerCorpo: (limite) => lerCorpo(req, limite), responder, res });
+      const contexto = { req, res, metodo, rota: caminho.slice('/api/anuncios'.length), lerCorpo: (limite) => lerCorpo(req, limite), responder };
+      const tratado = (await anuncios.rotas(contexto)) || (await campanhasMeta.rotas(contexto));
       if (!tratado) responder(res, 404, { erro: 'Rota não encontrada' });
     } catch (falha) {
       if (falha instanceof ErroMeta) return responder(res, falha.status, { erro: falha.message, detalhe: falha.detalhe });
@@ -648,7 +689,8 @@ const servidor = createServer(async (req, res) => {
   }
 });
 
-servidor.requestTimeout = 120000;
+// Envios de vídeo vão em partes de 8 MB; cada parte tem até 10 minutos.
+servidor.requestTimeout = 10 * 60 * 1000;
 servidor.listen(PORTA, '0.0.0.0', () => log(`Konext Gestão no ar na porta ${PORTA} (dados em ${PASTA_DADOS})`));
 
 const desligar = () => {

@@ -131,6 +131,8 @@ export type Config = {
   areasProcesso: string[];
   // Processo padrão de cada tipo de serviço (chave = nome do tipo).
   processosServico: Record<string, ProcessoServico>;
+  // Nomes de conjunto oferecidos ao criar campanhas (Anúncios → Criar campanha).
+  nomesConjunto: string[];
 };
 
 // Etapa feita uma vez, no começo do serviço (vira uma entrega do cliente).
@@ -196,6 +198,9 @@ export type Rota =
   | { tela: 'campanhas' }
   | { tela: 'rotina' }
   | { tela: 'anuncios-contas' }
+  | { tela: 'anuncios-criar' }
+  | { tela: 'anuncios-execucao'; id?: string }
+  | { tela: 'anuncios-criativos' }
   | { tela: 'anuncios-diagnostico' }
   | { tela: 'config'; aba?: string }
   | { tela: 'apresentacao'; clienteId: string };

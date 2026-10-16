@@ -3773,3 +3773,5 @@ button.cartao-midia {
 .rel-escuro { --serie-4: #c98500; --serie-5: #d55181; --serie-6: #008300; --serie-7: #9085e9; --serie-8: #e66767; }
 @media print { .funil-faixa { break-inside: avoid; } }
 @media (max-width: 720px) { .lista-orientacoes { grid-template-columns: 1fr; } .funil-faixa b { font-size: 17px; } }
+.rel-claro, .pagina-clara, .sobreposicao-clara, .apresentar-claro { --cor-mulheres: #e87ba4; --cor-homens: #1baf7a; }
+.rel-escuro { --cor-mulheres: #d55181; --cor-homens: #199e70; }

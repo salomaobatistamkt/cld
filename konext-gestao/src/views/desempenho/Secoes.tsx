@@ -440,6 +440,8 @@ const SecaoPublico = ({ rel }: Props) => {
         <Barras
           itens={itens.map((i) => ({
             rotulo: nomeSegmento(i.segmento),
+            // Mulheres em rosa, homens em verde (o nome do segmento também diz o gênero).
+            tom: /(^| · )female$/.test(i.segmento) ? 'var(--cor-mulheres)' : /(^| · )male$/.test(i.segmento) ? 'var(--cor-homens)' : undefined,
             valor: i.impressoes,
             detalhe: `${total ? formatar((i.impressoes / total) * 100, 'pct') : ''}${i.custoPorResultado !== null ? ` · ${formatar(i.custoPorResultado, 'moeda')} por resultado` : ''}`,
           }))}

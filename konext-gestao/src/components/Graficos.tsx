@@ -4,8 +4,9 @@ import { useMemo, useRef, useState } from 'react';
 
 import { dataCurta, type Formato, formatar } from '@/lib/metricas';
 
-// Paleta categórica validada (modo escuro, superfície do sistema) — no máximo 3 séries juntas.
-export const CORES_SERIE = ['#3987e5', '#d95926', '#199e70'];
+// Paleta categórica validada (claro e escuro) — no máximo 3 séries juntas. As cores vêm do tema
+// (--serie-1…3 em styles.css), então o mesmo gráfico serve ao painel escuro e ao portal claro.
+export const CORES_SERIE = ['var(--serie-1)', 'var(--serie-2)', 'var(--serie-3)'];
 
 const escalaBonita = (max: number) => {
   if (max <= 0) return 1;
@@ -79,9 +80,9 @@ export const GraficoLinha = ({ pontos, formato, rotulo, altura = 220, cor = CORE
             </text>
           ) : null,
         )}
-        <path d={caminho} fill="none" stroke={cor} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+        <path d={caminho} fill="none" style={{ stroke: cor }} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
         {pontos.length <= 31
-          ? pontos.map((pt, i) => (pt.y !== null ? <circle key={pt.x} cx={px(i)} cy={py(pt.y)} r={foco === i ? 5 : 2.5} fill={cor} stroke="#120c0a" strokeWidth={2} /> : null))
+          ? pontos.map((pt, i) => (pt.y !== null ? <circle key={pt.x} cx={px(i)} cy={py(pt.y)} r={foco === i ? 5 : 2.5} style={{ fill: cor, stroke: 'var(--serie-fundo)' }} strokeWidth={2} /> : null))
           : null}
         {p ? <line x1={px(foco!)} x2={px(foco!)} y1={M.t} y2={altura - M.b} className="cursor" /> : null}
       </svg>
@@ -175,8 +176,8 @@ export const GraficoRetencao = ({ series, altura = 220 }: { series: SerieRetenca
           });
           return (
             <g key={s.nome} pointerEvents="none">
-              <path d={d} fill="none" stroke={CORES_SERIE[k]} strokeWidth={2} strokeLinejoin="round" />
-              {s.pontos.map((p, i) => (p.valor !== null ? <circle key={i} cx={px(i)} cy={py(p.valor)} r={foco === i ? 5 : 3} fill={CORES_SERIE[k]} stroke="#120c0a" strokeWidth={2} /> : null))}
+              <path d={d} fill="none" style={{ stroke: CORES_SERIE[k] }} strokeWidth={2} strokeLinejoin="round" />
+              {s.pontos.map((p, i) => (p.valor !== null ? <circle key={i} cx={px(i)} cy={py(p.valor)} r={foco === i ? 5 : 3} style={{ fill: CORES_SERIE[k], stroke: 'var(--serie-fundo)' }} strokeWidth={2} /> : null))}
             </g>
           );
         })}

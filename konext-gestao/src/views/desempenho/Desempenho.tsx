@@ -1,14 +1,16 @@
-// Desempenho: painel da equipe com as métricas do Meta Ads de cada cliente,
-// classificação de performance e configuração do portal/apresentação do cliente.
-import { AlertTriangle, BarChart3, Copy, ExternalLink, Link2, MessageCircle, Presentation, RefreshCw, Settings, Trash2 } from 'lucide-react';
+// Desempenho: painel da equipe com as métricas do Meta Ads de cada cliente, avaliação de
+// performance e o que o cliente vê (link exclusivo, apresentação e PDF).
+import { AlertTriangle, BarChart3, Copy, Database, ExternalLink, FileDown, Link2, MessageCircle, Presentation, RefreshCw, Settings, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { periodoDe, SeletorPeriodo } from '@/components/SeletorPeriodo';
 import { Avatar, Vazio } from '@/components/ui';
-import { intervaloDoPeriodo, PERIODOS, type Periodo } from '@/lib/meta';
 import {
   BIBLIOTECA,
+  type EscolhaPeriodo,
   type EstadoMetricas,
   formatar,
+  type MapaAcoes,
   METRICAS_PADRAO,
   metricasApi,
   MODELOS_RELATORIO_PADRAO,
@@ -23,35 +25,32 @@ import { classificarCtr, classificarCusto, parametrosCom } from '@/lib/performan
 import { useStore } from '@/lib/store';
 import { useToast } from '@/lib/toast';
 import { type Cliente } from '@/lib/types';
-import { hojeISO } from '@/lib/util';
 
 import { AvisoSoServidor } from '../anuncios/Diagnostico';
-import { SecaoRelatorio, Selo, TabelaCampanhas } from './Secoes';
+import { BlocoRelatorio, Selo, TabelaCampanhas } from './Secoes';
 
-type Aba = 'geral' | 'campanhas' | 'publico' | 'videos' | 'perfil' | 'cliente';
+type Aba = 'geral' | 'campanhas' | 'publico' | 'videos' | 'acoes' | 'cliente';
 const ABAS: Array<{ id: Aba; rotulo: string }> = [
   { id: 'geral', rotulo: 'Visão geral' },
   { id: 'campanhas', rotulo: 'Campanhas' },
   { id: 'publico', rotulo: 'Público' },
   { id: 'videos', rotulo: 'Vídeos' },
-  { id: 'perfil', rotulo: 'Perfil e seguidores' },
   { id: 'cliente', rotulo: 'Relatório do cliente' },
+  { id: 'acoes', rotulo: 'Métricas da conta' },
 ];
+const TODAS: Secao[] = SECOES.map((s) => s.id);
 
 const mensagemDe = (f: unknown) => (f instanceof Error ? f.message : 'Erro inesperado');
 
 export const Desempenho = ({ clienteId }: { clienteId?: string }) => {
   const { dados, ir, backend } = useStore();
   const modoServidor = backend?.modo === 'servidor';
-  const clientes = dados.clientes.filter((c) => c.status !== 'encerrado');
-  const comConta = clientes.filter((c) => c.metaContaId);
+  const comConta = dados.clientes.filter((c) => c.status !== 'encerrado' && c.metaContaId);
   const cliente = comConta.find((c) => c.id === clienteId) || null;
   const params = parametrosCom(dados.config.performance);
 
   const [estado, setEstado] = useState<EstadoMetricas | null>(null);
-  const [periodo, setPeriodo] = useState<Periodo | 'personalizado'>('30');
-  const [de, setDe] = useState(() => intervaloDoPeriodo('30').de);
-  const [ate, setAte] = useState(() => hojeISO());
+  const [periodo, setPeriodo] = useState<EscolhaPeriodo>(() => periodoDe('30'));
   const [comparar, setComparar] = useState(true);
   const [campanhaId, setCampanhaId] = useState('');
   const [objetivo, setObjetivo] = useState('');
@@ -71,13 +70,6 @@ export const Desempenho = ({ clienteId }: { clienteId?: string }) => {
   useEffect(carregarEstado, [carregarEstado]);
 
   useEffect(() => {
-    if (periodo === 'personalizado') return;
-    const i = intervaloDoPeriodo(periodo);
-    setDe(i.de);
-    setAte(i.ate);
-  }, [periodo]);
-
-  useEffect(() => {
     setCampanhaId('');
     setObjetivo('');
     setProcedimento('');
@@ -86,11 +78,11 @@ export const Desempenho = ({ clienteId }: { clienteId?: string }) => {
   }, [clienteId]);
 
   const carregar = useCallback(async () => {
-    if (!cliente || !modoServidor || !de || !ate) return;
+    if (!cliente || !modoServidor) return;
     setCarregando(true);
     setErro('');
     try {
-      const r = await metricasApi.painel(cliente.id, de, ate, campanhaId || undefined, comparar);
+      const r = await metricasApi.painel(cliente.id, periodo, campanhaId || undefined, comparar);
       setRel(r);
       if (!campanhaId) setListaCampanhas(r.campanhas.map((c) => ({ id: c.id, nome: c.nome })));
     } catch (f) {
@@ -98,17 +90,18 @@ export const Desempenho = ({ clienteId }: { clienteId?: string }) => {
     } finally {
       setCarregando(false);
     }
-  }, [cliente, modoServidor, de, ate, campanhaId, comparar]);
+  }, [cliente, modoServidor, periodo, campanhaId, comparar]);
   useEffect(() => {
     void carregar();
   }, [carregar]);
 
-  const sincronizar = async () => {
+  const sincronizar = async (dias?: 'maximo') => {
     if (!cliente) return;
+    if (dias === 'maximo' && !window.confirm('Baixar todo o histórico da conta (até 37 meses)? Em contas grandes pode levar alguns minutos.')) return;
     setSincronizando(true);
     try {
-      const r = await metricasApi.sincronizar(cliente.id);
-      mostrar(`Sincronizado: ${r.linhas} registros de ${r.de.split('-').reverse().join('/')} a ${r.ate.split('-').reverse().join('/')}.${r.avisos.length ? ` ${r.avisos.join(' ')}` : ''}`);
+      const r = await metricasApi.sincronizar(cliente.id, dias);
+      mostrar(`Atualizado: ${r.linhas} registros de ${r.de.split('-').reverse().join('/')} a ${r.ate.split('-').reverse().join('/')}.`);
       carregarEstado();
       await carregar();
     } catch (f) {
@@ -143,6 +136,8 @@ export const Desempenho = ({ clienteId }: { clienteId?: string }) => {
     );
   }
 
+  const props = relFiltrado ? { rel: relFiltrado, params, clienteId: cliente?.id, metricas: cliente?.relatorio?.metricas } : null;
+
   return (
     <div className="pagina">
       <div className="cabecalho">
@@ -150,10 +145,10 @@ export const Desempenho = ({ clienteId }: { clienteId?: string }) => {
           <h1>
             <BarChart3 size={26} /> Desempenho
           </h1>
-          <p>Métricas do Meta Ads por cliente, avaliação de performance e o portal de resultados de cada cliente.</p>
+          <p>Resultados do Meta Ads de cada cliente.</p>
         </div>
         <button type="button" className="btn" onClick={() => ir({ tela: 'config', aba: 'performance' })}>
-          <Settings size={16} /> Referências de performance
+          <Settings size={16} /> Referências
         </button>
       </div>
 
@@ -170,7 +165,7 @@ export const Desempenho = ({ clienteId }: { clienteId?: string }) => {
                   <span>
                     <b>{c.nome}</b>
                     <small className={e?.sincronizacao?.status === 'erro' ? 'erro-texto' : 'muted'}>
-                      {e?.contaCompartilhada ? 'Conta ligada a outro cliente' : e?.sincronizacao?.status === 'erro' ? 'Falha na sincronização' : `Sincronizado: ${quando(e?.sincronizacao?.em)}`}
+                      {e?.contaCompartilhada ? 'Conta ligada a outro cliente' : e?.sincronizacao?.status === 'erro' ? 'Falha na atualização' : `Atualizado ${quando(e?.sincronizacao?.em)}`}
                     </small>
                   </span>
                   {e?.portal ? <Link2 size={14} className="muted" aria-label="Tem link do cliente" /> : null}
@@ -180,24 +175,11 @@ export const Desempenho = ({ clienteId }: { clienteId?: string }) => {
           </div>
 
           {!cliente ? (
-            <Vazio icone={<BarChart3 size={28} />} texto="Escolha um cliente acima para ver o desempenho." />
+            <Vazio icone={<BarChart3 size={28} />} texto="Escolha um cliente acima." />
           ) : (
-            <section className="cartao painel-desempenho">
+            <section className="painel-desempenho">
               <div className="barra-filtros">
-                <select className="input" value={periodo} onChange={(e) => setPeriodo(e.target.value as Periodo | 'personalizado')} aria-label="Período">
-                  {PERIODOS.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.rotulo}
-                    </option>
-                  ))}
-                  <option value="personalizado">Personalizado</option>
-                </select>
-                {periodo === 'personalizado' ? (
-                  <>
-                    <input className="input" type="date" value={de} max={ate} onChange={(e) => setDe(e.target.value)} aria-label="De" />
-                    <input className="input" type="date" value={ate} min={de} max={hojeISO()} onChange={(e) => setAte(e.target.value)} aria-label="Até" />
-                  </>
-                ) : null}
+                <SeletorPeriodo valor={periodo} aoMudar={setPeriodo} real={rel?.periodo} desabilitado={carregando} />
                 <select className="input" value={campanhaId} onChange={(e) => setCampanhaId(e.target.value)} aria-label="Campanha">
                   <option value="">Todas as campanhas</option>
                   {listaCampanhas.map((c) => (
@@ -230,12 +212,12 @@ export const Desempenho = ({ clienteId }: { clienteId?: string }) => {
                   <input type="checkbox" checked={comparar} onChange={(e) => setComparar(e.target.checked)} /> Comparar com o período anterior
                 </label>
                 <div className="sinc">
-                  <span className="muted">
-                    Última sincronização: <b>{quando(est?.sincronizacao?.em)}</b>
-                    {estado?.automaticaHoras ? ` · automática a cada ${estado.automaticaHoras}h` : ''}
-                  </span>
-                  <button type="button" className="btn" onClick={sincronizar} disabled={sincronizando || est?.sincronizacao?.executando}>
-                    <RefreshCw size={15} className={sincronizando ? 'girando' : ''} /> {sincronizando ? 'Sincronizando…' : 'Sincronizar agora'}
+                  <span className="muted">Atualizado {quando(est?.sincronizacao?.em)}</span>
+                  <button type="button" className="btn" onClick={() => void sincronizar()} disabled={sincronizando || est?.sincronizacao?.executando}>
+                    <RefreshCw size={15} className={sincronizando ? 'girando' : ''} /> {sincronizando ? 'Atualizando…' : 'Atualizar agora'}
+                  </button>
+                  <button type="button" className="btn" onClick={() => void sincronizar('maximo')} disabled={sincronizando} title="Baixa todo o histórico da conta para os gráficos de períodos longos">
+                    <Database size={15} /> Histórico completo
                   </button>
                 </div>
               </div>
@@ -243,13 +225,7 @@ export const Desempenho = ({ clienteId }: { clienteId?: string }) => {
               {est?.sincronizacao?.status === 'erro' ? (
                 <div className="faixa alerta">
                   <AlertTriangle size={18} />
-                  <p>Última sincronização falhou: {est.sincronizacao.erro}. Os dados abaixo são do histórico guardado.</p>
-                </div>
-              ) : null}
-              {!est?.sincronizacao?.em ? (
-                <div className="faixa">
-                  <AlertTriangle size={18} />
-                  <p>Este cliente ainda não foi sincronizado. Clique em “Sincronizar agora” para baixar o histórico (até 90 dias). Os totais do período já aparecem consultando a Meta.</p>
+                  <p>A última atualização falhou: {est.sincronizacao.erro}</p>
                 </div>
               ) : null}
               {erro ? (
@@ -267,7 +243,6 @@ export const Desempenho = ({ clienteId }: { clienteId?: string }) => {
                   <p>{a}</p>
                 </div>
               ))}
-              {objetivo || procedimento ? <p className="muted">O filtro de objetivo/procedimento vale para as listas de campanhas; os totais do topo são da conta inteira. Para totais de uma campanha, escolha-a no filtro de campanha.</p> : null}
 
               <div className="abas-desempenho" role="tablist">
                 {ABAS.map((a) => (
@@ -277,29 +252,22 @@ export const Desempenho = ({ clienteId }: { clienteId?: string }) => {
                 ))}
               </div>
 
-              {carregando && !rel ? <p className="muted">Carregando métricas…</p> : null}
-              {relFiltrado ? (
-                <div className={carregando ? 'carregando-suave' : ''}>
-                  {aba === 'geral'
-                    ? (['investimento', 'alcance', 'ctr_cpc', 'frequencia', 'evolucao', 'destaques', 'alertas'] as Secao[]).map((s) => (
-                        <SecaoRelatorio key={s} secao={s} rel={relFiltrado} params={params} clienteId={cliente.id} metricas={cliente.relatorio?.metricas} />
-                      ))
-                    : null}
-                  {aba === 'campanhas' ? <AbaCampanhas rel={relFiltrado} params={params} clienteId={cliente.id} /> : null}
-                  {aba === 'publico' ? <SecaoRelatorio secao="publico" rel={relFiltrado} params={params} clienteId={cliente.id} /> : null}
-                  {aba === 'videos' ? <SecaoRelatorio secao="videos" rel={relFiltrado} params={params} clienteId={cliente.id} /> : null}
-                  {aba === 'perfil' ? (
+              {carregando && !rel ? <p className="muted">Carregando…</p> : null}
+              {props ? (
+                <div className={`rel-escuro${carregando ? ' carregando-suave' : ''}`}>
+                  {aba === 'geral' ? (
                     <>
-                      <SecaoRelatorio secao="perfil" rel={relFiltrado} params={params} clienteId={cliente.id} />
-                      <SecaoRelatorio secao="seguidores" rel={relFiltrado} params={params} clienteId={cliente.id} />
+                      <BlocoRelatorio bloco="visao" secoes={TODAS} {...props} />
+                      <BlocoRelatorio bloco="evolucao" secoes={TODAS} {...props} />
+                      <BlocoRelatorio bloco="destaques" secoes={TODAS} {...props} />
+                      <BlocoRelatorio bloco="alertas" secoes={TODAS} {...props} />
                     </>
                   ) : null}
+                  {aba === 'campanhas' ? <AbaCampanhas rel={props.rel} params={params} clienteId={cliente.id} /> : null}
+                  {aba === 'publico' ? <BlocoRelatorio bloco="publico" secoes={TODAS} {...props} /> : null}
+                  {aba === 'videos' ? (props.rel.videos?.length ? <BlocoRelatorio bloco="videos" secoes={TODAS} {...props} /> : <p className="vazio-rel">Nenhum anúncio em vídeo com reproduções neste período.</p>) : null}
+                  {aba === 'acoes' ? <MetricasDaConta cliente={cliente} periodo={periodo} contaId={rel?.contaId || ''} aoSalvar={carregar} /> : null}
                   {aba === 'cliente' ? <RelatorioDoCliente cliente={cliente} rel={rel} temLink={Boolean(est?.portal)} aoMudarLink={carregarEstado} /> : null}
-                  <p className="rodape-dados muted">
-                    Período {relFiltrado.periodo.de.split('-').reverse().join('/')} a {relFiltrado.periodo.ate.split('-').reverse().join('/')}
-                    {relFiltrado.anterior ? ` · comparado com ${relFiltrado.anterior.de.split('-').reverse().join('/')} a ${relFiltrado.anterior.ate.split('-').reverse().join('/')}` : ''} · conta {relFiltrado.contaId} · totais consultados na Meta em{' '}
-                    {quando(relFiltrado.consultadoEm)}
-                  </p>
                 </div>
               ) : null}
             </section>
@@ -310,7 +278,7 @@ export const Desempenho = ({ clienteId }: { clienteId?: string }) => {
   );
 };
 
-// Campanhas, conjuntos e anúncios numa tabela só, com avaliação.
+// Campanhas, conjuntos e anúncios.
 const AbaCampanhas = ({ rel, params, clienteId }: { rel: Relatorio; params: ReturnType<typeof parametrosCom>; clienteId: string }) => {
   const [nivel, setNivel] = useState<'campanhas' | 'conjuntos' | 'anuncios'>('campanhas');
   const idsCampanhas = new Set(rel.campanhas.map((c) => c.id));
@@ -322,8 +290,8 @@ const AbaCampanhas = ({ rel, params, clienteId }: { rel: Relatorio; params: Retu
         ? (rel.anuncios || []).filter((a) => idsCampanhas.has(a.campanhaId))
         : [];
   return (
-    <section className="secao-relatorio">
-      <div className="chips-metricas">
+    <section className="bloco-rel">
+      <div className="abas-rel">
         {(['campanhas', 'conjuntos', 'anuncios'] as const).map((n) => (
           <button key={n} type="button" className={nivel === n ? 'ativo' : ''} onClick={() => setNivel(n)}>
             {n === 'campanhas' ? 'Campanhas' : n === 'conjuntos' ? 'Conjuntos' : 'Anúncios'}
@@ -333,20 +301,19 @@ const AbaCampanhas = ({ rel, params, clienteId }: { rel: Relatorio; params: Retu
       {nivel === 'campanhas' ? (
         <TabelaCampanhas campanhas={rel.campanhas} params={params} clienteId={clienteId} />
       ) : !linhas.length ? (
-        <Vazio texto="Sem dados neste nível para o período." />
+        <p className="vazio-rel">Sem dados neste nível para o período.</p>
       ) : (
-        <div className="tabela-wrap">
-          <table className="tabela tabela-desempenho tabela-campanhas">
+        <div className="tabela-rel-wrap">
+          <table className="tabela-rel">
             <thead>
               <tr>
                 <th>{nivel === 'conjuntos' ? 'Conjunto' : 'Anúncio'}</th>
-                <th style={{ textAlign: 'right' }}>Investido</th>
-                <th style={{ textAlign: 'right' }}>Resultados</th>
-                <th style={{ textAlign: 'right' }}>Custo/result.</th>
-                <th style={{ textAlign: 'right' }}>Impressões</th>
-                <th style={{ textAlign: 'right' }}>CTR link</th>
-                <th style={{ textAlign: 'right' }}>CPC link</th>
-                <th>Avaliação</th>
+                <th className="num">Investido</th>
+                <th className="num">Resultados</th>
+                <th className="num">Custo por resultado</th>
+                <th className="num">Impressões</th>
+                <th className="num">CTR</th>
+                <th className="num">CPC</th>
               </tr>
             </thead>
             <tbody>
@@ -354,30 +321,120 @@ const AbaCampanhas = ({ rel, params, clienteId }: { rel: Relatorio; params: Retu
                 .sort((a, b) => b.m.gasto - a.m.gasto)
                 .map((l) => (
                   <tr key={l.id}>
-                    <td>
-                      <b>{l.nome}</b>
-                      <div className="linha-tags">
-                        <span className="muted">{nomeCampanha.get(l.campanhaId)}</span>
-                      </div>
+                    <td className="nome-camp" data-rotulo={nivel === 'conjuntos' ? 'Conjunto' : 'Anúncio'}>
+                      {l.nome}
+                      <small className="tipo-res">{nomeCampanha.get(l.campanhaId)}</small>
                     </td>
-                    <td className="num" data-rotulo="Investido" style={{ textAlign: 'right' }}>{formatar(l.m.gasto, 'moeda')}</td>
-                    <td className="num" data-rotulo="Resultados" style={{ textAlign: 'right' }}>{formatar(l.m.resultados, 'numero')}</td>
-                    <td className="num" data-rotulo="Custo/result." style={{ textAlign: 'right' }}>{formatar(l.m.custoPorResultado, 'moeda')}</td>
-                    <td className="num" data-rotulo="Impressões" style={{ textAlign: 'right' }}>{formatar(l.m.impressoes, 'numero')}</td>
-                    <td className="num" data-rotulo="CTR link" style={{ textAlign: 'right' }}>{formatar(l.m.ctrLink, 'pct')}</td>
-                    <td className="num" data-rotulo="CPC link" style={{ textAlign: 'right' }}>{formatar(l.m.cpcLink, 'moeda')}</td>
-                    <td data-rotulo="Avaliação">
-                      <div className="linha-tags">
-                        <Selo c={classificarCusto(l.m, params, { clienteId })} />
-                        <Selo c={classificarCtr(l.m, params, { clienteId })} />
-                      </div>
+                    <td className="num" data-rotulo="Investido">{formatar(l.m.gasto, 'moeda')}</td>
+                    <td className="num" data-rotulo="Resultados">
+                      {formatar(l.m.resultados, 'numero')}
+                      {l.m.resultados !== null ? <small className="tipo-res">{l.m.tipoResultado.toLowerCase()}</small> : null}
                     </td>
+                    <td className="num" data-rotulo="Custo por resultado">
+                      {formatar(l.m.custoPorResultado, 'moeda')} <Selo c={classificarCusto(l.m, params, { clienteId })} />
+                    </td>
+                    <td className="num" data-rotulo="Impressões">{formatar(l.m.impressoes, 'numero')}</td>
+                    <td className="num" data-rotulo="CTR">
+                      {formatar(l.m.ctrLink, 'pct')} <Selo c={classificarCtr(l.m, params, { clienteId })} />
+                    </td>
+                    <td className="num" data-rotulo="CPC">{formatar(l.m.cpcLink, 'moeda')}</td>
                   </tr>
                 ))}
             </tbody>
           </table>
         </div>
       )}
+    </section>
+  );
+};
+
+// Todas as ações que a Meta devolve para a conta. Aqui se escolhe qual delas é “seguidor”
+// e qual é “visita ao perfil”, igual ao que aparece no Gerenciador.
+const NOMES_ACAO: Record<string, string> = {
+  link_click: 'Cliques no link',
+  page_engagement: 'Engajamento com a página',
+  post_engagement: 'Engajamento com a publicação',
+  post_reaction: 'Reações',
+  comment: 'Comentários',
+  post: 'Compartilhamentos',
+  like: 'Curtidas da página',
+  video_view: 'Reproduções de 3 s',
+  landing_page_view: 'Visualizações da página de destino',
+  'onsite_conversion.messaging_conversation_started_7d': 'Conversas iniciadas',
+  'onsite_conversion.messaging_first_reply': 'Primeiras respostas',
+  'onsite_conversion.total_messaging_connection': 'Conexões por mensagem',
+  'onsite_conversion.post_save': 'Salvamentos',
+  instagram_profile_visit: 'Visitas ao perfil do Instagram',
+};
+
+const MetricasDaConta = ({ cliente, periodo, contaId, aoSalvar }: { cliente: Cliente; periodo: EscolhaPeriodo; contaId: string; aoSalvar: () => void }) => {
+  const { dados, salvarConfig } = useStore();
+  const mostrar = useToast((e) => e.mostrar);
+  const [acoes, setAcoes] = useState<Array<{ tipo: string; total: number; seguidor: boolean; visitaPerfil: boolean }> | null>(null);
+  const [erro, setErro] = useState('');
+  const carregar = useCallback(() => {
+    setErro('');
+    metricasApi
+      .acoes(cliente.id, periodo)
+      .then((r) => setAcoes(r.acoes))
+      .catch((f) => setErro(mensagemDe(f)));
+  }, [cliente.id, periodo]);
+  useEffect(carregar, [carregar]);
+  const mapa: MapaAcoes = (contaId && dados.config.acoesMetricas?.[contaId]) || {};
+  const marcar = (campo: keyof MapaAcoes, tipo: string, ligado: boolean) => {
+    if (!contaId) return;
+    const atual = mapa[campo]?.length ? mapa[campo]! : (acoes || []).filter((a) => (campo === 'seguidores' ? a.seguidor : a.visitaPerfil)).map((a) => a.tipo);
+    const novo = ligado ? [...new Set([...atual, tipo])] : atual.filter((t) => t !== tipo);
+    salvarConfig({ ...dados.config, acoesMetricas: { ...(dados.config.acoesMetricas || {}), [contaId]: { ...mapa, [campo]: novo } } });
+    mostrar('Salvo. Os números são recalculados com essa escolha.');
+    setTimeout(() => {
+      carregar();
+      aoSalvar();
+    }, 600);
+  };
+  return (
+    <section className="bloco-rel">
+      <div className="cabeca-bloco">
+        <h2>Métricas da conta</h2>
+        <p>Tudo o que a Meta informou para esta conta no período. Marque qual ação conta como seguidor ganho com anúncios e como visita ao perfil (use o mesmo nome da coluna do Gerenciador).</p>
+      </div>
+      {erro ? <p className="erro-texto">{erro}</p> : null}
+      {!acoes ? (
+        <p className="muted">Carregando…</p>
+      ) : !acoes.length ? (
+        <p className="vazio-rel">A Meta não devolveu ações neste período.</p>
+      ) : (
+        <div className="tabela-rel-wrap">
+          <table className="tabela-rel">
+            <thead>
+              <tr>
+                <th>Ação informada pela Meta</th>
+                <th className="num">Total no período</th>
+                <th>É seguidor?</th>
+                <th>É visita ao perfil?</th>
+              </tr>
+            </thead>
+            <tbody>
+              {acoes.map((a) => (
+                <tr key={a.tipo}>
+                  <td className="nome-camp" data-rotulo="Ação">
+                    {NOMES_ACAO[a.tipo] || a.tipo}
+                    <small className="tipo-res">{a.tipo}</small>
+                  </td>
+                  <td className="num" data-rotulo="Total">{formatar(a.total, 'numero')}</td>
+                  <td data-rotulo="É seguidor?">
+                    <input type="checkbox" checked={a.seguidor} onChange={(e) => marcar('seguidores', a.tipo, e.target.checked)} aria-label={`${a.tipo} é seguidor`} />
+                  </td>
+                  <td data-rotulo="É visita ao perfil?">
+                    <input type="checkbox" checked={a.visitaPerfil} onChange={(e) => marcar('visitasPerfil', a.tipo, e.target.checked)} aria-label={`${a.tipo} é visita ao perfil`} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p className="nota-rel">Se nenhuma ação de seguidor aparecer aqui, a Meta ainda não está entregando “Seguidores no Instagram” para esta conta pela API; nesse caso o número fica como indisponível (não estimamos).</p>
     </section>
   );
 };
@@ -463,7 +520,7 @@ const RelatorioDoCliente = ({ cliente, rel, temLink, aoMudarLink }: { cliente: C
 
   return (
     <div className="relatorio-cliente">
-      <section className="secao-relatorio">
+      <section className="bloco-rel">
         <div className="cabeca-rel">
           <h3>
             <Link2 size={18} /> Link exclusivo do cliente
@@ -498,10 +555,13 @@ const RelatorioDoCliente = ({ cliente, rel, temLink, aoMudarLink }: { cliente: C
           <button type="button" className="btn" onClick={() => ir({ tela: 'apresentar-resultados', clienteId: cliente.id })}>
             <Presentation size={15} /> Apresentar em reunião
           </button>
+          <button type="button" className="btn" onClick={() => ir({ tela: 'relatorio-pdf', clienteId: cliente.id })}>
+            <FileDown size={15} /> Ver e baixar PDF
+          </button>
         </div>
       </section>
 
-      <section className="secao-relatorio">
+      <section className="bloco-rel">
         <div className="cabeca-rel">
           <h3>O que o cliente vê</h3>
           <p>Vale para o portal e para a apresentação. Escolha um modelo e ajuste as seções e métricas.</p>

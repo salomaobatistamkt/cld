@@ -1,4 +1,4 @@
-import { type ModeloRelatorio, type ParametrosPerformance, type Secao } from './metricas';
+import { type MapaAcoes, type ModeloRelatorio, type ParametrosPerformance, type Secao } from './metricas';
 
 export type StatusCliente = 'lead' | 'onboarding' | 'ativo' | 'pausado' | 'encerrado';
 
@@ -140,6 +140,8 @@ export type Config = {
   // Referências de performance (Desempenho) e modelos de relatório/apresentação.
   performance?: ParametrosPerformance;
   modelosRelatorio?: ModeloRelatorio[];
+  // Por conta de anúncios (act_…): quais ações da Meta contam como seguidor / visita ao perfil.
+  acoesMetricas?: Record<string, MapaAcoes>;
 };
 
 // Etapa feita uma vez, no começo do serviço (vira uma entrega do cliente).
@@ -212,4 +214,5 @@ export type Rota =
   | { tela: 'config'; aba?: string }
   | { tela: 'apresentacao'; clienteId: string }
   | { tela: 'desempenho'; clienteId?: string }
-  | { tela: 'apresentar-resultados'; clienteId: string };
+  | { tela: 'apresentar-resultados'; clienteId: string }
+  | { tela: 'relatorio-pdf'; clienteId: string };

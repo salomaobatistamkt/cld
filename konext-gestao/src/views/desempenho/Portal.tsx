@@ -1,13 +1,13 @@
-// Portal de resultados do cliente (link exclusivo, sem login, só leitura).
-// Tudo o que aparece aqui vem do servidor já filtrado para o cliente dono do link.
-import { AlertTriangle, BarChart3, RefreshCw } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+// Relatório de resultados em visual claro: é o que o cliente vê no link exclusivo e o que
+// vira PDF. Tudo vem do servidor já filtrado para o cliente.
+import { AlertTriangle, Download, RefreshCw } from 'lucide-react';
+import { type ReactNode, useCallback, useEffect, useState } from 'react';
 
-import { intervaloDoPeriodo, PERIODOS, type Periodo } from '@/lib/meta';
-import { dataBR, lerPortal, quando, type Relatorio, SECOES } from '@/lib/metricas';
+import { SeletorPeriodo, periodoDe } from '@/components/SeletorPeriodo';
+import { dataBR, type EscolhaPeriodo, lerPortal, quando, type Relatorio, type Secao } from '@/lib/metricas';
 import { parametrosCom } from '@/lib/performance';
 
-import { rotuloSecao, SecaoRelatorio } from './Secoes';
+import { BlocoRelatorio, blocosDe } from './Secoes';
 
 const iniciais = (nome: string) =>
   nome
@@ -17,8 +17,85 @@ const iniciais = (nome: string) =>
     .map((p) => p[0]?.toUpperCase())
     .join('');
 
+export const imprimir = () => {
+  // Abre a janela de impressão do navegador: “Salvar como PDF” gera o arquivo com este mesmo visual.
+  window.print();
+};
+
+export const RelatorioView = ({
+  rel,
+  periodo,
+  aoMudarPeriodo,
+  carregando,
+  secoes,
+  metricas,
+  clienteId,
+  titulo,
+  mensagem,
+  extra,
+}: {
+  rel: Relatorio;
+  periodo: EscolhaPeriodo;
+  aoMudarPeriodo: (p: EscolhaPeriodo) => void;
+  carregando?: boolean;
+  secoes: Secao[];
+  metricas?: string[];
+  clienteId?: string;
+  titulo?: string;
+  mensagem?: string;
+  extra?: ReactNode;
+}) => {
+  const params = parametrosCom(rel.parametros);
+  const blocos = blocosDe(secoes);
+  return (
+    <div className="rel-claro">
+      <header className="rel-topo">
+        <div className="rel-titulo">
+          <span className="rel-avatar" style={{ background: rel.cliente.cor || '#2563eb' }} aria-hidden="true">
+            {iniciais(rel.cliente.nome)}
+          </span>
+          <div>
+            <h1>{titulo || `Resultados de ${rel.cliente.nome}`}</h1>
+            <p>
+              Período: {dataBR(rel.periodo.de)} a {dataBR(rel.periodo.ate)}
+              {rel.anterior ? <span className="so-tela"> · comparado com {dataBR(rel.anterior.de)} a {dataBR(rel.anterior.ate)}</span> : null}
+            </p>
+          </div>
+        </div>
+        <div className="rel-acoes nao-imprimir">
+          <SeletorPeriodo valor={periodo} aoMudar={aoMudarPeriodo} real={rel.periodo} desabilitado={carregando} />
+          <button type="button" className="btn-claro" onClick={imprimir}>
+            <Download size={16} /> Baixar PDF
+          </button>
+          {extra}
+        </div>
+      </header>
+      {mensagem ? <p className="rel-mensagem">{mensagem}</p> : null}
+      {rel.avisos.map((a) => (
+        <p key={a} className="rel-aviso">
+          <AlertTriangle size={15} /> {a}
+        </p>
+      ))}
+      <main className={carregando ? 'carregando-suave' : ''}>
+        {rel.resumo.gasto === 0 && !rel.campanhas.length ? (
+          <p className="vazio-rel">Nenhum anúncio veiculado neste período.</p>
+        ) : (
+          blocos.map((b) => <BlocoRelatorio key={b} bloco={b} secoes={secoes} rel={rel} params={params} metricas={metricas} clienteId={clienteId} />)
+        )}
+      </main>
+      <footer className="rel-rodape">
+        <span>
+          <RefreshCw size={12} /> Dados do Meta Ads atualizados em {quando(rel.sincronizacao.em || rel.consultadoEm)}
+        </span>
+        <span>{rel.agencia?.nome ? `Relatório preparado por ${rel.agencia.nome}` : ''}</span>
+      </footer>
+    </div>
+  );
+};
+
+// Página pública do link exclusivo (/resultados/<token>).
 export const Portal = ({ token }: { token: string }) => {
-  const [periodo, setPeriodo] = useState<Periodo>('30');
+  const [periodo, setPeriodo] = useState<EscolhaPeriodo>(() => periodoDe('30'));
   const [rel, setRel] = useState<Relatorio | null>(null);
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(true);
@@ -27,10 +104,9 @@ export const Portal = ({ token }: { token: string }) => {
     setCarregando(true);
     setErro('');
     try {
-      const { de, ate } = intervaloDoPeriodo(periodo);
-      const r = await lerPortal(token, de, ate);
+      const r = await lerPortal(token, periodo);
       setRel(r);
-      document.title = `${r.titulo || `Resultados · ${r.cliente.nome}`}`;
+      document.title = r.titulo || `Resultados · ${r.cliente.nome}`;
     } catch (f) {
       setErro(f instanceof Error ? f.message : 'Não foi possível carregar os resultados.');
     } finally {
@@ -41,105 +117,16 @@ export const Portal = ({ token }: { token: string }) => {
     void carregar();
   }, [carregar]);
 
-  if (!rel && erro) {
-    return (
-      <div className="portal">
-        <div className="portal-erro">
-          <AlertTriangle size={30} />
-          <h1>Resultados indisponíveis</h1>
-          <p>{erro}</p>
-        </div>
-      </div>
-    );
-  }
-  if (!rel) {
-    return (
-      <div className="portal">
-        <div className="portal-erro">
-          <RefreshCw size={26} className="girando" />
-          <p>Carregando resultados…</p>
-        </div>
-      </div>
-    );
-  }
-
-  const params = parametrosCom(rel.parametros);
-  const secoes = SECOES.map((s) => s.id).filter((s) => rel.secoes.includes(s));
-
   return (
-    <div className="portal">
-      <header className="portal-topo" style={{ ['--cor-cliente' as string]: rel.cliente.cor || '#eae6e4' }}>
-        <div className="portal-marca">
-          {rel.agencia?.logo ? <img src={rel.agencia.logo} alt={rel.agencia.nome} /> : <span className="logo-texto">{(rel.agencia?.nome || 'konext').toLowerCase()}</span>}
-        </div>
-        <div className="portal-cliente">
-          <span className="portal-avatar" style={{ background: rel.cliente.cor || '#3a302b' }} aria-hidden="true">
-            {iniciais(rel.cliente.nome)}
-          </span>
-          <div>
-            <h1>{rel.titulo || `Resultados de ${rel.cliente.nome}`}</h1>
-            <p>
-              Campanhas no Meta Ads (Facebook e Instagram){rel.cliente.instagram ? ` · @${rel.cliente.instagram}` : ''}
-            </p>
-          </div>
-        </div>
-        {rel.mensagem ? <p className="portal-mensagem">{rel.mensagem}</p> : null}
-        <div className="portal-controles">
-          <select className="input" value={periodo} onChange={(e) => setPeriodo(e.target.value as Periodo)} aria-label="Período" disabled={carregando}>
-            {PERIODOS.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.rotulo}
-              </option>
-            ))}
-          </select>
-          <span>
-            {dataBR(rel.periodo.de)} a {dataBR(rel.periodo.ate)}
-            {rel.anterior ? ` · comparado com ${dataBR(rel.anterior.de)} a ${dataBR(rel.anterior.ate)}` : ''}
-          </span>
-          <span className="portal-atualizado">
-            <RefreshCw size={13} className={carregando ? 'girando' : ''} /> Dados atualizados em {quando(rel.sincronizacao.em || rel.consultadoEm)}
-          </span>
-        </div>
-        {secoes.length > 3 ? (
-          <nav className="portal-indice" aria-label="Seções">
-            {secoes.map((s) => (
-              <a key={s} href={`#secao-${s}`} onClick={(e) => {
-                e.preventDefault();
-                document.getElementById(`secao-${s}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }}>
-                {rotuloSecao(s)}
-              </a>
-            ))}
-          </nav>
-        ) : null}
-      </header>
-
-      <main className={`portal-corpo${carregando ? ' carregando-suave' : ''}`}>
-        {erro ? (
-          <div className="faixa alerta">
-            <AlertTriangle size={18} />
-            <p>{erro}</p>
-          </div>
-        ) : null}
-        {rel.avisos.map((a) => (
-          <div key={a} className="faixa">
-            <AlertTriangle size={18} />
-            <p>{a}</p>
-          </div>
-        ))}
-        {rel.resumo.gasto === 0 && !rel.campanhas.length ? (
-          <div className="portal-erro">
-            <BarChart3 size={28} />
-            <p>Nenhum anúncio veiculado neste período.</p>
-          </div>
-        ) : (
-          secoes.map((s) => <SecaoRelatorio key={s} secao={s} rel={rel} params={params} metricas={rel.metricas} />)
-        )}
-      </main>
-      <footer className="portal-rodape">
-        <span>Dados oficiais do Meta Ads · página somente para consulta</span>
-        <span>Taxas e custos são calculados a partir dos dados da Meta; métricas que a Meta não informa aparecem como indisponíveis.</span>
-      </footer>
+    <div className="pagina-clara">
+      {!rel ? (
+        <div className="rel-espera">{erro ? <><AlertTriangle size={26} /><h1>Resultados indisponíveis</h1><p>{erro}</p></> : <><RefreshCw size={22} className="girando" /><p>Carregando resultados…</p></>}</div>
+      ) : (
+        <>
+          {erro ? <p className="rel-aviso"><AlertTriangle size={15} /> {erro}</p> : null}
+          <RelatorioView rel={rel} periodo={periodo} aoMudarPeriodo={setPeriodo} carregando={carregando} secoes={rel.secoes} metricas={rel.metricas} titulo={rel.titulo} mensagem={rel.mensagem} />
+        </>
+      )}
     </div>
   );
 };

@@ -20,6 +20,8 @@ export const rotaParaHash = (rota: Rota): string => {
       return rota.clienteId ? `#/desempenho/${rota.clienteId}` : '#/desempenho';
     case 'apresentar-resultados':
       return `#/apresentar-resultados/${rota.clienteId}`;
+    case 'relatorio-pdf':
+      return `#/relatorio-pdf/${rota.clienteId}`;
     default:
       return `#/${rota.tela}`;
   }
@@ -45,6 +47,8 @@ export const hashParaRota = (hash: string): Rota => {
       return { tela: 'desempenho', clienteId: id || undefined };
     case 'apresentar-resultados':
       return id ? { tela: 'apresentar-resultados', clienteId: id } : { tela: 'desempenho' };
+    case 'relatorio-pdf':
+      return id ? { tela: 'relatorio-pdf', clienteId: id } : { tela: 'desempenho' };
     case 'cliente':
       return id ? { tela: 'cliente', id, aba: aba || undefined } : { tela: 'clientes' };
     case 'quadro':

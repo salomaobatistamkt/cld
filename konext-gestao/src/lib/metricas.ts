@@ -101,6 +101,13 @@ export type VideoRel = { id: string; nome: string; campanha: string; conjunto: s
 
 export type Sincronizacao = { em: string | null; de?: string | null; ate?: string | null; status?: string | null; erro?: string | null; executando?: boolean };
 
+// Resultados de cada tipo (objetivo), com o custo calculado só com o investimento daquele tipo.
+export type PorTipo = { indicador: string; tipo: string; resultados: number; gasto: number; custo: number | null; campanhas: number };
+
+// Período escolhido: atalho, intervalo livre ou o máximo da conta (decidido no servidor).
+export type EscolhaPeriodo = { modo: 'hoje' | '7' | '14' | '30' | '90' | 'mes' | 'mes-passado' | 'maximo' | 'personalizado'; de: string; ate: string };
+export const consultaPeriodo = (p: EscolhaPeriodo) => (p.modo === 'maximo' ? 'periodo=maximo' : `de=${p.de}&ate=${p.ate}`);
+
 export type Relatorio = {
   cliente: { id?: string; nome: string; cor: string; instagram: string | null };
   periodo: { de: string; ate: string; dias: number };
@@ -109,11 +116,10 @@ export type Relatorio = {
   consultadoEm: string | null;
   secoes: Secao[];
   avisos: string[];
-  resumo: Derivadas;
-  resumoAnterior: Derivadas | null;
+  resumo: Derivadas & { porTipo: PorTipo[] };
+  resumoAnterior: (Derivadas & { porTipo: PorTipo[] }) | null;
   campanhas: CampanhaRel[];
   serie?: PontoSerie[];
-  seguidoresPerfil?: SeguidoresPerfil;
   videos?: VideoRel[];
   segmentos?: Record<string, Segmento>;
   conjuntos?: Array<{ id: string; nome: string; campanhaId: string; status: string; orcamentoDiario: number | null; m: Derivadas }>;
@@ -253,6 +259,9 @@ export type RegraPerformance = {
   ctrExcelente?: number;
 };
 
+// Ação da Meta que conta como seguidor / visita ao perfil, por conta (Desempenho → Métricas da conta).
+export type MapaAcoes = { seguidores?: string[]; visitasPerfil?: string[] };
+
 export type ParametrosPerformance = {
   ctrMuitoAlto: number;
   ctrExcelente: number;
@@ -311,10 +320,12 @@ export type EstadoMetricas = {
 
 export const metricasApi = {
   estado: () => pedir<EstadoMetricas>('/estado'),
-  sincronizar: (clienteId: string, dias?: number) =>
+  sincronizar: (clienteId: string, dias?: number | 'maximo') =>
     pedir<{ status: string; linhas: number; de: string; ate: string; avisos: string[] }>('/sincronizar', { method: 'POST', body: JSON.stringify({ clienteId, dias }) }),
-  painel: (clienteId: string, de: string, ate: string, campanhaId?: string, comparar = true) =>
-    pedir<Relatorio>(`/painel?clienteId=${encodeURIComponent(clienteId)}&de=${de}&ate=${ate}${campanhaId ? `&campanhaId=${encodeURIComponent(campanhaId)}` : ''}${comparar ? '' : '&comparar=0'}`),
+  painel: (clienteId: string, periodo: EscolhaPeriodo, campanhaId?: string, comparar = true) =>
+    pedir<Relatorio>(`/painel?clienteId=${encodeURIComponent(clienteId)}&${consultaPeriodo(periodo)}${campanhaId ? `&campanhaId=${encodeURIComponent(campanhaId)}` : ''}${comparar ? '' : '&comparar=0'}`),
+  acoes: (clienteId: string, periodo: EscolhaPeriodo) =>
+    pedir<{ acoes: Array<{ tipo: string; total: number; seguidor: boolean; visitaPerfil: boolean }>; mapa: MapaAcoes; contaId: string }>(`/acoes?clienteId=${encodeURIComponent(clienteId)}&${consultaPeriodo(periodo)}`),
   gerarLink: (clienteId: string) => pedir<{ token: string }>(`/portais/${encodeURIComponent(clienteId)}`, { method: 'POST', body: '{}' }),
   lerLink: (clienteId: string) => pedir<{ token: string }>(`/portais/${encodeURIComponent(clienteId)}`),
   revogarLink: (clienteId: string) => pedir<void>(`/portais/${encodeURIComponent(clienteId)}`, { method: 'DELETE' }),
@@ -322,8 +333,8 @@ export const metricasApi = {
 
 export const urlPortal = (token: string) => `${window.location.origin}/resultados/${token}`;
 
-export const lerPortal = async (token: string, de?: string, ate?: string): Promise<Relatorio> => {
-  const q = de && ate ? `?de=${de}&ate=${ate}` : '';
+export const lerPortal = async (token: string, periodo?: EscolhaPeriodo): Promise<Relatorio> => {
+  const q = periodo ? `?${consultaPeriodo(periodo)}` : '';
   const r = await fetch(`/api/publico/resultados/${encodeURIComponent(token)}${q}`, { cache: 'no-store', referrerPolicy: 'no-referrer' });
   const corpo = await r.json().catch(() => ({}));
   if (!r.ok) throw new ErroMetricas((corpo as { erro?: string }).erro || `Erro ${r.status}`);

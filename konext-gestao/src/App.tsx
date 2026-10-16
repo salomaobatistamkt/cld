@@ -36,7 +36,7 @@ import { CriarCampanha } from '@/views/anuncios/CriarCampanha';
 import { BibliotecaCriativos } from '@/views/anuncios/Criativos';
 import { CentralExecucao } from '@/views/anuncios/Execucao';
 import { DiagnosticoMeta } from '@/views/anuncios/Diagnostico';
-import { ApresentarResultados } from '@/views/desempenho/ApresentarResultados';
+import { ApresentarResultados, RelatorioPdf } from '@/views/desempenho/ApresentarResultados';
 import { Desempenho } from '@/views/desempenho/Desempenho';
 import { Apresentacao } from '@/views/Apresentacao';
 import { Caixa } from '@/views/Caixa';
@@ -121,7 +121,7 @@ export const App = () => {
     item.tela === rota.tela ||
     (item.tela === 'clientes' && (rota.tela === 'cliente' || rota.tela === 'apresentacao')) ||
     (item.tela === 'quadros' && rota.tela === 'quadro') ||
-    (item.tela === 'desempenho' && rota.tela === 'apresentar-resultados');
+    (item.tela === 'desempenho' && (rota.tela === 'apresentar-resultados' || rota.tela === 'relatorio-pdf'));
 
   const navegar = (item: ItemMenu) => {
     setMaisAberto(false);
@@ -190,6 +190,7 @@ export const App = () => {
         return <DiagnosticoMeta />;
       case 'desempenho':
       case 'apresentar-resultados':
+      case 'relatorio-pdf':
         return <Desempenho clienteId={rota.clienteId} />;
       case 'caixa':
         return <Caixa />;
@@ -295,6 +296,7 @@ export const App = () => {
       ) : null}
       {rota.tela === 'apresentacao' ? <Apresentacao clienteId={rota.clienteId} /> : null}
       {rota.tela === 'apresentar-resultados' ? <ApresentarResultados clienteId={rota.clienteId} /> : null}
+      {rota.tela === 'relatorio-pdf' ? <RelatorioPdf clienteId={rota.clienteId} /> : null}
 
       {toast ? <div className={`toast${toast.erro ? ' erro' : ''}`}>{toast.texto}</div> : null}
       {erroSalvar ? <div className="toast erro">Não foi possível salvar: {erroSalvar}</div> : null}

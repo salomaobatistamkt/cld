@@ -26,7 +26,9 @@ const lerResultado = (lista) => {
   if (!Array.isArray(lista) || !lista.length) return { valor: null, indicador: '' };
   const p = lista[0];
   const valores = Array.isArray(p.values) ? p.values : p.value !== undefined ? [{ value: p.value }] : [];
-  return { valor: valores.length ? valores.reduce((t, v) => t + (num(v.value) ?? 0), 0) : null, indicador: p.indicator || '' };
+  // A Meta manda o indicador sem valores quando o resultado do período é zero.
+  if (!valores.length) return { valor: p.indicator ? 0 : null, indicador: p.indicator || '' };
+  return { valor: valores.reduce((t, v) => t + (num(v.value) ?? 0), 0), indicador: p.indicator || '' };
 };
 
 export const rotuloResultado = (indicador = '') => {
@@ -44,8 +46,10 @@ export const rotuloResultado = (indicador = '') => {
 };
 
 // Ações da Meta que contam como visita ao perfil / seguidor (o tipo exato é guardado como fonte).
-const ehVisitaPerfil = (tipo) => /profile_visit/i.test(tipo);
-const ehSeguidor = (tipo) => /(^|[._])follow/i.test(tipo) && !/unfollow/i.test(tipo);
+// O administrador pode apontar exatamente qual ação da conta conta como seguidor/visita
+// (Desempenho → Métricas da conta). Sem escolha, reconhece pelos nomes que a Meta usa.
+const ehVisitaPerfil = (tipo, mapa = {}) => (mapa.visitasPerfil?.length ? mapa.visitasPerfil.includes(tipo) : /profile_visit/i.test(tipo));
+const ehSeguidor = (tipo, mapa = {}) => (mapa.seguidores?.length ? mapa.seguidores.includes(tipo) : /(^|[._])follow/i.test(tipo) && !/unfollow/i.test(tipo));
 
 // ---------- Normalização de uma linha de insights ----------
 const normalizar = (l) => {
@@ -107,10 +111,10 @@ const somar = (linhas) => {
 };
 
 // Métricas calculadas (sempre a partir das somas, com o denominador certo).
-const derivar = (n) => {
+const derivar = (n, mapa = {}) => {
   if (!n) return null;
-  const visitas = Object.entries(n.acoes || {}).filter(([k]) => ehVisitaPerfil(k));
-  const seguidores = Object.entries(n.acoes || {}).filter(([k]) => ehSeguidor(k));
+  const visitas = Object.entries(n.acoes || {}).filter(([k]) => ehVisitaPerfil(k, mapa));
+  const seguidores = Object.entries(n.acoes || {}).filter(([k]) => ehSeguidor(k, mapa));
   let visitasPerfil = visitas.length ? visitas.reduce((t, [, v]) => t + v, 0) : null;
   if (visitasPerfil === null && /profile_visit/.test(n.indicador || '') && n.resultados !== null) visitasPerfil = n.resultados;
   let seguidoresAnuncios = seguidores.length ? seguidores.reduce((t, [, v]) => t + v, 0) : null;
@@ -294,7 +298,16 @@ export const criarMetricas = ({ db, graph, ErroMeta, normalizarConta, ler, lista
     return campanhas.data.length + conjuntos.data.length + anuncios.data.length;
   };
 
-  const sincronizarDiarias = async (act, de, ate) => {
+  const sincronizarDiarias = async (act, deTotal, ateTotal) => {
+    let linhas = 0;
+    // Em janelas de até 60 dias para não estourar o limite de linhas por consulta.
+    for (let de = deTotal; de <= ateTotal; de = somarDias(de, 60)) {
+      const ateJanela = somarDias(de, 59) < ateTotal ? somarDias(de, 59) : ateTotal;
+      linhas += await sincronizarJanela(act, de, ateJanela);
+    }
+    return linhas;
+  };
+  const sincronizarJanela = async (act, de, ate) => {
     let linhas = 0;
     for (const nivel of ['account', 'campaign', 'adset', 'ad']) {
       const dados = await lerInsights(act, { nivel, de, ate, diario: true });
@@ -312,29 +325,22 @@ export const criarMetricas = ({ db, graph, ErroMeta, normalizarConta, ler, lista
     return linhas;
   };
 
-  // Seguidores do perfil do Instagram: total atual (instagram_basic) e, se a permissão
-  // instagram_manage_insights existir, os novos seguidores por dia. É o crescimento TOTAL do
-  // perfil (orgânico + pago), sempre mostrado separado do que a Meta atribui aos anúncios.
-  const sincronizarSeguidores = async (instagramId) => {
-    if (!instagramId) return;
-    const perfil = await graph(instagramId, { fields: 'followers_count' });
-    if (num(perfil.followers_count) !== null)
-      db.prepare('INSERT INTO met_seguidores (instagram_id, data, total, fonte) VALUES (?, ?, ?, ?) ON CONFLICT (instagram_id, data) DO UPDATE SET total = excluded.total')
-        .run(instagramId, hoje(), num(perfil.followers_count), 'followers_count');
-    try {
-      const ate = Math.floor(Date.now() / 1000);
-      const r = await graph(`${instagramId}/insights`, { metric: 'follower_count', period: 'day', since: String(ate - 29 * 86400), until: String(ate) });
-      for (const m of r.data || []) {
-        for (const v of m.values || []) {
-          const data = String(v.end_time || '').slice(0, 10);
-          if (dataValida(data) && num(v.value) !== null)
-            db.prepare('INSERT INTO met_seguidores (instagram_id, data, novos, fonte) VALUES (?, ?, ?, ?) ON CONFLICT (instagram_id, data) DO UPDATE SET novos = excluded.novos')
-              .run(instagramId, somarDias(data, -1), num(v.value), 'follower_count');
-        }
+  // Primeiro dia com dados possível: criação da conta, limitado aos 37 meses que a Meta guarda.
+  const LIMITE_DIAS = 1120;
+  const inicioDaConta = async (act) => {
+    const minimo = somarDias(hoje(), -(LIMITE_DIAS - 1));
+    const guardado = lerCache(`inicio|${act}`, 7 * DIA);
+    let inicio = guardado?.dados;
+    if (!inicio) {
+      try {
+        const c = await graph(act, { fields: 'created_time' });
+        inicio = String(c.created_time || '').slice(0, 10);
+      } catch {
+        inicio = null;
       }
-    } catch {
-      // sem instagram_manage_insights: fica só o total (histórico vai se formando a cada sincronização)
+      if (dataValida(inicio)) gravarCache(`inicio|${act}`, act, inicio);
     }
+    return dataValida(inicio) && inicio > minimo ? inicio : minimo;
   };
 
   const emAndamento = new Set();
@@ -344,9 +350,8 @@ export const criarMetricas = ({ db, graph, ErroMeta, normalizarConta, ler, lista
     if (!act) throw new ErroMeta('Este cliente não tem conta de anúncios válida.', 400);
     if (emAndamento.has(act)) throw new ErroMeta('Já existe uma sincronização desta conta em andamento.', 409);
     const temHistorico = db.prepare('SELECT 1 FROM met_diarias WHERE conta_id = ? LIMIT 1').get(act);
-    const n = dias ?? (temHistorico ? 35 : 90);
     const ate = hoje();
-    const de = somarDias(ate, -(n - 1));
+    const de = dias === 'maximo' ? await inicioDaConta(act) : somarDias(ate, -((dias ?? (temHistorico ? 35 : 90)) - 1));
     const id = randomUUID();
     db.prepare('INSERT INTO met_sincronizacoes (id, conta_id, cliente_id, inicio, status, de, ate, origem) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(id, act, clienteId, agora(), 'executando', de, ate, origem);
     emAndamento.add(act);
@@ -354,11 +359,6 @@ export const criarMetricas = ({ db, graph, ErroMeta, normalizarConta, ler, lista
       let linhas = await sincronizarObjetos(act);
       linhas += await sincronizarDiarias(act, de, ate);
       const avisos = [];
-      try {
-        await sincronizarSeguidores(cliente.metaInstagramId);
-      } catch (falha) {
-        avisos.push(`Seguidores do Instagram: ${falha.message}`);
-      }
       db.prepare('DELETE FROM met_cache WHERE conta_id = ?').run(act);
       db.prepare('UPDATE met_sincronizacoes SET fim = ?, status = ?, linhas = ?, erro = ? WHERE id = ?').run(agora(), 'ok', linhas, avisos.length ? avisos.join(' | ') : null, id);
       return { id, status: 'ok', linhas, de, ate, avisos };
@@ -458,7 +458,7 @@ export const criarMetricas = ({ db, graph, ErroMeta, normalizarConta, ler, lista
     }
   };
 
-  const serieDiaria = (act, de, ate, campanhaId) => {
+  const serieDiaria = (act, de, ate, campanhaId, mapa = {}) => {
     const linhas = campanhaId
       ? db.prepare("SELECT data, dados FROM met_diarias WHERE conta_id = ? AND nivel = 'campaign' AND objeto_id = ? AND data BETWEEN ? AND ? ORDER BY data").all(act, campanhaId, de, ate)
       : db.prepare("SELECT data, dados FROM met_diarias WHERE conta_id = ? AND nivel = 'account' AND data BETWEEN ? AND ? ORDER BY data").all(act, de, ate);
@@ -482,7 +482,7 @@ export const criarMetricas = ({ db, graph, ErroMeta, normalizarConta, ler, lista
         n.resultados = tipos.length ? Object.values(m).reduce((a, b) => a + b, 0) : null;
         n.indicador = tipos.length === 1 ? tipos[0] : '';
       }
-      const d = derivar(n);
+      const d = derivar(n, mapa);
       return {
         data: l.data,
         gasto: d.gasto,
@@ -555,25 +555,34 @@ export const criarMetricas = ({ db, graph, ErroMeta, normalizarConta, ler, lista
     return resultado;
   };
 
-  const seguidoresDoPerfil = (instagramId, de, ate) => {
-    if (!instagramId) return { disponivel: false, motivo: 'O cliente não tem perfil do Instagram validado (Anúncios → Contas).' };
-    const linhas = db.prepare('SELECT data, total, novos FROM met_seguidores WHERE instagram_id = ? AND data BETWEEN ? AND ? ORDER BY data').all(instagramId, somarDias(de, -1), ate);
-    const ultimo = db.prepare('SELECT data, total FROM met_seguidores WHERE instagram_id = ? AND total IS NOT NULL ORDER BY data DESC LIMIT 1').get(instagramId);
-    if (!linhas.length && !ultimo) return { disponivel: false, motivo: 'Ainda não há leitura de seguidores. Ela acontece a cada sincronização.' };
-    const novos = linhas.filter((l) => l.novos !== null && l.data >= de);
-    const totais = linhas.filter((l) => l.total !== null);
-    return {
-      disponivel: true,
-      totalAtual: ultimo?.total ?? null,
-      totalEm: ultimo?.data ?? null,
-      novosNoPeriodo: novos.length ? novos.reduce((t, l) => t + l.novos, 0) : null,
-      diasComNovos: novos.length,
-      variacaoTotal: totais.length >= 2 ? totais[totais.length - 1].total - totais[0].total : null,
-      historico: linhas.map((l) => ({ data: l.data, total: l.total, novos: l.novos })),
-    };
+  // ---------- Montagem do relatório ----------
+  // Resultados agrupados pelo tipo (objetivo) de cada campanha, cada um com o próprio custo:
+  // o investimento de campanhas de conversa só divide conversas, e assim por diante.
+  const resultadosPorTipo = (linhas) => {
+    const grupos = new Map();
+    for (const l of linhas) {
+      const ind = l.n.indicador;
+      if (!ind || l.n.resultados === null || l.n.resultados === undefined) continue;
+      const g = grupos.get(ind) || { indicador: ind, tipo: rotuloResultado(ind), resultados: 0, gasto: 0, campanhas: 0 };
+      g.resultados += l.n.resultados;
+      g.gasto += l.n.gasto;
+      g.campanhas += 1;
+      grupos.set(ind, g);
+    }
+    return [...grupos.values()].map((g) => ({ ...g, custo: g.resultados ? g.gasto / g.resultados : null })).sort((a, b) => b.gasto - a.gasto);
   };
 
-  // ---------- Montagem do relatório ----------
+  // Custo por visita/seguidor no total: só o investimento das campanhas que geraram isso
+  // (dividir o investimento da conta inteira pelas visitas misturaria objetivos).
+  const custosDasCampanhas = (resumo, linhas, derivarM) => {
+    const ds = linhas.map((l) => derivarM(l.n));
+    const comVisitas = ds.filter((d) => d.visitasPerfil);
+    const comSeguidores = ds.filter((d) => d.seguidores);
+    resumo.custoVisita = comVisitas.length ? comVisitas.reduce((t, d) => t + d.gasto, 0) / comVisitas.reduce((t, d) => t + d.visitasPerfil, 0) : null;
+    resumo.custoSeguidor = comSeguidores.length ? comSeguidores.reduce((t, d) => t + d.gasto, 0) / comSeguidores.reduce((t, d) => t + d.seguidores, 0) : null;
+    return resumo;
+  };
+
   const periodoAnterior = (de, ate) => {
     const n = diasEntre(de, ate);
     return { de: somarDias(de, -n), ate: somarDias(de, -1) };
@@ -584,6 +593,8 @@ export const criarMetricas = ({ db, graph, ErroMeta, normalizarConta, ler, lista
     if (!act) throw new ErroMeta('Este cliente não tem conta de anúncios ligada.', 409);
     const quer = (s) => secoes.includes(s);
     const avisos = [];
+    const mapa = lerConfig()?.acoesMetricas?.[act] || {};
+    const derivarM = (n) => derivar(n, mapa);
     if (campanhaId) {
       const existe = db.prepare("SELECT 1 FROM met_objetos WHERE conta_id = ? AND nivel = 'campaign' AND objeto_id = ?").get(act, campanhaId);
       if (!existe) throw new ErroMeta('Campanha não encontrada nesta conta.', 404);
@@ -599,8 +610,9 @@ export const criarMetricas = ({ db, graph, ErroMeta, normalizarConta, ler, lista
     const totalN = { ...totalBruto, resultadosPorTipo: porTipo, resultados: tipos.length === 1 ? porTipo[tipos[0]] : null, indicador: tipos.length === 1 ? tipos[0] : '' };
     // Visitas/seguidores no total: soma das campanhas (ações são contagens, podem somar).
     const acoesCamp = somar(camp.linhas.map((c) => c.n)).acoes;
-    totalN.acoes = { ...totalN.acoes, ...Object.fromEntries(Object.entries(acoesCamp).filter(([k]) => ehVisitaPerfil(k) || ehSeguidor(k))) };
-    const resumo = derivar(totalN);
+    totalN.acoes = { ...totalN.acoes, ...Object.fromEntries(Object.entries(acoesCamp).filter(([k]) => ehVisitaPerfil(k, mapa) || ehSeguidor(k, mapa))) };
+    const resumo = { ...derivarM(totalN), porTipo: resultadosPorTipo(camp.linhas) };
+    custosDasCampanhas(resumo, camp.linhas, derivarM);
 
     let anterior = null;
     let periodoAnt = null;
@@ -613,8 +625,8 @@ export const criarMetricas = ({ db, graph, ErroMeta, normalizarConta, ler, lista
         for (const c of ac.linhas) if (c.n.resultados !== null && c.n.resultados !== undefined) pt[c.n.indicador || '?'] = (pt[c.n.indicador || '?'] || 0) + c.n.resultados;
         const tt = Object.keys(pt);
         const an = { ...(a.linhas[0]?.n || somar([])), resultadosPorTipo: pt, resultados: tt.length === 1 ? pt[tt[0]] : null, indicador: tt.length === 1 ? tt[0] : '' };
-        an.acoes = { ...an.acoes, ...Object.fromEntries(Object.entries(somar(ac.linhas.map((c) => c.n)).acoes).filter(([k]) => ehVisitaPerfil(k) || ehSeguidor(k))) };
-        anterior = a.linhas.length || ac.linhas.length ? derivar(an) : null;
+        an.acoes = { ...an.acoes, ...Object.fromEntries(Object.entries(somar(ac.linhas.map((c) => c.n)).acoes).filter(([k]) => ehVisitaPerfil(k, mapa) || ehSeguidor(k, mapa))) };
+        anterior = a.linhas.length || ac.linhas.length ? custosDasCampanhas({ ...derivarM(an), porTipo: resultadosPorTipo(ac.linhas) }, ac.linhas, derivarM) : null;
       } catch (falha) {
         avisos.push(`Comparação com o período anterior indisponível: ${falha.message}`);
       }
@@ -632,7 +644,7 @@ export const criarMetricas = ({ db, graph, ErroMeta, normalizarConta, ler, lista
           objetivo: o.objetivo || '',
           orcamentoDiario: o.orcamento_diario ?? null,
           orcamentoTotal: o.orcamento_total ?? null,
-          m: derivar(c.n),
+          m: derivarM(c.n),
         };
       })
       .sort((a, b) => b.m.gasto - a.m.gasto);
@@ -649,8 +661,7 @@ export const criarMetricas = ({ db, graph, ErroMeta, normalizarConta, ler, lista
       resumoAnterior: anterior,
       campanhas: quer('comparativo') || quer('destaques') || quer('alertas') || quer('perfil') || quer('seguidores') || admin ? campanhas : [],
     };
-    if (quer('evolucao') || admin) relatorio.serie = serieDiaria(act, de, ate, campanhaId);
-    if (quer('seguidores') || admin) relatorio.seguidoresPerfil = seguidoresDoPerfil(cliente.metaInstagramId, de, ate);
+    if (quer('evolucao') || admin) relatorio.serie = serieDiaria(act, de, ate, campanhaId, mapa);
     if (quer('videos') || admin) {
       const ads = await agregadoDoPeriodo(act, 'ad', de, ate, campanhaId);
       relatorio.videos = ads.linhas
@@ -660,7 +671,7 @@ export const criarMetricas = ({ db, graph, ErroMeta, normalizarConta, ler, lista
           const extra = JSON.parse(o.extra || '{}');
           const cmp = objetos.get(`campaign:${a.campanhaId}`) || {};
           const cj = objetos.get(`adset:${a.conjuntoId}`) || {};
-          return { id: a.id, nome: a.nome || o.nome || 'Anúncio', campanha: cmp.nome || '', conjunto: cj.nome || '', miniatura: extra.miniatura || null, m: derivar(a.n) };
+          return { id: a.id, nome: a.nome || o.nome || 'Anúncio', campanha: cmp.nome || '', conjunto: cj.nome || '', miniatura: extra.miniatura || null, m: derivarM(a.n) };
         })
         .sort((a, b) => (b.m.video.reproducoes ?? 0) - (a.m.video.reproducoes ?? 0))
         .slice(0, 30);
@@ -669,12 +680,12 @@ export const criarMetricas = ({ db, graph, ErroMeta, normalizarConta, ler, lista
       const conj = await agregadoDoPeriodo(act, 'adset', de, ate, campanhaId);
       relatorio.conjuntos = conj.linhas.map((c) => {
         const o = objetos.get(`adset:${c.id}`) || {};
-        return { id: c.id, nome: c.nome || o.nome, campanhaId: c.campanhaId, status: o.status || '', orcamentoDiario: o.orcamento_diario ?? null, m: derivar(c.n) };
+        return { id: c.id, nome: c.nome || o.nome, campanhaId: c.campanhaId, status: o.status || '', orcamentoDiario: o.orcamento_diario ?? null, m: derivarM(c.n) };
       });
       const ads = await agregadoDoPeriodo(act, 'ad', de, ate, campanhaId);
       relatorio.anuncios = ads.linhas.map((a) => {
         const o = objetos.get(`ad:${a.id}`) || {};
-        return { id: a.id, nome: a.nome || o.nome, campanhaId: a.campanhaId, conjuntoId: a.conjuntoId, status: o.status || '', miniatura: JSON.parse(o.extra || '{}').miniatura || null, m: derivar(a.n) };
+        return { id: a.id, nome: a.nome || o.nome, campanhaId: a.campanhaId, conjuntoId: a.conjuntoId, status: o.status || '', miniatura: JSON.parse(o.extra || '{}').miniatura || null, m: derivarM(a.n) };
       });
       relatorio.contaId = act;
     }
@@ -736,13 +747,15 @@ export const criarMetricas = ({ db, graph, ErroMeta, normalizarConta, ler, lista
     return r.vezes <= 60;
   };
 
-  const lerPeriodo = (url, padraoDias = 30) => {
+  const lerPeriodo = async (url, act, padraoDias = 30) => {
     const ateP = url.searchParams.get('ate');
     const deP = url.searchParams.get('de');
     const ate = dataValida(ateP) ? ateP : hoje();
-    const de = dataValida(deP) ? deP : somarDias(ate, -(padraoDias - 1));
+    let de = dataValida(deP) ? deP : somarDias(ate, -(padraoDias - 1));
+    // "Máximo": desde o início da conta (até 37 meses, o que a Meta guarda).
+    if (url.searchParams.get('periodo') === 'maximo') de = await inicioDaConta(act);
     if (de > ate) throw new ErroMeta('O início do período precisa ser antes do fim.', 400);
-    if (diasEntre(de, ate) > 400) throw new ErroMeta('Escolha um período de até 400 dias.', 400);
+    if (diasEntre(de, ate) > LIMITE_DIAS) throw new ErroMeta('A Meta guarda até 37 meses de dados. Escolha um período menor.', 400);
     if (ate > somarDias(hoje(), 1)) throw new ErroMeta('O período não pode terminar no futuro.', 400);
     return { de, ate };
   };
@@ -753,7 +766,7 @@ export const criarMetricas = ({ db, graph, ErroMeta, normalizarConta, ler, lista
     const act = contaDoCliente(cliente);
     if (!act) throw new ErroMeta('Os resultados deste cliente ainda não estão disponíveis.', 409);
     if (donosDaConta(act).length > 1) throw new ErroMeta('Os resultados estão temporariamente indisponíveis.', 409);
-    const { de, ate } = lerPeriodo(url);
+    const { de, ate } = await lerPeriodo(url, act);
     const { secoes, metricas, titulo, mensagem, config } = configRelatorio(cliente);
     db.prepare('UPDATE portais SET ultimo_acesso = ?, acessos = acessos + 1 WHERE cliente_id = ?').run(agora(), cliente.id);
     const r = await montarRelatorio(cliente, { de, ate, secoes, comparar: true });
@@ -801,16 +814,36 @@ export const criarMetricas = ({ db, graph, ErroMeta, normalizarConta, ler, lista
     }
     if (rota === '/sincronizar' && metodo === 'POST') {
       const corpo = await lerCorpo(10 * 1024);
-      const dias = corpo.dias ? Math.min(400, Math.max(1, Number(corpo.dias) || 35)) : undefined;
+      const dias = corpo.dias === 'maximo' ? 'maximo' : corpo.dias ? Math.min(1120, Math.max(1, Number(corpo.dias) || 35)) : undefined;
       responder(res, 200, await sincronizar(String(corpo.clienteId || ''), { dias }));
       return true;
     }
     if (rota === '/painel' && metodo === 'GET') {
       const cliente = ler('clientes', url.searchParams.get('clienteId') || '');
       if (!cliente) throw new ErroMeta('Cliente não encontrado.', 404);
-      const { de, ate } = lerPeriodo(url);
+      const act = contaDoCliente(cliente);
+      if (!act) throw new ErroMeta('Este cliente não tem conta de anúncios ligada.', 409);
+      const { de, ate } = await lerPeriodo(url, act);
       const campanhaId = url.searchParams.get('campanhaId') || null;
       responder(res, 200, await montarRelatorio(cliente, { de, ate, campanhaId, comparar: url.searchParams.get('comparar') !== '0', admin: true }));
+      return true;
+    }
+    if (rota === '/acoes' && metodo === 'GET') {
+      // Todas as ações que a Meta devolveu para a conta no período (para escolher o que é seguidor/visita).
+      const cliente = ler('clientes', url.searchParams.get('clienteId') || '');
+      const act = contaDoCliente(cliente);
+      if (!act) throw new ErroMeta('Cliente sem conta de anúncios.', 404);
+      const { de, ate } = await lerPeriodo(url, act);
+      const camp = await agregadoDoPeriodo(act, 'campaign', de, ate);
+      const totais = somar(camp.linhas.map((c) => c.n)).acoes;
+      const mapa = lerConfig()?.acoesMetricas?.[act] || {};
+      responder(res, 200, {
+        acoes: Object.entries(totais)
+          .map(([tipo, total]) => ({ tipo, total, seguidor: ehSeguidor(tipo, mapa), visitaPerfil: ehVisitaPerfil(tipo, mapa) }))
+          .sort((a, b) => b.total - a.total),
+        mapa,
+        contaId: act,
+      });
       return true;
     }
     if ((m = rota.match(/^\/portais\/([\w-]+)$/))) {

@@ -53,6 +53,12 @@ export type CampanhaRel = {
   orcamentoDiario: number | null;
   orcamentoTotal: number | null;
   m: Derivadas;
+  // Para as orientações:
+  inicio: string | null;
+  aprendizado: boolean;
+  diasComGasto: number;
+  variacaoCusto: number | null;
+  anterior: Derivadas | null;
 };
 
 export type PontoSerie = {
@@ -97,7 +103,7 @@ export type SeguidoresPerfil =
       historico: Array<{ data: string; total: number | null; novos: number | null }>;
     };
 
-export type VideoRel = { id: string; nome: string; campanha: string; conjunto: string; miniatura: string | null; m: Derivadas };
+export type VideoRel = { id: string; nome: string; campanha: string; conjunto: string; miniatura: string | null; duracao: number | null; m: Derivadas };
 
 export type Sincronizacao = { em: string | null; de?: string | null; ate?: string | null; status?: string | null; erro?: string | null; executando?: boolean };
 

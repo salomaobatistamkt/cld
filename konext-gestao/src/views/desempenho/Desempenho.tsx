@@ -23,15 +23,17 @@ import {
 } from '@/lib/metricas';
 import { classificarCtr, classificarCusto, parametrosCom } from '@/lib/performance';
 import { useStore } from '@/lib/store';
+import { CRUZAMENTOS, distribuicao, GUIA, gerarOrientacoes, ROTULO_ACAO } from '@/lib/orientacoes';
 import { useToast } from '@/lib/toast';
 import { type Cliente } from '@/lib/types';
 
 import { AvisoSoServidor } from '../anuncios/Diagnostico';
 import { BlocoRelatorio, Selo, TabelaCampanhas } from './Secoes';
 
-type Aba = 'geral' | 'campanhas' | 'publico' | 'videos' | 'acoes' | 'cliente';
+type Aba = 'geral' | 'orientacoes' | 'campanhas' | 'publico' | 'videos' | 'acoes' | 'cliente';
 const ABAS: Array<{ id: Aba; rotulo: string }> = [
   { id: 'geral', rotulo: 'Visão geral' },
+  { id: 'orientacoes', rotulo: 'Orientações' },
   { id: 'campanhas', rotulo: 'Campanhas' },
   { id: 'publico', rotulo: 'Público' },
   { id: 'videos', rotulo: 'Vídeos' },
@@ -263,6 +265,7 @@ export const Desempenho = ({ clienteId }: { clienteId?: string }) => {
                       <BlocoRelatorio bloco="alertas" secoes={TODAS} {...props} />
                     </>
                   ) : null}
+                  {aba === 'orientacoes' ? <Orientacoes rel={props.rel} params={params} clienteId={cliente.id} /> : null}
                   {aba === 'campanhas' ? <AbaCampanhas rel={props.rel} params={params} clienteId={cliente.id} /> : null}
                   {aba === 'publico' ? <BlocoRelatorio bloco="publico" secoes={TODAS} {...props} /> : null}
                   {aba === 'videos' ? (props.rel.videos?.length ? <BlocoRelatorio bloco="videos" secoes={TODAS} {...props} /> : <p className="vazio-rel">Nenhum anúncio em vídeo com reproduções neste período.</p>) : null}
@@ -275,6 +278,108 @@ export const Desempenho = ({ clienteId }: { clienteId?: string }) => {
         </>
       )}
     </div>
+  );
+};
+
+// Orientações: o próximo passo de cada campanha (pelas regras da agência), a distribuição do
+// orçamento comparada ao modelo base e o guia fixo de decisões.
+const Orientacoes = ({ rel, params, clienteId }: { rel: Relatorio; params: ReturnType<typeof parametrosCom>; clienteId: string }) => {
+  const lista = gerarOrientacoes(rel, params, clienteId);
+  const dist = distribuicao(rel);
+  return (
+    <>
+      <section className="bloco-rel">
+        <div className="cabeca-bloco">
+          <h2>Próximo passo de cada campanha</h2>
+          <p>Calculado com as regras da agência a partir das métricas do período. É uma orientação: confirme olhando o Gerenciador.</p>
+        </div>
+        {!lista.length ? (
+          <p className="vazio-rel">Nenhuma campanha com investimento no período.</p>
+        ) : (
+          <div className="lista-orientacoes">
+            {lista.map((o) => (
+              <div key={o.campanha.id} className="orientacao">
+                <div className="orientacao-topo">
+                  <b>{o.campanha.nome}</b>
+                  <span className={`status-rel ${ROTULO_ACAO[o.acao].cor}`}>{ROTULO_ACAO[o.acao].texto}</span>
+                </div>
+                <p className="orientacao-porque">{o.porque.join(' ')}</p>
+                <ul>
+                  {o.fazer.map((f) => (
+                    <li key={f}>{f}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="bloco-rel">
+        <div className="cabeca-bloco">
+          <h2>Distribuição do orçamento</h2>
+          <p>Investimento do período por papel da campanha, ao lado do modelo base (não é regra fixa). Remarketing e testes são reconhecidos pelo nome da campanha.</p>
+        </div>
+        <div className="tabela-rel-wrap">
+          <table className="tabela-rel">
+            <thead>
+              <tr>
+                <th>Papel</th>
+                <th className="num">Investido</th>
+                <th className="num">Atual</th>
+                <th className="num">Modelo base</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dist.map((d) => (
+                <tr key={d.papel}>
+                  <td className="nome-camp" data-rotulo="Papel">{d.rotulo}</td>
+                  <td className="num" data-rotulo="Investido">{formatar(d.gasto, 'moeda')}</td>
+                  <td className="num" data-rotulo="Atual">{formatar(d.atual, 'pct')}</td>
+                  <td className="num" data-rotulo="Modelo base">{d.pct}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="bloco-rel">
+        <div className="cabeca-bloco">
+          <h2>Como cruzar as métricas</h2>
+        </div>
+        <ul className="lista-rel">
+          {CRUZAMENTOS.map((c) => (
+            <li key={c.se}>
+              <span className="marca-nivel" />
+              <span>
+                <b>{c.se}:</b> {c.entao}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="bloco-rel">
+        <div className="cabeca-bloco">
+          <h2>Guia de decisões</h2>
+          <p>As regras fixas da agência para mexer, escalar e distribuir o orçamento.</p>
+        </div>
+        <div className="guia-decisoes">
+          {GUIA.map((g) => (
+            <details key={g.titulo}>
+              <summary>{g.titulo}</summary>
+              <ul>
+                {g.itens.map((i) => (
+                  <li key={i}>{i}</li>
+                ))}
+              </ul>
+              {g.nota ? <p className="nota-rel">{g.nota}</p> : null}
+            </details>
+          ))}
+        </div>
+      </section>
+    </>
   );
 };
 

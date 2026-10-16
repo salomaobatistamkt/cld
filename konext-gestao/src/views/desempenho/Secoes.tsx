@@ -3,7 +3,7 @@
 import { ArrowDownRight, ArrowUpRight, Info } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 
-import { Barras, GraficoLinha, GraficoRetencao, type SerieRetencao } from '@/components/Graficos';
+import { Barras, CORES_SERIE, GraficoLinha, GraficoMulti, GraficoRetencao, type SerieRetencao } from '@/components/Graficos';
 import {
   type CampanhaRel,
   type Derivadas,
@@ -21,6 +21,7 @@ import {
   variacao,
   type VideoRel,
 } from '@/lib/metricas';
+import { gerarOrientacoes, ROTULO_ACAO } from '@/lib/orientacoes';
 import {
   type Classificacao,
   classificarCtr,
@@ -28,8 +29,6 @@ import {
   classificarFrequencia,
   classificarVolume,
   COR_NIVEL,
-  gerarAlertas,
-  type Nivel,
 } from '@/lib/performance';
 
 type Props = { rel: Relatorio; params: ParametrosPerformance; clienteId?: string; metricas?: string[] };
@@ -64,7 +63,7 @@ const Kpi = ({ rotulo, valor, formato, ajuda, anterior, melhor = null, aval, det
         </span>
       ) : null}
     </span>
-    <b className={valor === null ? 'vazio' : ''}>{valor === null ? 'Indisponível' : formatar(valor, formato)}</b>
+    <b className={valor === null ? 'sem-dado' : ''}>{valor === null ? 'Indisponível' : formatar(valor, formato)}</b>
     <span className="kpi-rodape">
       {valor !== null ? <Delta atual={valor} anterior={anterior} melhor={melhor} /> : <small>A Meta não informou para este período</small>}
       {aval ? <Selo c={aval} /> : null}
@@ -165,7 +164,7 @@ export const VisaoGeral = ({ rel, params, clienteId, metricas, secoes }: Props &
       />,
     );
   }
-  const mostrarFunil = secoes.includes('investimento') || secoes.includes('ctr_cpc');
+  const mostrarFunil = secoes.includes('investimento') || secoes.includes('alcance');
   return (
     <section className="bloco-rel" id="secao-visao">
       <h2>Visão geral</h2>
@@ -175,29 +174,38 @@ export const VisaoGeral = ({ rel, params, clienteId, metricas, secoes }: Props &
   );
 };
 
-// Funil: impressões → cliques no link → resultados (quando há um tipo só).
+// Funil: impressões → alcance → resultados de cada objetivo → valor investido.
 const Funil = ({ rel }: { rel: Relatorio }) => {
   const r = rel.resumo;
-  const tipos = r.porTipo || [];
-  const etapas: Array<{ rotulo: string; valor: number | null; custo: number | null }> = [
-    { rotulo: 'Impressões', valor: r.impressoes, custo: r.impressoes ? r.gasto / r.impressoes : null },
-    { rotulo: 'Cliques no link', valor: r.cliquesLink, custo: r.cpcLink },
-    ...(tipos.length === 1 ? [{ rotulo: tipos[0].tipo, valor: tipos[0].resultados, custo: tipos[0].custo }] : []),
+  if (!r.impressoes) return null;
+  const etapas: Array<{ rotulo: string; valor: string; detalhe?: string }> = [
+    { rotulo: 'Impressões', valor: formatar(r.impressoes, 'numero'), detalhe: r.cpm !== null ? `${formatar(r.cpm, 'moeda')} a cada mil` : undefined },
+    ...(r.alcance !== null ? [{ rotulo: 'Alcance', valor: formatar(r.alcance, 'numero'), detalhe: r.frequencia !== null ? `cada pessoa viu ${formatar(r.frequencia, 'decimal')}×` : undefined }] : []),
+    ...(r.porTipo || []).map((t) => ({ rotulo: t.tipo, valor: formatar(t.resultados, 'numero'), detalhe: `${formatar(t.custo, 'moeda')} por ${SINGULAR[t.tipo] || 'resultado'}` })),
+    { rotulo: 'Valor investido', valor: formatar(r.gasto, 'moeda') },
   ];
-  if (!r.impressoes || r.cliquesLink === null) return null;
+  const n = etapas.length;
   return (
-    <div className="funil">
-      <span className="funil-topo">Valor investido: {formatar(r.gasto, 'moeda')}</span>
-      {etapas.map((e, i) => (
-        <div key={e.rotulo} className="funil-passo">
-          {i > 0 && etapas[i - 1].valor ? <span className="funil-taxa">{formatar(((e.valor ?? 0) / etapas[i - 1].valor!) * 100, 'pct')} de conversão</span> : null}
-          <div className="funil-barra" style={{ width: `${100 - i * 14}%` }}>
+    <div className="funil-v" role="list" aria-label="Funil do período">
+      {etapas.map((e, i) => {
+        // Cada faixa é um trapézio um pouco mais estreito que o anterior.
+        const topo = 100 - (i * 52) / n;
+        const base = 100 - ((i + 1) * 52) / n;
+        const recuoTopo = (100 - topo) / 2;
+        const recuoBase = (100 - base) / 2;
+        return (
+          <div
+            key={e.rotulo}
+            role="listitem"
+            className={`funil-faixa${i === n - 1 ? ' final' : ''}`}
+            style={{ clipPath: `polygon(${recuoTopo}% 0, ${100 - recuoTopo}% 0, ${100 - recuoBase}% 100%, ${recuoBase}% 100%)`, opacity: 1 - i * (0.35 / n) }}
+          >
             <span>{e.rotulo}</span>
-            <b>{formatar(e.valor, 'numero')}</b>
-            <small>{formatar(e.custo, 'moeda')} cada</small>
+            <b>{e.valor}</b>
+            {e.detalhe ? <small>{e.detalhe}</small> : null}
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };
@@ -219,9 +227,7 @@ const SERIES: Array<{ id: keyof PontoSerie; rotulo: string; formato: Formato }> 
   { id: 'alcance', rotulo: 'Alcance', formato: 'numero' },
   { id: 'cliquesLink', rotulo: 'Cliques no link', formato: 'numero' },
   { id: 'ctrLink', rotulo: 'CTR', formato: 'pct' },
-  { id: 'cpm', rotulo: 'CPM', formato: 'moeda' },
   { id: 'visitasPerfil', rotulo: 'Visitas ao perfil', formato: 'numero' },
-  { id: 'seguidores', rotulo: 'Seguidores', formato: 'numero' },
 ];
 
 // Períodos longos viram semanas ou meses (somando contagens e recalculando as taxas).
@@ -263,24 +269,35 @@ const agrupar = (serie: PontoSerie[]): { pontos: PontoSerie[]; escala: 'dia' | '
 const SecaoEvolucao = ({ rel }: Props) => {
   const { pontos, escala } = useMemo(() => agrupar(rel.serie || []), [rel.serie]);
   const disponiveis = SERIES.filter((s) => (s.id !== 'alcance' || escala === 'dia') && pontos.some((p) => p[s.id] !== null && p[s.id] !== 0));
-  const [escolhida, setEscolhida] = useState<keyof PontoSerie>('gasto');
-  const atual = disponiveis.find((s) => s.id === escolhida) || disponiveis[0];
+  const [escolhidas, setEscolhidas] = useState<Array<keyof PontoSerie>>(['gasto']);
+  const ativas = disponiveis.filter((s) => escolhidas.includes(s.id));
+  const lista = ativas.length ? ativas : disponiveis.slice(0, 1);
+  const cor = (id: keyof PontoSerie) => CORES_SERIE[Math.max(0, SERIES.findIndex((s) => s.id === id))];
+  const alternar = (id: keyof PontoSerie) => setEscolhidas((e) => (e.includes(id) ? e.filter((x) => x !== id) : [...e, id]));
+  const todas = lista.length === disponiveis.length;
   return (
     <section className="bloco-rel" id="secao-evolucao">
       <Cabeca titulo="Desempenho no período" texto={escala === 'dia' ? undefined : `Valores somados por ${escala}.`} />
-      {!pontos.length || !atual ? (
+      {!pontos.length || !lista.length ? (
         <Vazio texto="Ainda não há histórico para este período." />
       ) : (
         <>
-          <GraficoLinha pontos={pontos.map((p) => ({ x: p.data, y: (p[atual.id] as number | null) ?? null }))} formato={atual.formato} rotulo={atual.rotulo} />
-          <div className="legenda-metricas" role="tablist">
+          {lista.length === 1 ? (
+            <GraficoLinha pontos={pontos.map((p) => ({ x: p.data, y: (p[lista[0].id] as number | null) ?? null }))} formato={lista[0].formato} rotulo={lista[0].rotulo} cor={cor(lista[0].id)} />
+          ) : (
+            <GraficoMulti datas={pontos.map((p) => p.data)} series={lista.map((s) => ({ id: s.id, rotulo: s.rotulo, formato: s.formato, cor: cor(s.id), valores: pontos.map((p) => (p[s.id] as number | null) ?? null) }))} />
+          )}
+          <div className="legenda-metricas" role="group" aria-label="Métricas do gráfico">
             {disponiveis.map((s) => (
-              <button key={s.id} type="button" role="tab" aria-selected={atual.id === s.id} className={atual.id === s.id ? 'ativo' : ''} onClick={() => setEscolhida(s.id)}>
+              <button key={s.id} type="button" aria-pressed={lista.some((x) => x.id === s.id)} className={lista.some((x) => x.id === s.id) ? 'ativo' : ''} style={{ ['--cor-metrica' as string]: cor(s.id) }} onClick={() => alternar(s.id)}>
                 {s.rotulo}
               </button>
             ))}
+            <button type="button" className="todas" onClick={() => setEscolhidas(todas ? ['gasto'] : disponiveis.map((s) => s.id))}>
+              {todas ? 'Limpar' : 'Selecionar todas'}
+            </button>
           </div>
-          <p className="nota-rel">Clique nas métricas para trocar a visualização.</p>
+          <p className="nota-rel">{lista.length > 1 ? 'Com várias métricas, cada linha mostra a variação em relação ao seu maior valor no período; passe o mouse para ver os valores reais.' : 'Clique nas métricas para comparar várias ao mesmo tempo.'}</p>
         </>
       )}
     </section>
@@ -434,37 +451,47 @@ const SecaoPublico = ({ rel }: Props) => {
 };
 
 const pctDe = (a: number | null, base: number | null) => (a !== null && base ? (a / base) * 100 : null);
-export const retencaoDe = (v: VideoRel) => {
+// Pontos da curva de retenção: (tempo, % de quem começou). Com a duração do vídeo, as partes
+// 25%…100% viram segundos; 3 s e 30 s entram direto. Sem duração, usa a parte do vídeo.
+export const retencaoDe = (v: VideoRel, emSegundos: boolean) => {
   const x = v.m.video;
-  return [
-    { rotulo: 'Início', valor: x.reproducoes ? 100 : null },
-    { rotulo: '25%', valor: pctDe(x.p25, x.reproducoes) },
-    { rotulo: '50%', valor: pctDe(x.p50, x.reproducoes) },
-    { rotulo: '75%', valor: pctDe(x.p75, x.reproducoes) },
-    { rotulo: '95%', valor: pctDe(x.p95, x.reproducoes) },
-    { rotulo: '100%', valor: pctDe(x.p100, x.reproducoes) },
-  ];
+  const d = v.duracao;
+  const pts: Array<{ t: number; valor: number | null }> = [{ t: 0, valor: x.reproducoes ? 100 : null }];
+  const partes: Array<[number, number | null]> = [[0.25, x.p25], [0.5, x.p50], [0.75, x.p75], [0.95, x.p95], [1, x.p100]];
+  if (emSegundos && d) {
+    pts.push({ t: 3, valor: pctDe(x.v3s, x.reproducoes) });
+    if (d >= 30) pts.push({ t: 30, valor: pctDe(x.s30, x.reproducoes) });
+    for (const [f, val] of partes) pts.push({ t: Math.round(f * d * 10) / 10, valor: pctDe(val, x.reproducoes) });
+  } else {
+    for (const [f, val] of partes) pts.push({ t: f * 100, valor: pctDe(val, x.reproducoes) });
+  }
+  return pts
+    .filter((p): p is { t: number; valor: number } => p.valor !== null && (!emSegundos || !d || p.t <= d))
+    .sort((a, b) => a.t - b.t);
 };
 
 const SecaoVideos = ({ rel }: Props) => {
   const videos = rel.videos || [];
   const [escolhidos, setEscolhidos] = useState<string[]>(() => videos.slice(0, 3).map((v) => v.id));
   if (!videos.length) return null;
-  const series: SerieRetencao[] = videos.filter((v) => escolhidos.includes(v.id)).map((v) => ({ nome: v.nome, pontos: retencaoDe(v) }));
+  const marcados = videos.filter((v) => escolhidos.includes(v.id));
+  const emSegundos = marcados.length > 0 && marcados.every((v) => v.duracao);
+  const series: SerieRetencao[] = marcados.map((v) => ({ nome: v.nome, pontos: retencaoDe(v, emSegundos) }));
   const alternar = (id: string) => setEscolhidos((e) => (e.includes(id) ? e.filter((x) => x !== id) : e.length >= 3 ? [...e.slice(1), id] : [...e, id]));
   return (
     <section className="bloco-rel" id="secao-videos">
-      <Cabeca titulo="Vídeos" texto="Quantos dos que começaram o vídeo chegaram a cada parte dele." />
-      <GraficoRetencao series={series} />
+      <Cabeca titulo="Vídeos" texto="Em que momento as pessoas param de assistir. Use o ponto de queda para criar públicos de remarketing (ex.: quem assistiu 50%)." />
+      <GraficoRetencao series={series} emSegundos={emSegundos} />
       <div className="tabela-rel-wrap">
         <table className="tabela-rel">
           <thead>
             <tr>
               <th>Criativo</th>
+              <th className="num">Duração</th>
               <th className="num">Reproduções</th>
               <th className="num" title="Reproduções de 3 s ÷ reproduções">Ficaram 3 s</th>
               <th className="num" title="Reproduções de 30 s ÷ reproduções">Ficaram 30 s</th>
-              <th className="num">ThruPlays</th>
+              <th className="num">Metade do vídeo</th>
               <th className="num">Até o fim</th>
               <th className="num">Tempo médio</th>
             </tr>
@@ -482,10 +509,11 @@ const SecaoVideos = ({ rel }: Props) => {
                     </span>
                   </label>
                 </td>
+                <td className="num" data-rotulo="Duração">{v.duracao ? `${Math.round(v.duracao)} s` : '—'}</td>
                 <td className="num" data-rotulo="Reproduções">{formatar(v.m.video.reproducoes, 'numero')}</td>
                 <td className="num" data-rotulo="Ficaram 3 s">{formatar(pctDe(v.m.video.v3s, v.m.video.reproducoes), 'pct')}</td>
-                <td className="num" data-rotulo="Ficaram 30 s">{formatar(pctDe(v.m.video.s30, v.m.video.reproducoes), 'pct')}</td>
-                <td className="num" data-rotulo="ThruPlays">{formatar(v.m.video.thruplay, 'numero')}</td>
+                <td className="num" data-rotulo="Ficaram 30 s">{v.duracao && v.duracao < 30 ? '—' : formatar(pctDe(v.m.video.s30, v.m.video.reproducoes), 'pct')}</td>
+                <td className="num" data-rotulo="Metade do vídeo">{formatar(pctDe(v.m.video.p50, v.m.video.reproducoes), 'pct')}</td>
                 <td className="num" data-rotulo="Até o fim">{formatar(pctDe(v.m.video.p100, v.m.video.reproducoes), 'pct')}</td>
                 <td className="num" data-rotulo="Tempo médio">{formatar(v.m.video.tempoMedio, 'segundos')}</td>
               </tr>
@@ -493,24 +521,23 @@ const SecaoVideos = ({ rel }: Props) => {
           </tbody>
         </table>
       </div>
-      <p className="nota-rel">Percentuais calculados com as contagens da Meta. Ela não informa reproduções de 5, 10 ou 40 segundos, por isso não aparecem.</p>
+      <p className="nota-rel">Percentuais sobre quem começou o vídeo, calculados com as contagens da Meta. {emSegundos ? '' : 'Sem a duração de algum vídeo, o eixo mostra a parte do vídeo em vez dos segundos.'}</p>
     </section>
   );
 };
 
 const SecaoAlertas = ({ rel, params, clienteId }: Props) => {
-  const alertas = gerarAlertas(rel.campanhas, params, clienteId).filter((a) => a.nivel !== 'info' && a.nivel !== 'insuficiente');
-  if (!alertas.length) return null;
-  const COR: Record<Nivel, string> = { alerta: 'red', atencao: 'amber', otimo: 'green', bom: 'green', info: 'slate', insuficiente: 'slate' };
+  const lista = gerarOrientacoes(rel, params, clienteId).filter((o) => o.acao !== 'ok');
+  if (!lista.length) return null;
   return (
     <section className="bloco-rel" id="secao-alertas">
-      <Cabeca titulo="Pontos de atenção" />
+      <Cabeca titulo="Próximos passos" />
       <ul className="lista-rel">
-        {alertas.map((a, i) => (
-          <li key={i}>
-            <span className={`marca-nivel ${COR[a.nivel]}`} />
+        {lista.map((o) => (
+          <li key={o.campanha.id}>
+            <span className={`marca-nivel ${ROTULO_ACAO[o.acao].cor}`} />
             <span>
-              <b>{a.titulo}</b> {a.texto}
+              <b>{o.campanha.nome}</b> · {ROTULO_ACAO[o.acao].texto}. {o.porque.join(' ')} {o.fazer[0]}
             </span>
           </li>
         ))}

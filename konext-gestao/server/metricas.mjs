@@ -283,17 +283,31 @@ export const criarMetricas = ({ db, graph, ErroMeta, normalizarConta, ler, lista
     const t = agora();
     const [campanhas, conjuntos, anuncios] = await Promise.all([
       graph(`${act}/campaigns`, { fields: 'id,name,effective_status,objective,daily_budget,lifetime_budget,start_time,stop_time', limit: '500' }),
-      graph(`${act}/adsets`, { fields: 'id,name,campaign_id,effective_status,daily_budget,lifetime_budget,optimization_goal,destination_type', limit: '500' }),
+      graph(`${act}/adsets`, { fields: 'id,name,campaign_id,effective_status,daily_budget,lifetime_budget,optimization_goal,destination_type,learning_stage_info', limit: '500' }).catch((falha) => {
+        if (falha?.detalhe?.codigo !== 100) throw falha;
+        return graph(`${act}/adsets`, { fields: 'id,name,campaign_id,effective_status,daily_budget,lifetime_budget,optimization_goal,destination_type', limit: '500' });
+      }),
       graph(`${act}/ads`, { fields: 'id,name,campaign_id,adset_id,effective_status,creative{id,thumbnail_url,video_id,object_type}', limit: '500' }),
     ]);
     const centavos = (v) => (num(v) === null ? null : num(v) / 100);
+    // Duração dos vídeos (para o gráfico de retenção em segundos).
+    const duracoes = new Map();
+    const idsVideo = [...new Set(anuncios.data.map((a) => a.creative?.video_id).filter(Boolean))];
+    for (let i = 0; i < idsVideo.length; i += 50) {
+      try {
+        const r = await graph('', { ids: idsVideo.slice(i, i + 50).join(','), fields: 'length' });
+        for (const [id, v] of Object.entries(r || {})) if (num(v?.length) !== null) duracoes.set(id, num(v.length));
+      } catch {
+        // sem acesso ao vídeo: o gráfico usa a parte do vídeo (%) no lugar dos segundos
+      }
+    }
     transacao(() => {
       for (const c of campanhas.data)
         gravarObjeto.run(act, 'campaign', c.id, c.name, c.id, null, STATUS(c.effective_status), c.objective || '', centavos(c.daily_budget), centavos(c.lifetime_budget), JSON.stringify({ inicio: c.start_time || null, fim: c.stop_time || null }), t);
       for (const s of conjuntos.data)
-        gravarObjeto.run(act, 'adset', s.id, s.name, s.campaign_id, s.id, STATUS(s.effective_status), '', centavos(s.daily_budget), centavos(s.lifetime_budget), JSON.stringify({ otimizacao: s.optimization_goal || '', destino: s.destination_type || '' }), t);
+        gravarObjeto.run(act, 'adset', s.id, s.name, s.campaign_id, s.id, STATUS(s.effective_status), '', centavos(s.daily_budget), centavos(s.lifetime_budget), JSON.stringify({ otimizacao: s.optimization_goal || '', destino: s.destination_type || '', aprendizado: s.learning_stage_info?.status || null }), t);
       for (const a of anuncios.data)
-        gravarObjeto.run(act, 'ad', a.id, a.name, a.campaign_id, a.adset_id, STATUS(a.effective_status), '', null, null, JSON.stringify({ miniatura: a.creative?.thumbnail_url || null, video: Boolean(a.creative?.video_id) }), t);
+        gravarObjeto.run(act, 'ad', a.id, a.name, a.campaign_id, a.adset_id, STATUS(a.effective_status), '', null, null, JSON.stringify({ miniatura: a.creative?.thumbnail_url || null, video: Boolean(a.creative?.video_id), duracao: duracoes.get(a.creative?.video_id) ?? null }), t);
     });
     return campanhas.data.length + conjuntos.data.length + anuncios.data.length;
   };
@@ -615,12 +629,14 @@ export const criarMetricas = ({ db, graph, ErroMeta, normalizarConta, ler, lista
     custosDasCampanhas(resumo, camp.linhas, derivarM);
 
     let anterior = null;
+    const anteriorPorCampanha = new Map();
     let periodoAnt = null;
     if (comparar) {
       periodoAnt = periodoAnterior(de, ate);
       try {
         const a = await agregadoDoPeriodo(act, campanhaId ? 'campaign' : 'account', periodoAnt.de, periodoAnt.ate, campanhaId);
         const ac = await agregadoDoPeriodo(act, 'campaign', periodoAnt.de, periodoAnt.ate, campanhaId);
+        for (const c of ac.linhas) anteriorPorCampanha.set(c.id, derivarM(c.n));
         const pt = {};
         for (const c of ac.linhas) if (c.n.resultados !== null && c.n.resultados !== undefined) pt[c.n.indicador || '?'] = (pt[c.n.indicador || '?'] || 0) + c.n.resultados;
         const tt = Object.keys(pt);
@@ -633,10 +649,31 @@ export const criarMetricas = ({ db, graph, ErroMeta, normalizarConta, ler, lista
     }
 
     const objetos = new Map(db.prepare('SELECT * FROM met_objetos WHERE conta_id = ?').all(act).map((o) => [`${o.nivel}:${o.objeto_id}`, o]));
+    // Para as orientações: início, aprendizado, dias com veiculação e estabilidade do custo.
+    const adsets = [...objetos.values()].filter((o) => o.nivel === 'adset');
+    const diariasCamp = new Map();
+    for (const l of db.prepare("SELECT objeto_id, data, dados FROM met_diarias WHERE conta_id = ? AND nivel = 'campaign' AND data BETWEEN ? AND ? ORDER BY data").all(act, de, ate)) {
+      if (!diariasCamp.has(l.objeto_id)) diariasCamp.set(l.objeto_id, []);
+      diariasCamp.get(l.objeto_id).push(JSON.parse(l.dados));
+    }
+    const estabilidade = (lista) => {
+      const custos = lista.slice(-5).filter((d) => d.resultados > 0 && d.gasto > 0).map((d) => d.gasto / d.resultados);
+      if (custos.length < 3) return null;
+      const media = custos.reduce((a, b) => a + b, 0) / custos.length;
+      const dp = Math.sqrt(custos.reduce((a, b) => a + (b - media) ** 2, 0) / custos.length);
+      return media ? dp / media : null;
+    };
     const campanhas = camp.linhas
       .map((c) => {
         const o = objetos.get(`campaign:${c.id}`) || {};
+        const extra = JSON.parse(o.extra || '{}');
+        const dias = diariasCamp.get(c.id) || [];
+        const seus = adsets.filter((s) => s.campanha_id === c.id && s.status === 'ativa');
         return {
+          inicio: extra.inicio ? String(extra.inicio).slice(0, 10) : null,
+          aprendizado: seus.some((s) => JSON.parse(s.extra || '{}').aprendizado === 'LEARNING'),
+          diasComGasto: dias.filter((d) => d.gasto > 0).length,
+          variacaoCusto: estabilidade(dias),
           id: c.id,
           nome: c.nome || o.nome || 'Campanha',
           procedimento: procedimentoDe(c.nome || o.nome),
@@ -645,6 +682,7 @@ export const criarMetricas = ({ db, graph, ErroMeta, normalizarConta, ler, lista
           orcamentoDiario: o.orcamento_diario ?? null,
           orcamentoTotal: o.orcamento_total ?? null,
           m: derivarM(c.n),
+          anterior: anteriorPorCampanha.get(c.id) || null,
         };
       })
       .sort((a, b) => b.m.gasto - a.m.gasto);
@@ -671,7 +709,7 @@ export const criarMetricas = ({ db, graph, ErroMeta, normalizarConta, ler, lista
           const extra = JSON.parse(o.extra || '{}');
           const cmp = objetos.get(`campaign:${a.campanhaId}`) || {};
           const cj = objetos.get(`adset:${a.conjuntoId}`) || {};
-          return { id: a.id, nome: a.nome || o.nome || 'Anúncio', campanha: cmp.nome || '', conjunto: cj.nome || '', miniatura: extra.miniatura || null, m: derivarM(a.n) };
+          return { id: a.id, nome: a.nome || o.nome || 'Anúncio', campanha: cmp.nome || '', conjunto: cj.nome || '', miniatura: extra.miniatura || null, duracao: extra.duracao ?? null, m: derivarM(a.n) };
         })
         .sort((a, b) => (b.m.video.reproducoes ?? 0) - (a.m.video.reproducoes ?? 0))
         .slice(0, 30);

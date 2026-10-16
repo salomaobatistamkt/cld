@@ -64,7 +64,7 @@ describe('Volume e frequência', () => {
 });
 
 describe('Alertas', () => {
-  const camp = (id: string, parcial: Partial<Derivadas>) => ({ id, nome: id, procedimento: '', status: 'ativa', objetivo: '', orcamentoDiario: null, orcamentoTotal: null, m: m(parcial) });
+  const camp = (id: string, parcial: Partial<Derivadas>) => ({ id, nome: id, procedimento: '', status: 'ativa', objetivo: '', orcamentoDiario: null, orcamentoTotal: null, m: m(parcial), inicio: null, aprendizado: false, diasComGasto: 7, variacaoCusto: 0.1, anterior: null });
   it('poucas impressões: só pede para aguardar', () => {
     const a = gerarAlertas([camp('nova', { impressoes: 200, ctrLink: 0.3, custoPorResultado: 50 })], p);
     expect(a).toHaveLength(1);

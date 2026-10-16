@@ -9,6 +9,7 @@ import {
   enviarArquivo,
   ErroApi,
   type Midia,
+  type ModeloMensagem,
   type ModoOrcamento,
   NOMES_CONJUNTO_PADRAO,
   nomeConjuntoSugerido,
@@ -95,6 +96,10 @@ export const CriarCampanha = () => {
   const [referenciaId, setReferenciaId] = useState('');
   const [config, setConfig] = useState<ConfigAprendida | null>(null);
   const [erroReferencia, setErroReferencia] = useState('');
+  const [modelosMensagem, setModelosMensagem] = useState<ModeloMensagem[] | null>(null);
+  const [modeloMensagemId, setModeloMensagemId] = useState('');
+  const [erroModelos, setErroModelos] = useState('');
+  const [carregandoModelos, setCarregandoModelos] = useState(false);
   const [procedimento, setProcedimento] = useState('');
   const [nomeCampanha, setNomeCampanha] = useState('');
   const [nomeManual, setNomeManual] = useState(false);
@@ -150,9 +155,38 @@ export const CriarCampanha = () => {
     if (!clienteId || !referenciaId) return;
     criacaoApi
       .referencia(clienteId, referenciaId, modelo)
-      .then((r) => setConfig(r.config))
+      .then((r) => {
+        setConfig(r.config);
+        if (r.config.modeloMensagemId) setModeloMensagemId(r.config.modeloMensagemId);
+      })
       .catch((f) => setErroReferencia(mensagem(f)));
   }, [clienteId, referenciaId, modelo]);
+
+  // Modelos de mensagem do WhatsApp (os “Modelos salvos” da página + os já usados em anúncios).
+  const carregarModelos = useCallback(
+    async (atualizar = false) => {
+      if (!clienteId || modelo !== 'whatsapp' || !modoServidor) return;
+      setCarregandoModelos(true);
+      setErroModelos('');
+      try {
+        const r = await criacaoApi.modelosMensagem(clienteId, atualizar);
+        setModelosMensagem(r.modelos);
+        const falhas = Object.values(r.erros || {}).map((e) => e.mensagem);
+        if (!r.modelos.length && falhas.length) setErroModelos(falhas.join(' | '));
+      } catch (f) {
+        setErroModelos(mensagem(f));
+      } finally {
+        setCarregandoModelos(false);
+      }
+    },
+    [clienteId, modelo, modoServidor],
+  );
+  useEffect(() => {
+    setModelosMensagem(null);
+    setModeloMensagemId('');
+    void carregarModelos();
+  }, [carregarModelos]);
+  const modeloMensagem = modelosMensagem?.find((m) => m.id === modeloMensagemId) || null;
 
   const carregarPublicos = useCallback(
     async (atualizar = false) => {
@@ -236,6 +270,7 @@ export const CriarCampanha = () => {
     clienteId,
     modelo,
     referenciaId,
+    modeloMensagemId: modelo === 'whatsapp' && modeloMensagemId ? modeloMensagemId : undefined,
     nomeCampanha,
     texto,
     titulo,
@@ -434,6 +469,51 @@ export const CriarCampanha = () => {
                 </small>
               ) : null}
             </label>
+            {modelo === 'whatsapp' ? (
+              <div className="campo largo modelo-mensagem">
+                <span>Modelo de mensagem (WhatsApp)</span>
+                <div className="linha-modelo">
+                  <select id="cc-modelo-mensagem" value={modeloMensagemId} onChange={(e) => setModeloMensagemId(e.target.value)} disabled={!clienteId || carregandoModelos}>
+                    <option value="">{carregandoModelos ? 'Carregando modelos…' : 'Sem modelo (a Meta usa a mensagem padrão)'}</option>
+                    {modelosMensagem?.some((m) => m.origem === 'salvo') ? (
+                      <optgroup label="Modelos salvos">
+                        {modelosMensagem.filter((m) => m.origem === 'salvo').map((m) => (
+                          <option key={m.id} value={m.id}>{m.nome}</option>
+                        ))}
+                      </optgroup>
+                    ) : null}
+                    {modelosMensagem?.some((m) => m.origem === 'anuncio') ? (
+                      <optgroup label="Usados em anúncios desta conta">
+                        {modelosMensagem.filter((m) => m.origem === 'anuncio').map((m) => (
+                          <option key={m.id} value={m.id}>{m.nome}</option>
+                        ))}
+                      </optgroup>
+                    ) : null}
+                  </select>
+                  <button type="button" className="btn" title="Atualizar lista" onClick={() => void carregarModelos(true)} disabled={!clienteId || carregandoModelos}>
+                    <RefreshCw size={14} />
+                  </button>
+                </div>
+                {modeloMensagem ? (
+                  <div className="previa-modelo">
+                    {modeloMensagem.boasVindas ? (
+                      <div><b>Mensagem de boas-vindas</b><p>{modeloMensagem.boasVindas}</p></div>
+                    ) : null}
+                    {modeloMensagem.mensagemPronta ? (
+                      <div><b>Mensagem pronta</b><p>{modeloMensagem.mensagemPronta}</p></div>
+                    ) : null}
+                    {modeloMensagem.botoes.length ? (
+                      <div><b>Perguntas</b><p>{modeloMensagem.botoes.join(' · ')}</p></div>
+                    ) : null}
+                    {modeloMensagem.origem === 'anuncio' ? <small>Copiado do anúncio “{modeloMensagem.anuncio}”.</small> : null}
+                  </div>
+                ) : null}
+                {erroModelos ? <small className="erro-texto">{erroModelos}</small> : null}
+                {modelosMensagem && !modelosMensagem.length && !erroModelos ? (
+                  <small className="aviso-texto"><AlertTriangle size={13} /> Nenhum modelo encontrado nesta página. Crie um no Gerenciador de Anúncios e clique em atualizar.</small>
+                ) : null}
+              </div>
+            ) : null}
             <label className="campo largo">
               <span>Texto principal do anúncio</span>
               <textarea id="cc-texto" rows={3} value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Vale para todos os anúncios desta campanha." />
@@ -728,6 +808,12 @@ export const CriarCampanha = () => {
             <div><span>Campanha</span><b>{revisao.plano.nomeCampanha}</b></div>
             <div><span>Objetivo → destino</span><b>{revisao.plano.config.objective} → {revisao.plano.config.destination_type} ({revisao.plano.config.optimization_goal})</b></div>
             <div><span>Configuração</span><b>{revisao.plano.config.origem === 'referencia' ? `copiada de “${revisao.plano.config.referencia?.nome}”` : 'padrão do sistema (não testada nesta conta)'}</b></div>
+            {revisao.plano.config.destination_type === 'WHATSAPP' || revisao.plano.mensagem ? (
+              <div>
+                <span>Modelo de mensagem</span>
+                <b>{revisao.plano.mensagem ? `${revisao.plano.mensagem.nome}${revisao.plano.mensagem.mensagemPronta ? ` — “${revisao.plano.mensagem.mensagemPronta}”` : ''}` : 'nenhum (mensagem padrão da Meta)'}</b>
+              </div>
+            ) : null}
             <div><span>Estrutura</span><b>{revisao.plano.itens.length} conjunto(s), {revisao.plano.itens.length} anúncio(s), 1 criativo em cada</b></div>
             <div>
               <span>Orçamento</span>

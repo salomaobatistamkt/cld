@@ -59,7 +59,7 @@ export const BibliotecaCriativos = () => {
           <h1>
             <IconeImagem size={26} /> Biblioteca de criativos
           </h1>
-          <p>Imagens e vídeos prontos para virar anúncio. O envio para a Meta acontece só na hora de publicar, e é reaproveitado depois.</p>
+          <p>Imagens e vídeos prontos para virar anúncio. O envio para a Meta acontece só na hora de publicar, e é reaproveitado depois. Para não ocupar espaço, cada arquivo é apagado automaticamente 24h depois do envio (os anúncios já criados continuam na Meta).</p>
         </div>
       </div>
       {!modoServidor ? (

@@ -3463,3 +3463,11 @@ button.cartao-midia {
     animation: none !important;
   }
 }
+
+/* Modelo de mensagem do WhatsApp */
+.modelo-mensagem { display: flex; flex-direction: column; gap: 6px; }
+.modelo-mensagem .linha-modelo { display: flex; gap: 8px; }
+.modelo-mensagem .linha-modelo select { flex: 1; min-width: 0; }
+.previa-modelo { background: var(--fundo-suave, rgba(127, 127, 127, 0.08)); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; }
+.previa-modelo b { font-size: 0.82rem; }
+.previa-modelo p { margin: 2px 0 0; font-size: 0.86rem; opacity: 0.9; white-space: pre-wrap; }

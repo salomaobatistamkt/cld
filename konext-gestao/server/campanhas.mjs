@@ -232,6 +232,44 @@ export const criarCampanhas = ({ db, graph, graphEnviar, ErroMeta, normalizarCon
     db.prepare('DELETE FROM midias WHERE id = ?').run(id);
   };
 
+  // Limpeza automática: arquivos da biblioteca saem do disco 24h depois do envio.
+  // Depois de enviado, a Meta guarda a própria cópia; só preserva o que ainda falta subir.
+  const HORAS_BIBLIOTECA = Number(process.env.KONEXT_MIDIAS_HORAS || 24);
+  const limparBiblioteca = () => {
+    const limite = new Date(Date.now() - HORAS_BIBLIOTECA * 3600 * 1000).toISOString();
+    const velhas = db.prepare('SELECT id, nome FROM midias WHERE criado_em < ?').all(limite);
+    const pendente = db.prepare(
+      "SELECT 1 FROM objetos o JOIN operacoes p ON p.id = o.operacao_id WHERE o.chave = ? AND (p.status IN ('na_fila','em_andamento','aguardando_limite') OR (o.status <> 'criado' AND p.status NOT IN ('concluida','cancelada') AND p.criado_em >= ?))",
+    );
+    const semana = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+    let apagadas = 0;
+    for (const m of velhas) {
+      if (pendente.get(`midia:${m.id}`, semana)) continue;
+      try {
+        apagarMidia(m.id);
+        apagadas += 1;
+      } catch {
+        // em uso: tenta na próxima rodada
+      }
+    }
+    if (apagadas) log(`biblioteca: ${apagadas} arquivo(s) com mais de ${HORAS_BIBLIOTECA}h apagado(s)`);
+  };
+  const timerLimpeza = setInterval(() => {
+    try {
+      limparBiblioteca();
+    } catch (falha) {
+      log('limpeza da biblioteca:', falha);
+    }
+  }, 30 * 60 * 1000);
+  timerLimpeza.unref?.();
+  setTimeout(() => {
+    try {
+      limparBiblioteca();
+    } catch (falha) {
+      log('limpeza da biblioteca:', falha);
+    }
+  }, 5000).unref?.();
+
   const servirMidia = (req, res, id) => {
     const m = lerMidia(id);
     if (!m || m.status !== 'pronta') {
@@ -451,6 +489,7 @@ export const criarCampanhas = ({ db, graph, graphEnviar, ErroMeta, normalizarCon
     const cj = conjuntos.data[0];
     if (!cj) throw new ErroMeta(`A campanha “${c.name}” não tem conjuntos para copiar a configuração.`, 409);
     const anuncios = await graph(`${campanhaId}/ads`, { fields: 'id,creative{object_story_spec,asset_feed_spec,call_to_action_type}', limit: '5' }, undefined, { maxPaginas: 1 });
+    const boasVindasRef = anuncios.data.map((a) => boasVindasDoCriativo(a.creative)).find(Boolean);
     let cta = null;
     let link = null;
     for (const a of anuncios.data) {
@@ -485,7 +524,98 @@ export const criarCampanhas = ({ db, graph, graphEnviar, ErroMeta, normalizarCon
       link: modelo === 'whatsapp' ? link || padrao.link : null,
       ctaCopiado: Boolean(cta),
       regulacao: await lerRegulacaoDoConjunto(cj.id),
+      boasVindas: modelo === 'whatsapp' && boasVindasRef ? comoTexto(boasVindasRef) : null,
     };
+  };
+
+  // ---------- Modelos de mensagem (boas-vindas / mensagem pronta do WhatsApp) ----------
+  // Vêm de duas fontes oficiais: os modelos salvos da página (welcome_message_flows) e os
+  // que já estão em anúncios da conta (page_welcome_message do criativo). Nada é inventado.
+  const textoDoModelo = (valor) => {
+    const r = { boasVindas: '', mensagemPronta: '', botoes: [] };
+    let dado = valor;
+    try {
+      if (typeof dado === 'string') dado = JSON.parse(dado);
+    } catch {
+      return r;
+    }
+    const visitar = (no, chave = '') => {
+      if (!no || typeof no !== 'object') return;
+      if (Array.isArray(no)) return no.forEach((x) => visitar(x, chave));
+      for (const [k, v] of Object.entries(no)) {
+        if (typeof v === 'string') {
+          if (k === 'text' && !r.boasVindas && chave === 'message') r.boasVindas = v;
+          else if (k === 'content' && /autofill|prefill/i.test(chave) && !r.mensagemPronta) r.mensagemPronta = v;
+          else if ((k === 'title' || k === 'question') && /ice_breaker|quick_repl|faq/i.test(chave)) r.botoes.push(v);
+        } else visitar(v, /^\d+$/.test(k) ? chave : k);
+      }
+    };
+    visitar(dado);
+    if (!r.boasVindas) {
+      const t = JSON.stringify(dado).match(/"text":"((?:[^"\\]|\\.)*)"/);
+      if (t) r.boasVindas = JSON.parse(`"${t[1]}"`);
+    }
+    r.botoes = [...new Set(r.botoes)].slice(0, 6);
+    return r;
+  };
+  const comoTexto = (v) => (typeof v === 'string' ? v : JSON.stringify(v));
+  const boasVindasDoCriativo = (cr) => {
+    const oss = cr?.object_story_spec || {};
+    return oss.link_data?.page_welcome_message || oss.video_data?.page_welcome_message || cr?.asset_feed_spec?.additional_data?.page_welcome_message || null;
+  };
+  const cacheModelos = new Map();
+  const modelosDeMensagem = async (act, paginaId, atualizar = false) => {
+    const chave = `${act}|${paginaId}`;
+    const guardado = cacheModelos.get(chave);
+    if (!atualizar && guardado && Date.now() - guardado.em < 10 * 60 * 1000) return guardado.valor;
+    const modelos = [];
+    const erros = {};
+    const vistos = new Set();
+    const adicionar = (m) => {
+      if (!m.valor || vistos.has(m.valor)) return;
+      vistos.add(m.valor);
+      modelos.push({ ...m, ...textoDoModelo(m.valor) });
+    };
+    // 1. Modelos salvos da página (o que aparece em “Modelos salvos” no Gerenciador).
+    if (paginaId) {
+      const campos = { fields: 'id,name,welcome_message_flow,eligible_platforms,is_used_in_ad,last_update_time', limit: '100' };
+      let lidos = null;
+      try {
+        lidos = await graph(`${paginaId}/welcome_message_flows`, campos);
+      } catch (falha) {
+        // Algumas páginas só respondem com o token da própria página (fica só no servidor).
+        try {
+          const pg = await graph(paginaId, { fields: 'access_token' });
+          if (!pg.access_token) throw falha;
+          lidos = await graph(`${paginaId}/welcome_message_flows`, campos, pg.access_token);
+        } catch (falha2) {
+          erros.salvos = { mensagem: falha2?.message || falha?.message || 'Erro ao ler os modelos salvos' };
+        }
+      }
+      for (const f of lidos?.data || []) {
+        const plataformas = Array.isArray(f.eligible_platforms) ? f.eligible_platforms : [];
+        if (plataformas.length && !plataformas.some((x) => /WHATSAPP/i.test(String(x)))) continue;
+        if (!f.welcome_message_flow) continue;
+        adicionar({ id: `salvo:${f.id}`, nome: f.name || `Modelo ${f.id}`, origem: 'salvo', valor: comoTexto(f.welcome_message_flow), atualizadoEm: f.last_update_time || null });
+      }
+    }
+    // 2. Modelos já usados em anúncios desta conta.
+    try {
+      const anuncios = await graph(`${act}/ads`, { fields: 'id,name,created_time,creative{object_story_spec,asset_feed_spec}', limit: '100' }, undefined, { maxPaginas: 2 });
+      const ordenados = (anuncios.data || []).sort((a, b) => String(b.created_time || '').localeCompare(String(a.created_time || '')));
+      for (const a of ordenados) {
+        const valor = boasVindasDoCriativo(a.creative);
+        if (!valor) continue;
+        const v = comoTexto(valor);
+        const t = textoDoModelo(v);
+        adicionar({ id: `anuncio:${a.id}`, nome: (t.mensagemPronta || t.boasVindas || `Do anúncio ${a.name}`).slice(0, 70), origem: 'anuncio', anuncio: a.name, valor: v });
+      }
+    } catch (falha) {
+      erros.anuncios = { mensagem: falha?.message || 'Erro ao ler os anúncios' };
+    }
+    const valor = { modelos, erros };
+    cacheModelos.set(chave, { em: Date.now(), valor });
+    return valor;
   };
 
   // ---------- Operações ----------
@@ -522,6 +652,15 @@ export const criarCampanhas = ({ db, graph, graphEnviar, ErroMeta, normalizarCon
     if (modo !== 'conjunto' && !(Number(orc.valor) > 0)) throw new ErroMeta('Informe o valor do orçamento da campanha.', 400);
     if (modo === 'campanha_total' && (!inicio || !fim)) throw new ErroMeta('Orçamento total precisa de data de início e de término.', 400);
     if (fim && inicio && fim <= inicio) throw new ErroMeta('A data de término precisa ser depois do início.', 400);
+
+    // Modelo de mensagem do WhatsApp: precisa existir de fato nesta página/conta.
+    let mensagem = null;
+    if (modelo === 'whatsapp' && entrada.modeloMensagemId) {
+      const { modelos } = await modelosDeMensagem(act, cliente.metaPaginaId, true);
+      const achado = modelos.find((x) => x.id === String(entrada.modeloMensagemId));
+      if (!achado) throw new ErroMeta('O modelo de mensagem escolhido não foi encontrado na página deste cliente. Atualize a lista e escolha de novo.', 409);
+      mensagem = { id: achado.id, nome: achado.nome, origem: achado.origem, valor: achado.valor, boasVindas: achado.boasVindas, mensagemPronta: achado.mensagemPronta };
+    }
 
     const itens = Array.isArray(entrada.itens) ? entrada.itens : [];
     if (!itens.length) throw new ErroMeta('Adicione pelo menos um criativo.', 400);
@@ -579,6 +718,7 @@ export const criarCampanhas = ({ db, graph, graphEnviar, ErroMeta, normalizarCon
         nomeCampanha,
         texto,
         titulo,
+        mensagem,
         orcamento: { modo, valor: modo === 'conjunto' ? null : Number(orc.valor), inicio, fim },
         itens: itensValidos,
         estimativa: { totalDiario, dias, totalPeriodo: modo === 'campanha_total' ? Number(orc.valor) : totalDiario && dias ? totalDiario * dias : null },
@@ -734,6 +874,7 @@ export const criarCampanhas = ({ db, graph, graphEnviar, ErroMeta, normalizarCon
       } else {
         oss.link_data = { image_hash: extraMidia.hash, message: plano.texto || undefined, name: plano.titulo || undefined, link: link || undefined, call_to_action: cta };
       }
+      if (plano.modelo === 'whatsapp' && plano.mensagem?.valor) (oss.video_data || oss.link_data).page_welcome_message = plano.mensagem.valor;
       const r = await comAdaptacoes((p) => graphEnviar(`${plano.contaId}/adcreatives`, p), { name: `${item.nomeAnuncio} · ${item.midiaNome}`.slice(0, 100), object_story_spec: oss });
       return { metaId: r.id };
     }
@@ -1009,6 +1150,13 @@ export const criarCampanhas = ({ db, graph, graphEnviar, ErroMeta, normalizarCon
       responder(res, 200, { contaId: act, atualizadoEm: new Date(r.em).toISOString(), erros: r.erros, publicos: r.publicos.map(({ targeting, ...resto }) => resto) });
       return true;
     }
+    if ((m = rota.match(/^\/clientes\/([\w-]+)\/modelos-mensagem$/)) && metodo === 'GET') {
+      const { act, cliente } = await contaDoCliente(m[1], { conferirNaMeta: false });
+      const url = new URL(req.url, 'http://local');
+      const r = await modelosDeMensagem(act, cliente.metaPaginaId, url.searchParams.get('atualizar') === '1');
+      responder(res, 200, { modelos: r.modelos.map(({ valor, ...resto }) => resto), erros: r.erros });
+      return true;
+    }
     if ((m = rota.match(/^\/clientes\/([\w-]+)\/referencias$/)) && metodo === 'GET') {
       const { act } = await contaDoCliente(m[1], { conferirNaMeta: false });
       const url = new URL(req.url, 'http://local');
@@ -1017,10 +1165,21 @@ export const criarCampanhas = ({ db, graph, graphEnviar, ErroMeta, normalizarCon
       return true;
     }
     if ((m = rota.match(/^\/clientes\/([\w-]+)\/referencias\/([\w-]+)$/)) && metodo === 'GET') {
-      const { act } = await contaDoCliente(m[1], { conferirNaMeta: false });
+      const { act, cliente } = await contaDoCliente(m[1], { conferirNaMeta: false });
       const url = new URL(req.url, 'http://local');
       const modelo = url.searchParams.get('modelo') === 'instagram' ? 'instagram' : 'whatsapp';
-      responder(res, 200, { config: await aprenderReferencia(act, m[2], modelo) });
+      const { boasVindas, ...config } = await aprenderReferencia(act, m[2], modelo);
+      // Qual modelo de mensagem a referência usa (para já vir selecionado).
+      let modeloMensagemId = null;
+      if (boasVindas) {
+        try {
+          const { modelos } = await modelosDeMensagem(act, cliente.metaPaginaId);
+          modeloMensagemId = modelos.find((x) => x.valor === boasVindas)?.id || null;
+        } catch {
+          // sem a lista, o usuário escolhe manualmente
+        }
+      }
+      responder(res, 200, { config: { ...config, modeloMensagemId } });
       return true;
     }
     if (rota === '/operacoes/revisar' && metodo === 'POST') {

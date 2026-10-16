@@ -99,6 +99,17 @@ export type ConfigAprendida = {
   cta: { type: string };
   ctaCopiado: boolean;
   regulacao?: Record<string, unknown> | null;
+  modeloMensagemId?: string | null;
+};
+
+export type ModeloMensagem = {
+  id: string;
+  nome: string;
+  origem: 'salvo' | 'anuncio';
+  anuncio?: string;
+  boasVindas: string;
+  mensagemPronta: string;
+  botoes: string[];
 };
 
 export type ModoOrcamento = 'conjunto' | 'campanha_diario' | 'campanha_total';
@@ -107,6 +118,7 @@ export type EntradaPlano = {
   clienteId: string;
   modelo: 'whatsapp' | 'instagram';
   referenciaId: string;
+  modeloMensagemId?: string;
   nomeCampanha: string;
   texto: string;
   titulo: string;
@@ -125,6 +137,7 @@ export type PlanoRevisado = {
   config: ConfigAprendida & { promoted_object: Record<string, string> };
   nomeCampanha: string;
   texto: string;
+  mensagem: { id: string; nome: string; boasVindas: string; mensagemPronta: string } | null;
   orcamento: { modo: ModoOrcamento; valor: number | null; inicio: string; fim: string };
   itens: Array<{
     n: number;
@@ -185,6 +198,8 @@ export const criacaoApi = {
     pedir<{ contaId: string; atualizadoEm: string; erros: Record<string, string>; publicos: Publico[] }>(`/clientes/${clienteId}/publicos${atualizar ? '?atualizar=1' : ''}`),
   referencias: (clienteId: string, modelo: string) => pedir<{ referencias: Referencia[] }>(`/clientes/${clienteId}/referencias?modelo=${modelo}`),
   referencia: (clienteId: string, id: string, modelo: string) => pedir<{ config: ConfigAprendida }>(`/clientes/${clienteId}/referencias/${id}?modelo=${modelo}`),
+  modelosMensagem: (clienteId: string, atualizar = false) =>
+    pedir<{ modelos: ModeloMensagem[]; erros: Record<string, { mensagem: string }> }>(`/clientes/${clienteId}/modelos-mensagem${atualizar ? '?atualizar=1' : ''}`),
   revisar: (entrada: EntradaPlano) => pedir<{ plano: PlanoRevisado; avisos: string[] }>('/operacoes/revisar', { method: 'POST', body: JSON.stringify(entrada) }),
   publicar: (entrada: EntradaPlano) => pedir<{ id: string }>('/operacoes', { method: 'POST', body: JSON.stringify(entrada) }),
   operacoes: () => pedir<{ operacoes: Operacao[] }>('/operacoes'),

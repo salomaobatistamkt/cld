@@ -137,8 +137,8 @@ Como as regras são aplicadas:
 - O período sai escrito na mensagem (ex.: *16/10 a 19/10*). Basta abrir o relatório da Konext Gestão nas **mesmas datas**.
 
 ### Período (nó `Config (Rel)`)
-- `desde_ultimo_relatorio` (padrão): a terça cobre **sexta → segunda** e a sexta cobre **terça → quinta**. Sem repetir nem pular dia, e sempre até ontem (dia fechado).
-- `ultimos_dias` + `periodo_dias = 7`: últimos 7 dias fechados.
+- `desde_ultimo_relatorio` (padrão): a terça cobre **sexta → terça** e a sexta cobre **terça → sexta**, até hoje (`incluir_hoje = true`, igual à Konext Gestão). Com `incluir_hoje = false`, vai só até ontem.
+- `ultimos_dias` + `periodo_dias = 5`: últimos 5 dias (contando hoje, se `incluir_hoje = true`).
 
 ### Para ativar
 1. Rode o fluxo **00**. Ele cria na **Planilha Geral › Clientes**, no fim da linha 1, a coluna **`Link do Relatório`** (e também `Enviar Relatório`, `Relatório - Melhorias`, `Relatório - Ajustes`). Depois, cole o link do relatório de cada cliente na linha dele.

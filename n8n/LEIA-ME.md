@@ -73,7 +73,7 @@ Quer priorizar o contato pessoal em vez do grupo? Coloque `preferir_grupo = fals
 
 1. No n8n, **importe** os 4 arquivos. Você pode abrir o fluxo antigo e usar *Import from File* para substituir, ou criar novos e **desativar os antigos** para não rodar em dobro.
 2. Abra cada fluxo e confirme que as credenciais aparecem selecionadas (`Salomão Konext`, `Google Sheets account 2`, `Facebook Graph account`).
-3. A aba `Campanhas Pausadas` é criada pelo fluxo **00** (cabeçalhos:
+3. A aba `Campanhas Pausadas` é criada pelo fluxo **00**, com os cabeçalhos:
    `Data | Cliente | ID da Conta | ID Campanha | Nome Campanha | Status | Reativada em | Erro`
 4. A aba de grupos é renomeada para `IDS GRUPOS - CLIENTES KONEXT` pelo fluxo **00**.
 5. **Ative** os 4 fluxos. A memória da reativação só funciona com o fluxo **ativo**, não em execução manual.

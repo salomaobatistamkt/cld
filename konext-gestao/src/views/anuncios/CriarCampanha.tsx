@@ -87,6 +87,7 @@ export const CriarCampanha = () => {
   const nomesConjunto = dados.config.nomesConjunto?.length ? dados.config.nomesConjunto : NOMES_CONJUNTO_PADRAO;
   const clientesValidos = dados.clientes.filter((c) => c.status !== 'encerrado' && situacaoConta(c).status === 'validada');
   const clientesSemValidar = dados.clientes.filter((c) => c.status !== 'encerrado' && c.metaContaId && situacaoConta(c).status !== 'validada');
+  const clientesSemConta = dados.clientes.filter((c) => c.status !== 'encerrado' && !c.metaContaId);
 
   const [etapa, setEtapa] = useState(1);
   const [clienteId, setClienteId] = useState('');
@@ -377,17 +378,38 @@ export const CriarCampanha = () => {
               <span>Cliente</span>
               <select id="cc-cliente" value={clienteId} onChange={(e) => setClienteId(e.target.value)}>
                 <option value="">Escolha…</option>
-                {clientesValidos.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome} — {c.metaValidacao?.contaNome}
-                  </option>
-                ))}
+                <optgroup label="Prontos para anunciar">
+                  {clientesValidos.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nome} — {c.metaValidacao?.contaNome}
+                    </option>
+                  ))}
+                </optgroup>
+                {clientesSemValidar.length ? (
+                  <optgroup label="Falta validar a conta (Anúncios → Contas de anúncios)">
+                    {clientesSemValidar.map((c) => (
+                      <option key={c.id} value="" disabled>
+                        {c.nome} — {situacaoConta(c).texto}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : null}
+                {clientesSemConta.length ? (
+                  <optgroup label="Sem conta de anúncios (edite o cliente)">
+                    {clientesSemConta.map((c) => (
+                      <option key={c.id} value="" disabled>
+                        {c.nome}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : null}
               </select>
-              {clientesSemValidar.length ? (
+              {clientesSemValidar.length || clientesSemConta.length ? (
                 <small>
-                  {clientesSemValidar.length} cliente(s) com conta ainda não validada.{' '}
+                  Só aparecem para escolher os clientes com a conta validada.
+                  {clientesSemValidar.length ? ` ${clientesSemValidar.length} cliente(s) ainda não validado(s).` : ''}{' '}
                   <button type="button" className="link-botao" onClick={() => ir({ tela: 'anuncios-contas' })}>
-                    Validar contas
+                    Validar contas agora
                   </button>
                 </small>
               ) : null}

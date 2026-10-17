@@ -1,6 +1,6 @@
 # Automações Meta Ads — Konext (n8n)
 
-4 workflows padronizados. Todos usam a **mesma base de clientes**, as **mesmas credenciais** e a **mesma regra de envio de WhatsApp**.
+5 workflows padronizados. Todos usam a **mesma base de clientes**, as **mesmas credenciais** e a **mesma regra de envio de WhatsApp**.
 
 | Arquivo | Quando roda | O que faz |
 |---|---|---|
@@ -8,6 +8,7 @@
 | `02 - Sincronizar Base de Clientes.json` | Todo dia 06:00 (+ manual) | Preenche Página, Instagram e Públicos na Planilha Geral |
 | `03 - Monitor de Custo por Resultado (CPR).json` | **A cada 30 min, das 06h às 23h30** | Estourou o teto → pausa na hora e avisa |
 | `04 - Verificacao de Saldo Meta Ads.json` | Todo dia 09:00 | Avisa saldo baixo (Pix/Boleto) ou cobrança próxima (cartão) |
+| `05 - Relatorio de Performance….json` | **Terça e sexta 07:30** | Relatório de performance para cada cliente |
 
 ## Padrão único
 
@@ -74,6 +75,38 @@ Quer priorizar o contato pessoal em vez do grupo? Coloque `preferir_grupo = fals
 4. Na planilha de grupos, renomeie a aba `IDS GRUPOS - CLIENTES VORK` para `IDS GRUPOS - CLIENTES KONEXT`. Os fluxos leem pela 1ª aba, então o nome não quebra nada.
 5. **Ative** os 4 fluxos. A memória da reativação só funciona com o fluxo **ativo**, não em execução manual.
 6. Teste: no fluxo 01, clique no gatilho "Sábado às 12:00" e em *Execute step*. Confira a aba `Campanhas Pausadas` e o WhatsApp. Depois execute o gatilho "Segunda às 07:30".
+
+## 05 — Relatório de Performance (terça e sexta, 07:30)
+
+### De onde vem cada número
+| Linha da mensagem | Origem na Meta (mesmo período escrito na mensagem) |
+|---|---|
+| Investimento, Alcance, Impressões | Totais **da conta** (nível conta). O alcance não é somado por campanha, porque somar duplicaria pessoas; é o número exato do Gerenciador |
+| Mensagens | ação `messaging_conversation_started_7d`, a mesma do Monitor de CPR |
+| Visitas ao perfil | ação `instagram_profile_visit` / `profile_visit`, a mesma do Monitor de CPR |
+| Público % | alcance por gênero (mulheres x homens, sem "desconhecido") |
+| Investimento da campanha | gasto da campanha |
+| **Custo por resultado da campanha** | **média do custo por resultado dos conjuntos que tiveram resultado.** Ex.: conjuntos de R$ 6,00 e R$ 3,00 mais um conjunto sem resultado → R$ 4,50. O conjunto sem resultado conta só no investimento |
+| Campanhas pausadas | registro do Monitor de CPR (aba `Pausas CPR`) com o motivo, mais os criativos pausados no período, com o link de cada criativo |
+| Escalada 🚀 | aumento de orçamento registrado no histórico da conta durante o período |
+| Melhoramos / Ajustar | automático (custo caiu ≥ 5% vs período anterior; acima da meta; sem resultado; frequência > 3,5). Também lê as colunas opcionais `Relatório - Melhorias` e `Relatório - Ajustes`, que você pode preencher |
+| Saldo atual | Meta em tempo real; tipo (Pix/Boleto/Cartão) pela coluna Método de Pagamento da planilha de saldo |
+
+Todas as consultas usam `use_unified_attribution_setting=true`, a mesma atribuição do Gerenciador de Anúncios.
+
+### Proteções para nunca mandar número em conflito
+- Se a Meta falhar em qualquer dado essencial (totais, campanhas, conjuntos), **o cliente não recebe**. Você recebe o erro.
+- Se a soma do investimento das campanhas não bater com o total da conta, **o envio é bloqueado** e você recebe a prévia.
+- O período sai escrito na mensagem (ex.: *16/10 a 19/10*). Basta abrir o relatório da Konext Gestão nas **mesmas datas**.
+
+### Período (nó `Config (Rel)`)
+- `desde_ultimo_relatorio` (padrão): a terça cobre **sexta → segunda** e a sexta cobre **terça → quinta**. Sem repetir nem pular dia, e sempre até ontem (dia fechado).
+- `ultimos_dias` + `periodo_dias = 7`: últimos 7 dias fechados.
+
+### Para ativar
+1. Na **Planilha Geral › Clientes**, crie a coluna **`Link do Relatório`** e cole o link do relatório de cada cliente. Opcionais: `Enviar Relatório` (Sim/Não), `Relatório - Melhorias`, `Relatório - Ajustes`.
+2. Na **Planilha_Pausa_Campanhas**, crie a aba **`Pausas CPR`** com os cabeçalhos: `Data | Cliente | ID da Conta | ID Campanha | Nome Campanha | Motivo | Anúncios`. O Monitor de CPR (03) foi atualizado para gravar nela cada pausa; **reimporte o 03**.
+3. Importe o 05. Ele vem com **`modo_teste = true`**: todos os relatórios vão só para você. Rode pelo gatilho *Executar manualmente*, compare com a Konext Gestão nas mesmas datas e, estando tudo igual, mude `modo_teste` para `false` e ative.
 
 ## Pontos que dependem de você (vistos nas planilhas)
 

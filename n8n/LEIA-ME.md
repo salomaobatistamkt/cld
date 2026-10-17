@@ -7,7 +7,7 @@
 | `00 - Preparar Planilhas (rodar 1x).json` | Rodar 1x agora (+ confere todo dia 05:45) | Cria colunas e abas que faltam, renomeia VORK → KONEXT |
 | `01 - Pausar Campanhas…json` | Sábado 12:00 / Segunda 07:30 | Pausa tudo no sábado, reativa na segunda, avisa cada cliente |
 | `02 - Sincronizar Base de Clientes.json` | Todo dia 06:00 (+ manual) | Preenche Página, Instagram e Públicos na Planilha Geral |
-| `03 - Monitor de Custo por Resultado (CPR).json` | **A cada 30 min, das 06h às 23h30** | Estourou o teto → pausa na hora e avisa |
+| `03 - Monitor de Custo por Resultado (CPR).json` | **A cada 6 horas** (00h, 06h, 12h, 18h), todos os dias, exceto de sábado 12h a segunda 7h30 | Custo por resultado passou do teto → pausa e avisa com o link dos criativos |
 | `04 - Verificacao de Saldo Meta Ads.json` | Todo dia 09:00 | Avisa saldo baixo (Pix/Boleto) ou cobrança próxima (cartão) |
 | `05 - Relatorio de Performance….json` | **Terça e sexta 07:30** | Relatório de performance para cada cliente |
 
@@ -51,7 +51,13 @@ Quer priorizar o contato pessoal em vez do grupo? Coloque `preferir_grupo = fals
 
 ### Monitor de CPR
 - O nó da planilha estava **sem aba selecionada**. Agora lê a Planilha Geral.
-- Rodava **1x por dia às 6h**, e o prejuízo corria até o dia seguinte. Agora roda **a cada 30 min, das 06h às 23h30**: estourou o teto, pausa na mesma rodada.
+- Rodava **1x por dia às 6h**, e o prejuízo corria até o dia seguinte. Agora roda **a cada 6 horas** (00h, 06h, 12h, 18h), todos os dias, **exceto de sábado 12h até segunda 7h30** (nesse período as campanhas já estão pausadas pelo fluxo 01).
+- **Regras de pausa (únicas):**
+  - **Mensagens:** ideal até R$ 5,00, aceitável até R$ 10,00. **Acima de R$ 10,00 por conversa, pausa.**
+  - **Visitas ao perfil:** **acima de R$ 0,60 por visita, pausa.**
+  - **Campanha sem nenhum resultado não é pausada** por este fluxo.
+- O aviso traz só o que importa: motivo da pausa, resultados, custo por resultado e investimento (janela curta e 15 dias), mais o **link de cada criativo** da campanha, para montar novos criativos sem repetir o erro.
+- Limites no nó **Config (CPR)**: `cpr_msg_meta` (5), `cpr_msg_max` (10), `cpr_visita_max` (0,60), `janela_curta_dias` (3).
 - O aviso agora vai **para o cliente** (grupo ou contato) **e uma cópia para o gestor**.
 - Se você **reativar manualmente** uma campanha que o monitor pausou, ele não pausa de novo por 24h (`ignorar_apos_reativacao_horas`).
 - Falha repetida ao pausar não lota o WhatsApp: o alerta repete no máximo a cada `reaviso_horas`.

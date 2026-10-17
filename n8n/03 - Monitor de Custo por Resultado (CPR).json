@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## 🚨 MONITOR DE CUSTO POR RESULTADO — a cada 30 min (06h às 23h30)\nMensagens: pausa se custo/conversa > **cpr_msg_max**. Visitas ao perfil: pausa se custo/visita > **cpr_visita_max**. Sem resultado e gasto ≥ mínimo: pausa. Janela de 3 dias (inclui hoje) e comparação com 15 dias.\nAtingiu o teto → pausa **na mesma rodada** e avisa o cliente (grupo → ou Contato do cliente) + cópia ao gestor.\nSe você reativar manualmente uma campanha que o monitor pausou, ela fica liberada por **ignorar_apos_reativacao_horas**.\nClientes: Planilha Geral › Clientes (Status = Ativo e Monitorar Custo ≠ Não).",
+        "content": "## 🚨 MONITOR DE CUSTO POR RESULTADO — a cada 6 horas (00h, 06h, 12h, 18h), todos os dias, exceto de sábado 12h até segunda 7h30\nMensagens: ideal até R$ 5,00, aceitável até R$ 10,00 — **acima de R$ 10,00 por conversa: pausa**. Visitas ao perfil: **acima de R$ 0,60 por visita: pausa**. Campanha sem resultado NÃO é pausada. Janela: últimos **janela_curta_dias** dias (inclui hoje), com comparação de 15 dias.\nPassou do teto → pausa na hora e avisa: dados da campanha (resultados, custo por resultado, investimento) + link de cada criativo, para o cliente (grupo → ou Contato) e cópia ao gestor.\nSe você reativar manualmente uma campanha que o monitor pausou, ela fica liberada por **ignorar_apos_reativacao_horas**.\nClientes: Planilha Geral › Clientes (Status = Ativo e Monitorar Custo ≠ Não).",
         "height": 200,
         "width": 1500,
         "color": 3
@@ -23,18 +23,42 @@
           "interval": [
             {
               "field": "cronExpression",
-              "expression": "0 */30 6-23 * * *"
+              "expression": "0 0 0,6,12,18 * * *"
             }
           ]
         }
       },
-      "id": "90ddf360-cd1e-5281-a442-6ad95cb38ffd",
-      "name": "A cada 30 min (06h-23h30)",
+      "id": "d36edc90-e08b-5dab-b9f2-45fee8210d94",
+      "name": "A cada 6 horas",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
+        14400,
+        2200
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "bf3c0528-371a-58f6-a1f2-2413141edc56",
+      "name": "Executar manualmente",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        14400,
+        2420
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Não roda de sábado 12:00 até segunda 07:30 (nesse período as campanhas estão pausadas pelo fluxo 01)\nconst w = $now.weekday, m = $now.hour * 60 + $now.minute;   // 1 = segunda ... 6 = sábado, 7 = domingo\nconst bloqueado = (w === 6 && m >= 12 * 60) || w === 7 || (w === 1 && m < 7 * 60 + 30);\nreturn bloqueado ? [] : [{ json: { rodada: $now.toFormat('dd/MM HH:mm') } }];"
+      },
+      "id": "a99ce7cc-991a-5647-b4dd-ed231bd906d7",
+      "name": "Fora da janela de sábado/domingo?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
         14624,
-        2288
+        2200
       ]
     },
     {
@@ -56,7 +80,7 @@
             {
               "id": "62759f31-a993-4ed6-a6fa-2f376c8392a7",
               "name": "cpr_msg_meta",
-              "value": 8,
+              "value": 5,
               "type": "number"
             },
             {
@@ -68,19 +92,7 @@
             {
               "id": "9181b6e1-3750-45ac-842a-58234ed826e2",
               "name": "cpr_visita_max",
-              "value": 0.5,
-              "type": "number"
-            },
-            {
-              "id": "3bd33f2e-5b24-47af-9557-c1a8d4e324ff",
-              "name": "gasto_min_sem_resultado_msg",
-              "value": 10,
-              "type": "number"
-            },
-            {
-              "id": "c36c60cc-0b98-47d6-8f43-5d2fa19ad5d6",
-              "name": "gasto_min_sem_resultado_visita",
-              "value": 3,
+              "value": 0.6,
               "type": "number"
             },
             {
@@ -382,7 +394,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const cfg = $('Config (CPR)').first().json;\nconst cli = $('Loop Clientes (CPR)').item.json;\nconst idConta = String(cli.conta);\nconst num = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };\nconst erroDe = r => {\n  if (!r) return 'sem resposta';\n  if (r.error || !Array.isArray(r.data)) {\n    let e = r.error;\n    if (e && typeof e === 'object') e = e.message || JSON.stringify(e);\n    return String(e ?? JSON.stringify(r)).slice(0, 250);\n  }\n  return null;\n};\nconst teste = cfg.modo_teste === true || cfg.modo_teste === 'true';\n\n// --- controle de alertas repetidos (memória do workflow; só persiste com o workflow ativo)\nconst sd = $getWorkflowStaticData('global');\nsd.alertas = sd.alertas || {};\nconst agora = Date.now();\nconst janelaMs = num(cfg.reaviso_horas) * 3600 * 1000;\nfor (const k of Object.keys(sd.alertas)) if (agora - sd.alertas[k] > 48 * 3600 * 1000) delete sd.alertas[k];\nconst pode = k => !sd.alertas[k] || (agora - sd.alertas[k]) > janelaMs;\n\nconst base = { cliente: cli.cliente, id_conta: idConta, destino: cli.destino, destino_desc: cli.destino_desc, mensagem_erro: '', violacoes: [] };\n// campanhas pausadas pelo monitor e reativadas manualmente ficam liberadas por um tempo\nsd.cpr_pausadas = sd.cpr_pausadas || {};\nfor (const k of Object.keys(sd.cpr_pausadas)) if (agora - sd.cpr_pausadas[k] > 72 * 3600 * 1000) delete sd.cpr_pausadas[k];\nconst liberadaMs = num(cfg.ignorar_apos_reativacao_horas) * 3600 * 1000;\n\nconst rSets = $('Conjuntos Ativos (CPR)').first().json;\nconst r3 = $('Insights Curto (CPR)').first().json;\nconst r15 = $input.item.json;\n\nconst falhas = [['conjuntos', rSets], ['insights curto', r3], ['insights longo', r15]]\n  .map(([n, r]) => { const e = erroDe(r); return e ? `${n}: ${e}` : null; }).filter(Boolean);\nif (falhas.length) {\n  const k = 'erro:' + idConta;\n  if (!pode(k)) return { json: { ...base, acao: 'nada' } };\n  sd.alertas[k] = agora;\n  return { json: { ...base, acao: 'erro', mensagem_erro: falhas.join(' | ').slice(0, 600) } };\n}\n\n// --- campanhas ativas + tipo, a partir dos conjuntos ativos (conjunto ativo => campanha ativa)\nconst goals = {}, nomes = {};\nfor (const s of rSets.data) {\n  (goals[s.campaign_id] = goals[s.campaign_id] || new Set()).add(s.optimization_goal);\n  nomes[s.campaign_id] = (s.campaign && s.campaign.name) || s.campaign_id;\n}\nconst TIPOS = {\n  mensagens: { nome: 'Mensagens', resultado: 'Conversas iniciadas', meta: num(cfg.cpr_msg_meta), max: num(cfg.cpr_msg_max), gastoMin: num(cfg.gasto_min_sem_resultado_msg) },\n  visitas:   { nome: 'Visitas ao perfil', resultado: 'Visitas ao perfil', meta: null, max: num(cfg.cpr_visita_max), gastoMin: num(cfg.gasto_min_sem_resultado_visita) },\n};\nconst tipoDe = id => {\n  const g = goals[id]; if (!g) return null;\n  if (g.has('CONVERSATIONS')) return 'mensagens';\n  if (g.has('VISIT_INSTAGRAM_PROFILE')) return 'visitas';\n  return null;\n};\nconst resultOf = (actions, tipo) => {\n  if (!Array.isArray(actions)) return 0;\n  const hit = actions.find(x => tipo === 'mensagens'\n    ? x.action_type === cfg.acao_mensagens\n    : (x.action_type === cfg.acao_visitas || /profile_visit/i.test(x.action_type)));\n  return hit ? num(hit.value) : 0;\n};\nconst por = arr => Object.fromEntries(arr.map(i => [i.campaign_id, i]));\nconst m3 = por(r3.data), m15 = por(r15.data);\n\nconst dCurta = num(cfg.janela_curta_dias), dLonga = num(cfg.janela_longa_dias);\nconst fmt = d => $now.minus({ days: d }).toFormat('dd/MM');\nconst violacoes = [];\nfor (const [campId, campNome] of Object.entries(nomes)) {\n  const tipo = tipoDe(campId); if (!tipo) continue;\n  if (!teste && sd.cpr_pausadas[campId] && (agora - sd.cpr_pausadas[campId]) < liberadaMs) continue; // reativada manualmente\n  const t = TIPOS[tipo];\n  const i3 = m3[campId]; if (!i3) continue;\n  const i15 = m15[campId] || {};\n  const spend3 = num(i3.spend), res3 = resultOf(i3.actions, tipo);\n  const cpr3 = res3 > 0 ? spend3 / res3 : null;\n  let violou = false, codigo = '';\n  if (res3 > 0 && cpr3 > t.max) { violou = true; codigo = 'cpr_acima'; }\n  else if (res3 === 0 && spend3 >= t.gastoMin) { violou = true; codigo = 'sem_resultado'; }\n  if (!violou) continue;\n  // Modo real: sem limite de repetição (se a pausa falhar, tenta de novo na próxima rodada).\n  // Modo teste: limita a 1 aviso por campanha a cada \"reaviso_horas\", para não lotar o WhatsApp.\n  if (teste) {\n    const k = 'teste:camp:' + campId;\n    if (!pode(k)) continue;\n    sd.alertas[k] = agora;\n  }\n  const spend15 = num(i15.spend), res15 = resultOf(i15.actions, tipo);\n  violacoes.push({\n    campanha_id: campId, campanha_nome: campNome, tipo, tipo_nome: t.nome, resultado_nome: t.resultado,\n    limite_meta: t.meta, limite_max: t.max, gasto_min: t.gastoMin, codigo,\n    spend3, res3, cpr3, imp3: num(i3.impressions), reach3: num(i3.reach), freq3: num(i3.frequency),\n    spend15, res15, cpr15: res15 > 0 ? spend15 / res15 : null,\n    imp15: num(i15.impressions), reach15: num(i15.reach), freq15: num(i15.frequency),\n    d_curta: dCurta, d_longa: dLonga,\n    desde_curta: fmt(dCurta - 1), desde_longa: fmt(dLonga - 1), ate: fmt(0),\n  });\n}\nif (!violacoes.length) return { json: { ...base, acao: 'nada' } };\nreturn { json: { ...base, acao: 'pausar', violacoes } };"
+        "jsCode": "const cfg = $('Config (CPR)').first().json;\nconst cli = $('Loop Clientes (CPR)').item.json;\nconst idConta = String(cli.conta);\nconst num = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };\nconst erroDe = r => {\n  if (!r) return 'sem resposta';\n  if (r.error || !Array.isArray(r.data)) {\n    let e = r.error;\n    if (e && typeof e === 'object') e = e.message || JSON.stringify(e);\n    return String(e ?? JSON.stringify(r)).slice(0, 250);\n  }\n  return null;\n};\nconst teste = cfg.modo_teste === true || cfg.modo_teste === 'true';\n\n// --- controle de alertas repetidos (memória do workflow; só persiste com o workflow ativo)\nconst sd = $getWorkflowStaticData('global');\nsd.alertas = sd.alertas || {};\nconst agora = Date.now();\nconst janelaMs = num(cfg.reaviso_horas) * 3600 * 1000;\nfor (const k of Object.keys(sd.alertas)) if (agora - sd.alertas[k] > 48 * 3600 * 1000) delete sd.alertas[k];\nconst pode = k => !sd.alertas[k] || (agora - sd.alertas[k]) > janelaMs;\n\nconst base = { cliente: cli.cliente, id_conta: idConta, destino: cli.destino, destino_desc: cli.destino_desc, mensagem_erro: '', violacoes: [] };\n// campanhas pausadas pelo monitor e reativadas manualmente ficam liberadas por um tempo\nsd.cpr_pausadas = sd.cpr_pausadas || {};\nfor (const k of Object.keys(sd.cpr_pausadas)) if (agora - sd.cpr_pausadas[k] > 72 * 3600 * 1000) delete sd.cpr_pausadas[k];\nconst liberadaMs = num(cfg.ignorar_apos_reativacao_horas) * 3600 * 1000;\n\nconst rSets = $('Conjuntos Ativos (CPR)').first().json;\nconst r3 = $('Insights Curto (CPR)').first().json;\nconst r15 = $input.item.json;\n\nconst falhas = [['conjuntos', rSets], ['insights curto', r3], ['insights longo', r15]]\n  .map(([n, r]) => { const e = erroDe(r); return e ? `${n}: ${e}` : null; }).filter(Boolean);\nif (falhas.length) {\n  const k = 'erro:' + idConta;\n  if (!pode(k)) return { json: { ...base, acao: 'nada' } };\n  sd.alertas[k] = agora;\n  return { json: { ...base, acao: 'erro', mensagem_erro: falhas.join(' | ').slice(0, 600) } };\n}\n\n// --- campanhas ativas + tipo, a partir dos conjuntos ativos (conjunto ativo => campanha ativa)\nconst goals = {}, nomes = {};\nfor (const s of rSets.data) {\n  (goals[s.campaign_id] = goals[s.campaign_id] || new Set()).add(s.optimization_goal);\n  nomes[s.campaign_id] = (s.campaign && s.campaign.name) || s.campaign_id;\n}\nconst TIPOS = {\n  mensagens: { nome: 'Mensagens', resultado: 'Conversas iniciadas', meta: num(cfg.cpr_msg_meta), max: num(cfg.cpr_msg_max), gastoMin: num(cfg.gasto_min_sem_resultado_msg) },\n  visitas:   { nome: 'Visitas ao perfil', resultado: 'Visitas ao perfil', meta: null, max: num(cfg.cpr_visita_max), gastoMin: num(cfg.gasto_min_sem_resultado_visita) },\n};\nconst tipoDe = id => {\n  const g = goals[id]; if (!g) return null;\n  if (g.has('CONVERSATIONS')) return 'mensagens';\n  if (g.has('VISIT_INSTAGRAM_PROFILE')) return 'visitas';\n  return null;\n};\nconst resultOf = (actions, tipo) => {\n  if (!Array.isArray(actions)) return 0;\n  const hit = actions.find(x => tipo === 'mensagens'\n    ? x.action_type === cfg.acao_mensagens\n    : (x.action_type === cfg.acao_visitas || /profile_visit/i.test(x.action_type)));\n  return hit ? num(hit.value) : 0;\n};\nconst por = arr => Object.fromEntries(arr.map(i => [i.campaign_id, i]));\nconst m3 = por(r3.data), m15 = por(r15.data);\n\nconst dCurta = num(cfg.janela_curta_dias), dLonga = num(cfg.janela_longa_dias);\nconst fmt = d => $now.minus({ days: d }).toFormat('dd/MM');\nconst violacoes = [];\nfor (const [campId, campNome] of Object.entries(nomes)) {\n  const tipo = tipoDe(campId); if (!tipo) continue;\n  if (!teste && sd.cpr_pausadas[campId] && (agora - sd.cpr_pausadas[campId]) < liberadaMs) continue; // reativada manualmente\n  const t = TIPOS[tipo];\n  const i3 = m3[campId]; if (!i3) continue;\n  const i15 = m15[campId] || {};\n  const spend3 = num(i3.spend), res3 = resultOf(i3.actions, tipo);\n  const cpr3 = res3 > 0 ? spend3 / res3 : null;\n  let violou = false, codigo = '';\n  // Única regra de pausa: custo por resultado ACIMA do teto (campanha sem resultado não é pausada)\n  if (res3 > 0 && cpr3 > t.max) { violou = true; codigo = 'cpr_acima'; }\n  if (!violou) continue;\n  // Modo real: sem limite de repetição (se a pausa falhar, tenta de novo na próxima rodada).\n  // Modo teste: limita a 1 aviso por campanha a cada \"reaviso_horas\", para não lotar o WhatsApp.\n  if (teste) {\n    const k = 'teste:camp:' + campId;\n    if (!pode(k)) continue;\n    sd.alertas[k] = agora;\n  }\n  const spend15 = num(i15.spend), res15 = resultOf(i15.actions, tipo);\n  violacoes.push({\n    campanha_id: campId, campanha_nome: campNome, tipo, tipo_nome: t.nome, resultado_nome: t.resultado,\n    limite_meta: t.meta, limite_max: t.max, gasto_min: t.gastoMin, codigo,\n    spend3, res3, cpr3, imp3: num(i3.impressions), reach3: num(i3.reach), freq3: num(i3.frequency),\n    spend15, res15, cpr15: res15 > 0 ? spend15 / res15 : null,\n    imp15: num(i15.impressions), reach15: num(i15.reach), freq15: num(i15.frequency),\n    d_curta: dCurta, d_longa: dLonga,\n    desde_curta: fmt(dCurta - 1), desde_longa: fmt(dLonga - 1), ate: fmt(0),\n  });\n}\nif (!violacoes.length) return { json: { ...base, acao: 'nada' } };\nreturn { json: { ...base, acao: 'pausar', violacoes } };"
       },
       "id": "441c0485-18ad-5bb3-ac98-40025015e9e1",
       "name": "Avaliar Campanhas (CPR)",
@@ -684,7 +696,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const cfg = $('Config (CPR)').first().json;\nconst src = $('Separar Violações').item.json;\nconst v = src.violacoes;\nconst act = src.id_conta;\nconst num = x => { const n = parseFloat(x); return isNaN(n) ? 0 : n; };\nconst milhar = s => s.replace(/\\B(?=(\\d{3})+(?!\\d))/g, '.');\nconst brl = n => 'R$ ' + milhar(n.toFixed(2).replace('.', ','));\nconst int = n => milhar(Math.round(n).toString());\nconst dec = n => n.toFixed(2).replace('.', ',');\nconst cprTxt = n => (n === null || n === undefined) ? 'sem resultados' : brl(n);\n\nlet pausa = null;\ntry { pausa = $('Pausar Campanha (CPR)').item.json; } catch (e) {}\nconst simulacao = cfg.modo_teste === true || cfg.modo_teste === 'true';\nlet status;\nif (simulacao) status = '🧪 SIMULAÇÃO — nada foi pausado (modo de teste ligado)';\nelse if (pausa && (pausa.success === true || pausa.success === 'true')) status = '⏸️ Campanha PAUSADA com sucesso';\nelse {\n  let e = pausa && pausa.error; if (e && typeof e === 'object') e = e.message || JSON.stringify(e);\n  status = '❌ FALHA AO PAUSAR — pause manualmente! ' + String(e ?? '').slice(0, 200);\n}\n\nconst limiteTxt = v.limite_meta !== null\n  ? `meta ${brl(v.limite_meta)} / máximo tolerado ${brl(v.limite_max)}`\n  : `limite ${brl(v.limite_max)}`;\nconst motivo = v.codigo === 'cpr_acima'\n  ? `O custo por resultado dos últimos ${v.d_curta} dias (*${brl(v.cpr3)}*) ficou acima do máximo permitido (${limiteTxt}).`\n  : `A campanha investiu *${brl(v.spend3)}* nos últimos ${v.d_curta} dias sem nenhum resultado (limite sem resultado: ${brl(v.gasto_min)}).`;\n\nconst bloco = (titulo, de, imp, reach, freq, res, cpr, spend) =>\n`📊 *${titulo}* (${de} a ${v.ate})\n• Impressões: ${int(imp)}\n• Alcance: ${int(reach)}\n• Frequência: ${dec(freq)}\n• Resultados (${v.resultado_nome}): ${int(res)}\n• Custo por resultado: ${cprTxt(cpr)}\n• Investido: ${brl(spend)}`;\n\n// anúncios\nconst ins = Array.isArray($('Insights dos Anúncios').item.json.data) ? $('Insights dos Anúncios').item.json.data : [];\nconst info = Array.isArray($input.item.json.data) ? $input.item.json.data : [];\nconst infoPorId = Object.fromEntries(info.map(a => [a.id, a]));\nconst resultOf = actions => {\n  if (!Array.isArray(actions)) return 0;\n  const hit = actions.find(x => v.tipo === 'mensagens'\n    ? x.action_type === cfg.acao_mensagens\n    : (x.action_type === cfg.acao_visitas || /profile_visit/i.test(x.action_type)));\n  return hit ? num(hit.value) : 0;\n};\nconst ads = ins.map(i => {\n  const spend = num(i.spend), res = resultOf(i.actions);\n  return { id: i.ad_id, nome: i.ad_name, spend, res, cpr: res > 0 ? spend / res : null, imp: num(i.impressions), prev: (infoPorId[i.ad_id] || {}).preview_shareable_link };\n}).sort((x, y) => y.spend - x.spend);\n\nconst TOP = 8;\nconst linhasAds = ads.slice(0, TOP).map((ad, n) => {\n  let t = `${n + 1}) *${ad.nome}*\\n   🆔 ${ad.id}\\n   💰 ${brl(ad.spend)} | 🎯 ${int(ad.res)} resultado(s) | CPR: ${cprTxt(ad.cpr)}\\n   🔗 https://adsmanager.facebook.com/adsmanager/manage/ads?act=${act}&selected_ad_ids=${ad.id}`;\n  if (ad.prev) t += `\\n   👁️ Prévia: ${ad.prev}`;\n  return t;\n});\nif (ads.length > TOP) linhasAds.push(`… e mais ${ads.length - TOP} anúncio(s) com entrega no período.`);\n\nconst cab = simulacao ? '🧪 *SIMULAÇÃO — esta campanha SERIA pausada*' : '🚨 *CAMPANHA PAUSADA — custo por resultado acima do limite*';\nlet msg = `${cab}\n\n👤 *Cliente:* ${src.cliente}\n📣 *Campanha:* ${v.campanha_nome}\n🆔 *ID:* ${v.campanha_id}\n🎯 *Tipo / resultado:* ${v.tipo_nome} → ${v.resultado_nome}\n🔗 https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${act}&selected_campaign_ids=${v.campanha_id}\n\n📌 *Por que:* ${motivo}\n\n${bloco('Últimos ' + v.d_curta + ' dias', v.desde_curta, v.imp3, v.reach3, v.freq3, v.res3, v.cpr3, v.spend3)}\n\n${bloco('Últimos ' + v.d_longa + ' dias', v.desde_longa, v.imp15, v.reach15, v.freq15, v.res15, v.cpr15, v.spend15)}\n\n${status}\n\n🎨 *Anúncios com entrega nos últimos ${v.d_curta} dias:*\n${linhasAds.length ? linhasAds.join('\\n\\n') : '(nenhum anúncio com entrega encontrado)'}`;\nif (msg.length > 3900) msg = msg.slice(0, 3850) + '\\n… (mensagem cortada)';\n\n// memória: pausada pelo monitor (para não repausar se você reativar manualmente) e controle de alertas de falha\nconst sd = $getWorkflowStaticData('global');\nsd.cpr_pausadas = sd.cpr_pausadas || {}; sd.alertas = sd.alertas || {};\nconst pausaOk = !simulacao && pausa && (pausa.success === true || pausa.success === 'true');\nlet enviar = true;\nif (pausaOk) sd.cpr_pausadas[v.campanha_id] = Date.now();\nelse if (!simulacao) {\n  const k = 'falha:' + v.campanha_id;\n  if (sd.alertas[k] && (Date.now() - sd.alertas[k]) < Number(cfg.reaviso_horas) * 3600 * 1000) enviar = false;\n  else sd.alertas[k] = Date.now();\n}\nconst motivoCurto = v.codigo === 'cpr_acima'\n  ? `Custo por resultado ${brl(v.cpr3)} acima do máximo ${brl(v.limite_max)} (${v.d_curta} dias)`\n  : `${brl(v.spend3)} investidos sem resultado em ${v.d_curta} dias`;\nconst linksAds = ads.slice(0, 8).map(ad => ad.prev || `https://adsmanager.facebook.com/adsmanager/manage/ads?act=${act}&selected_ad_ids=${ad.id}`).join(' ');\nreturn { json: { mensagem: msg, enviar, simulacao, pausa_ok: pausaOk, destino: src.destino || '', destino_desc: src.destino_desc || '', cliente: src.cliente,\n  id_conta: String(act), campanha_id: String(v.campanha_id), campanha_nome: v.campanha_nome, motivo_curto: motivoCurto, links_anuncios: linksAds } };"
+        "jsCode": "const cfg = $('Config (CPR)').first().json;\nconst src = $('Separar Violações').item.json;\nconst v = src.violacoes;\nconst act = src.id_conta;\nconst num = x => { const n = parseFloat(x); return isNaN(n) ? 0 : n; };\nconst milhar = s => s.replace(/\\B(?=(\\d{3})+(?!\\d))/g, '.');\nconst brl = n => 'R$ ' + milhar(n.toFixed(2).replace('.', ','));\nconst int = n => milhar(Math.round(n).toString());\nconst dec = n => n.toFixed(2).replace('.', ',');\nconst cprTxt = n => (n === null || n === undefined) ? 'sem resultados' : brl(n);\n\nlet pausa = null;\ntry { pausa = $('Pausar Campanha (CPR)').item.json; } catch (e) {}\nconst simulacao = cfg.modo_teste === true || cfg.modo_teste === 'true';\nlet status;\nif (simulacao) status = '🧪 SIMULAÇÃO — nada foi pausado (modo de teste ligado)';\nelse if (pausa && (pausa.success === true || pausa.success === 'true')) status = '⏸️ Campanha PAUSADA com sucesso';\nelse {\n  let e = pausa && pausa.error; if (e && typeof e === 'object') e = e.message || JSON.stringify(e);\n  status = '❌ FALHA AO PAUSAR — pause manualmente! ' + String(e ?? '').slice(0, 200);\n}\n\nconst limiteTxt = v.limite_meta !== null\n  ? `ideal até ${brl(v.limite_meta)} / aceitável até ${brl(v.limite_max)}`\n  : `limite ${brl(v.limite_max)}`;\nconst motivo = v.codigo === 'cpr_acima'\n  ? `O custo por resultado dos últimos ${v.d_curta} dias (*${brl(v.cpr3)}*) ficou acima do máximo permitido (${limiteTxt}).`\n  : `A campanha investiu *${brl(v.spend3)}* nos últimos ${v.d_curta} dias sem nenhum resultado (limite sem resultado: ${brl(v.gasto_min)}).`;\n\nconst bloco = (titulo, de, imp, reach, freq, res, cpr, spend) =>\n`📊 *${titulo}* (${de} a ${v.ate})\n• Resultados (${v.resultado_nome}): ${int(res)}\n• Custo por resultado: ${cprTxt(cpr)}\n• Investido: ${brl(spend)}`;\n\n// anúncios\nconst ins = Array.isArray($('Insights dos Anúncios').item.json.data) ? $('Insights dos Anúncios').item.json.data : [];\nconst info = Array.isArray($input.item.json.data) ? $input.item.json.data : [];\nconst infoPorId = Object.fromEntries(info.map(a => [a.id, a]));\nconst resultOf = actions => {\n  if (!Array.isArray(actions)) return 0;\n  const hit = actions.find(x => v.tipo === 'mensagens'\n    ? x.action_type === cfg.acao_mensagens\n    : (x.action_type === cfg.acao_visitas || /profile_visit/i.test(x.action_type)));\n  return hit ? num(hit.value) : 0;\n};\nconst ads = ins.map(i => {\n  const spend = num(i.spend), res = resultOf(i.actions);\n  return { id: i.ad_id, nome: i.ad_name, spend, res, cpr: res > 0 ? spend / res : null, imp: num(i.impressions), prev: (infoPorId[i.ad_id] || {}).preview_shareable_link };\n}).sort((x, y) => y.spend - x.spend);\n\nconst TOP = 8;\nconst linhasAds = ads.slice(0, TOP).map((ad, n) => {\n  let t = `${n + 1}) *${ad.nome}*\\n   🆔 ${ad.id}\\n   💰 ${brl(ad.spend)} | 🎯 ${int(ad.res)} resultado(s) | CPR: ${cprTxt(ad.cpr)}\\n   🔗 https://adsmanager.facebook.com/adsmanager/manage/ads?act=${act}&selected_ad_ids=${ad.id}`;\n  if (ad.prev) t += `\\n   👁️ Prévia: ${ad.prev}`;\n  return t;\n});\nif (ads.length > TOP) linhasAds.push(`… e mais ${ads.length - TOP} anúncio(s) com entrega no período.`);\n\nconst cab = simulacao ? '🧪 *SIMULAÇÃO — esta campanha SERIA pausada*' : '🚨 *CAMPANHA PAUSADA — custo por resultado acima do limite*';\nlet msg = `${cab}\n\n👤 *Cliente:* ${src.cliente}\n📣 *Campanha:* ${v.campanha_nome}\n🆔 *ID:* ${v.campanha_id}\n🎯 *Tipo / resultado:* ${v.tipo_nome} → ${v.resultado_nome}\n🔗 https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${act}&selected_campaign_ids=${v.campanha_id}\n\n📌 *Por que:* ${motivo}\n\n${bloco('Últimos ' + v.d_curta + ' dias', v.desde_curta, v.imp3, v.reach3, v.freq3, v.res3, v.cpr3, v.spend3)}\n\n${bloco('Últimos ' + v.d_longa + ' dias', v.desde_longa, v.imp15, v.reach15, v.freq15, v.res15, v.cpr15, v.spend15)}\n\n${status}\n\n🎨 *Anúncios com entrega nos últimos ${v.d_curta} dias:*\n${linhasAds.length ? linhasAds.join('\\n\\n') : '(nenhum anúncio com entrega encontrado)'}`;\nif (msg.length > 3900) msg = msg.slice(0, 3850) + '\\n… (mensagem cortada)';\n\n// memória: pausada pelo monitor (para não repausar se você reativar manualmente) e controle de alertas de falha\nconst sd = $getWorkflowStaticData('global');\nsd.cpr_pausadas = sd.cpr_pausadas || {}; sd.alertas = sd.alertas || {};\nconst pausaOk = !simulacao && pausa && (pausa.success === true || pausa.success === 'true');\nlet enviar = true;\nif (pausaOk) sd.cpr_pausadas[v.campanha_id] = Date.now();\nelse if (!simulacao) {\n  const k = 'falha:' + v.campanha_id;\n  if (sd.alertas[k] && (Date.now() - sd.alertas[k]) < Number(cfg.reaviso_horas) * 3600 * 1000) enviar = false;\n  else sd.alertas[k] = Date.now();\n}\nconst motivoCurto = v.codigo === 'cpr_acima'\n  ? `Custo por resultado ${brl(v.cpr3)} acima do máximo ${brl(v.limite_max)} (${v.d_curta} dias)`\n  : `${brl(v.spend3)} investidos sem resultado em ${v.d_curta} dias`;\nconst linksAds = ads.slice(0, 8).map(ad => ad.prev || `https://adsmanager.facebook.com/adsmanager/manage/ads?act=${act}&selected_ad_ids=${ad.id}`).join(' ');\nreturn { json: { mensagem: msg, enviar, simulacao, pausa_ok: pausaOk, destino: src.destino || '', destino_desc: src.destino_desc || '', cliente: src.cliente,\n  id_conta: String(act), campanha_id: String(v.campanha_id), campanha_nome: v.campanha_nome, motivo_curto: motivoCurto, links_anuncios: linksAds } };"
       },
       "id": "3b897dfb-b9d7-5bb2-b8d6-19e6c01abeaa",
       "name": "Montar Mensagem",
@@ -958,7 +970,29 @@
         ]
       ]
     },
-    "A cada 30 min (06h-23h30)": {
+    "Executar manualmente": {
+      "main": [
+        [
+          {
+            "node": "Config (CPR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A cada 6 horas": {
+      "main": [
+        [
+          {
+            "node": "Fora da janela de sábado/domingo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fora da janela de sábado/domingo?": {
       "main": [
         [
           {

@@ -72,7 +72,9 @@
         "documentId": {
           "__rl": true,
           "value": "1IywT4jszZAVuBCBk3p_8DgsUeffoTCkkiBojdQOybZk",
-          "mode": "id"
+          "mode": "list",
+          "cachedResultName": "Planilha-Geral-Konext",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1IywT4jszZAVuBCBk3p_8DgsUeffoTCkkiBojdQOybZk/edit"
         },
         "sheetName": {
           "__rl": true,
@@ -104,7 +106,9 @@
         "documentId": {
           "__rl": true,
           "value": "1AR75HoQXFCE7ancGQTLjekHP2eCDt1_-GjuaVgP0iKc",
-          "mode": "id"
+          "mode": "list",
+          "cachedResultName": "Cópia de [GRUPOS DE WHATSAPP][API]",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1AR75HoQXFCE7ancGQTLjekHP2eCDt1_-GjuaVgP0iKc/edit"
         },
         "sheetName": {
           "__rl": true,
@@ -140,7 +144,9 @@
         "documentId": {
           "__rl": true,
           "value": "1dDmkDK--VRx-ei2rwRVr1jxwlT5pGI2Wz0bpdiAwxXc",
-          "mode": "id"
+          "mode": "list",
+          "cachedResultName": "Cópia de [SALDO META ADS][KONEXT]",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dDmkDK--VRx-ei2rwRVr1jxwlT5pGI2Wz0bpdiAwxXc/edit"
         },
         "sheetName": {
           "__rl": true,
@@ -341,7 +347,9 @@
         "documentId": {
           "__rl": true,
           "value": "1dDmkDK--VRx-ei2rwRVr1jxwlT5pGI2Wz0bpdiAwxXc",
-          "mode": "id"
+          "mode": "list",
+          "cachedResultName": "Cópia de [SALDO META ADS][KONEXT]",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dDmkDK--VRx-ei2rwRVr1jxwlT5pGI2Wz0bpdiAwxXc/edit"
         },
         "sheetName": {
           "__rl": true,

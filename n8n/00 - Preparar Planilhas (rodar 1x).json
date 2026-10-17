@@ -3,9 +3,9 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## 🧱 PREPARAR PLANILHAS — rode 1x agora (e ele confere sozinho todo dia às 05:45)\nCria nas planilhas o que as automações precisam, **sem apagar nem mover nada**:\n• Planilha Geral › Clientes: colunas **Link do Relatório**, Enviar Relatório, Relatório - Melhorias, Relatório - Ajustes (no fim da linha 1)\n• Planilha Geral: aba **Parâmetros** (com os cabeçalhos)\n• Planilha_Pausa_Campanhas: abas **Campanhas Pausadas** e **Pausas CPR** (com os cabeçalhos)\n• Planilha de grupos: renomeia a aba *IDS GRUPOS - CLIENTES VORK* → **IDS GRUPOS - CLIENTES KONEXT**\nSe já existir, não faz nada. Quando cria algo, avisa o gestor no WhatsApp.",
-        "height": 220,
-        "width": 1300,
+        "content": "## 🧱 PREPARAR PLANILHAS — clique em *Execute workflow* 1x\n1️⃣ **Planilha-Geral-Konext › Clientes**: cria as colunas **Link do Relatório**, Enviar Relatório, Relatório - Melhorias e Relatório - Ajustes (no fim, depois de Observações). Valores que já existirem são mantidos.\n2️⃣ **Planilha-Geral-Konext**: cria a aba **Parâmetros** com os cabeçalhos.\n3️⃣ **Planilha_Pausa_Campanhas_Meta_Ads**: cria as abas **Campanhas Pausadas** e **Pausas CPR** com os cabeçalhos.\n4️⃣ **Planilha de grupos**: renomeia a aba *VORK* → **IDS GRUPOS - CLIENTES KONEXT**.\nNada é apagado. Se a aba já existir, ela é mantida como está. No fim, o gestor recebe no WhatsApp o que foi feito.",
+        "height": 230,
+        "width": 1500,
         "color": 5
       },
       "id": "9abfa1e9-99ce-5060-8e63-06cc60d7eab9",
@@ -14,7 +14,7 @@
       "typeVersion": 1,
       "position": [
         -40,
-        -260
+        -300
       ]
     },
     {
@@ -26,26 +26,6 @@
       "position": [
         0,
         200
-      ]
-    },
-    {
-      "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "cronExpression",
-              "expression": "0 45 5 * * *"
-            }
-          ]
-        }
-      },
-      "id": "3f684ebf-d392-5f80-8042-222d9ea8a3c3",
-      "name": "Todo dia às 05:45",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.2,
-      "position": [
-        0,
-        400
       ]
     },
     {
@@ -68,50 +48,93 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        220,
-        300
+        200,
+        200
       ]
     },
     {
       "parameters": {
-        "jsCode": "const itens = [\n  { doc: '1IywT4jszZAVuBCBk3p_8DgsUeffoTCkkiBojdQOybZk', aba: 'Clientes', criar: false,\n    cabecalhos: ['Link do Relatório', 'Enviar Relatório', 'Relatório - Melhorias', 'Relatório - Ajustes'] },\n  { doc: '1IywT4jszZAVuBCBk3p_8DgsUeffoTCkkiBojdQOybZk', aba: 'Parâmetros', criar: true, sheet_id_novo: 710001,\n    cabecalhos: ['Cliente', 'Procedimento', 'Objetivo', 'Tipo de resultado', 'CPR ótimo até', 'CPR bom até', 'CTR muito alto acima de',\n      'CTR excelente a partir de', 'CTR bom a partir de', 'CTR atenção a partir de', 'Tipo de CTR', 'Impressões mínimas', 'Alcance mínimo',\n      'Frequência inicial até', 'Frequência boa até', 'Resultados mínimos', 'Gasto mínimo sem resultado', 'Ativo'] },\n  { doc: '1w0y2bu6_gA3Ye-u0GYYZT56voGixcD1InqKiB5dhzwY', aba: 'Campanhas Pausadas', criar: true, sheet_id_novo: 710002,\n    cabecalhos: ['Data', 'Cliente', 'ID da Conta', 'ID Campanha', 'Nome Campanha', 'Status', 'Reativada em', 'Erro'] },\n  { doc: '1w0y2bu6_gA3Ye-u0GYYZT56voGixcD1InqKiB5dhzwY', aba: 'Pausas CPR', criar: true, sheet_id_novo: 710003,\n    cabecalhos: ['Data', 'Cliente', 'ID da Conta', 'ID Campanha', 'Nome Campanha', 'Motivo', 'Anúncios'] },\n  { doc: '1AR75HoQXFCE7ancGQTLjekHP2eCDt1_-GjuaVgP0iKc', aba: '', renomear: { sheetId: 0, titulo: 'IDS GRUPOS - CLIENTES KONEXT' }, cabecalhos: [] },\n];\nconst sd = $getWorkflowStaticData('global');\nsd.prep = { [String($execution.id)]: [] };\nreturn itens.map(j => ({ json: j }));"
+        "documentId": {
+          "__rl": true,
+          "value": "1IywT4jszZAVuBCBk3p_8DgsUeffoTCkkiBojdQOybZk",
+          "mode": "list",
+          "cachedResultName": "Planilha-Geral-Konext",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1IywT4jszZAVuBCBk3p_8DgsUeffoTCkkiBojdQOybZk/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Clientes",
+          "mode": "name"
+        },
+        "options": {}
       },
-      "id": "39b3f74a-94ab-54d5-8f1c-ef17eacc346b",
-      "name": "Estrutura Desejada",
+      "id": "b587d39f-58f5-580a-b5fb-dc610153cb2e",
+      "name": "Planilha Geral › Clientes (ler)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        400,
+        200
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const cols = [\"Link do Relatório\", \"Enviar Relatório\", \"Relatório - Melhorias\", \"Relatório - Ajustes\"];\nconst out = [];\nfor (const it of $input.all()) {\n  const r = it.json || {};\n  const conta = String(r['ID da Conta'] ?? '').trim();\n  if (r.error || !conta) continue;\n  const j = { 'ID da Conta': conta };\n  for (const c of cols) j[c] = r[c] ?? '';          // mantém o que já estiver preenchido\n  out.push({ json: j });\n}\nreturn out;"
+      },
+      "id": "b00739af-06c5-5ce1-958a-f9bc92989483",
+      "name": "Montar Colunas Novas",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        440,
-        300
+        600,
+        200
       ]
     },
     {
       "parameters": {
-        "options": {}
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1IywT4jszZAVuBCBk3p_8DgsUeffoTCkkiBojdQOybZk",
+          "mode": "list",
+          "cachedResultName": "Planilha-Geral-Konext",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1IywT4jszZAVuBCBk3p_8DgsUeffoTCkkiBojdQOybZk/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Clientes",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "ID da Conta"
+          ],
+          "schema": []
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED",
+          "handlingExtraData": "insertInNewColumn"
+        }
       },
-      "id": "b9ee64b9-c40f-5ae0-b9c3-f675232df2ea",
-      "name": "Loop Estrutura",
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 3,
+      "id": "65bb2a58-2666-5699-8f1f-99e0182cfdba",
+      "name": "Planilha Geral › Clientes: criar colunas",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
       "position": [
-        660,
-        300
-      ]
-    },
-    {
-      "parameters": {
-        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Loop Estrutura').first().json.doc }}?fields=sheets.properties",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "googleSheetsOAuth2Api",
-        "options": {}
-      },
-      "id": "e6bdb770-5ae3-5ea4-a55d-8fcfce266394",
-      "name": "Propriedades da Planilha",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        880,
-        400
+        800,
+        200
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -122,22 +145,28 @@
       "onError": "continueRegularOutput",
       "retryOnFail": true,
       "maxTries": 3,
-      "waitBetweenTries": 2000
+      "waitBetweenTries": 3000
     },
     {
       "parameters": {
-        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Loop Estrutura').first().json.doc }}/values/{{ encodeURIComponent(\"'\" + ($('Loop Estrutura').first().json.aba || '-') + \"'!1:1\") }}",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "operation": "create",
+        "documentId": {
+          "__rl": true,
+          "value": "1IywT4jszZAVuBCBk3p_8DgsUeffoTCkkiBojdQOybZk",
+          "mode": "list",
+          "cachedResultName": "Planilha-Geral-Konext",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1IywT4jszZAVuBCBk3p_8DgsUeffoTCkkiBojdQOybZk/edit"
+        },
+        "title": "Parâmetros",
         "options": {}
       },
-      "id": "e2c32401-c042-58f2-b8c8-c694facf8c27",
-      "name": "Ler Cabeçalho",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "id": "1c129c7a-e573-51fe-960d-3b04ae59011b",
+      "name": "Planilha Geral › criar aba Parâmetros",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
       "position": [
-        1100,
-        400
+        1020,
+        200
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -146,22 +175,8 @@
         }
       },
       "onError": "continueRegularOutput",
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 2000
-    },
-    {
-      "parameters": {
-        "jsCode": "// ===== utilitários padrão Konext (iguais em todos os fluxos) =====\nconst n_ = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');\nconst pick = (row, nomes) => {\n  const m = {};\n  for (const k of Object.keys(row || {})) m[n_(k)] = row[k];\n  for (const nome of nomes) { const v = m[n_(nome)]; if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim(); }\n  return '';\n};\nconst dig = v => String(v ?? '').replace(/\\D/g, '');\nconst sim = (v, padrao) => { const t = n_(v); if (!t) return padrao; return ['sim', 's', 'yes', 'y', 'true', '1', 'ativo'].includes(t); };\nconst nao = v => ['nao', 'n', 'no', 'false', '0', 'inativo'].includes(n_(v));\nconst money = v => {\n  let s = String(v ?? '').replace(/[^\\d,.\\-]/g, '');\n  if (!s) return null;\n  const c = s.lastIndexOf(','), p = s.lastIndexOf('.');\n  if (c > -1 && p > -1) s = c > p ? s.replace(/\\./g, '').replace(',', '.') : s.replace(/,/g, '');\n  else if (c > -1) s = s.replace(',', '.');\n  else if (/^\\d{1,3}(\\.\\d{3})+$/.test(s)) s = s.replace(/\\./g, '');\n  const n = parseFloat(s); return isNaN(n) ? null : n;\n};\n// Número de WhatsApp ou ID de grupo -> formato aceito pela Evolution API\nconst jid = v => {\n  const s = String(v ?? '').trim();\n  if (!s) return '';\n  if (/@g\\.us$/i.test(s)) return s.replace(/\\s/g, '');\n  const d = s.replace(/\\D/g, '');\n  if (!d) return '';\n  if (d.startsWith('120363') && d.length >= 15) return d + '@g.us';\n  return d.length <= 11 ? '55' + d : d;\n};\n\nconst it = $('Loop Estrutura').first().json;\nconst props = $('Propriedades da Planilha').first().json || {};\nconst errTxt = e => { if (e && typeof e === 'object') e = e.message || JSON.stringify(e); return String(e ?? '').slice(0, 200); };\nconst rotulo = it.aba ? `\"${it.aba}\"` : 'planilha de grupos';\nif (props.error || !Array.isArray(props.sheets)) return [{ json: { reqs: [], feito: [], erro: `${rotulo}: sem acesso à planilha (${errTxt(props.error)})` } }];\nconst sheets = props.sheets.map(s => s.properties || {});\nconst reqs = [], feito = [];\nif (it.renomear) {\n  const s = sheets.find(x => x.sheetId === it.renomear.sheetId);\n  if (s && s.title !== it.renomear.titulo) {\n    reqs.push({ updateSheetProperties: { properties: { sheetId: s.sheetId, title: it.renomear.titulo }, fields: 'title' } });\n    feito.push(`aba \"${s.title}\" renomeada para \"${it.renomear.titulo}\"`);\n  }\n  return [{ json: { reqs, feito, erro: '' } }];\n}\nconst s = sheets.find(x => n_(x.title) === n_(it.aba));\nlet sheetId, existentes = [], cols = 26;\nif (!s) {\n  if (!it.criar) return [{ json: { reqs: [], feito: [], erro: `aba ${rotulo} não encontrada` } }];\n  sheetId = it.sheet_id_novo;\n  cols = Math.max(26, it.cabecalhos.length);\n  reqs.push({ addSheet: { properties: { sheetId, title: it.aba, gridProperties: { rowCount: 1000, columnCount: cols, frozenRowCount: 1 } } } });\n  feito.push(`aba ${rotulo} criada`);\n} else {\n  sheetId = s.sheetId;\n  cols = (s.gridProperties || {}).columnCount || 26;\n  const h = $('Ler Cabeçalho').first().json || {};\n  existentes = (Array.isArray(h.values) && h.values[0]) || [];\n}\nconst faltam = it.cabecalhos.filter(c => !existentes.some(e => n_(e) === n_(c)));\nif (faltam.length) {\n  const ini = existentes.length;                       // logo depois da última coluna com título\n  if (s && ini + faltam.length > cols) reqs.push({ appendDimension: { sheetId, dimension: 'COLUMNS', length: ini + faltam.length - cols } });\n  reqs.push({ updateCells: { start: { sheetId, rowIndex: 0, columnIndex: ini },\n    rows: [{ values: faltam.map(c => ({ userEnteredValue: { stringValue: c }, userEnteredFormat: { textFormat: { bold: true } } })) }],\n    fields: 'userEnteredValue,userEnteredFormat.textFormat.bold' } });\n  if (s) feito.push(`colunas adicionadas em ${rotulo}: ${faltam.join(', ')}`);\n}\nreturn [{ json: { reqs, feito, erro: '' } }];"
-      },
-      "id": "65ba799c-ea5c-5bda-99e5-b8cdc6c5b9cf",
-      "name": "Montar Alterações",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1320,
-        400
-      ]
+      "alwaysOutputData": true,
+      "executeOnce": true
     },
     {
       "parameters": {
@@ -174,8 +189,8 @@
           },
           "conditions": [
             {
-              "id": "f1c16007-f503-578a-9326-9e93295eabbf",
-              "leftValue": "={{ $json.reqs.length > 0 }}",
+              "id": "87ad12b2-a044-526a-9f35-99188d071b78",
+              "leftValue": "={{ !$json.error && $json.sheetId !== undefined }}",
               "rightValue": "",
               "operator": {
                 "type": "boolean",
@@ -188,33 +203,60 @@
         },
         "options": {}
       },
-      "id": "79f78e2a-55aa-514f-880a-414591729cd0",
-      "name": "Tem alteração?",
+      "id": "f84a5549-abf9-5476-affa-b09b3563ae6a",
+      "name": "Aba Parâmetros é nova?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1540,
-        400
+        1240,
+        200
       ]
     },
     {
       "parameters": {
-        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Loop Estrutura').first().json.doc }}:batchUpdate",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "googleSheetsOAuth2Api",
-        "options": {},
-        "method": "POST",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ requests: $('Montar Alterações').first().json.reqs }) }}"
+        "jsCode": "return [{ json: {\"Cliente\": \"\", \"Procedimento\": \"\", \"Objetivo\": \"\", \"Tipo de resultado\": \"\", \"CPR ótimo até\": \"\", \"CPR bom até\": \"\", \"CTR muito alto acima de\": \"\", \"CTR excelente a partir de\": \"\", \"CTR bom a partir de\": \"\", \"CTR atenção a partir de\": \"\", \"Tipo de CTR\": \"\", \"Impressões mínimas\": \"\", \"Alcance mínimo\": \"\", \"Frequência inicial até\": \"\", \"Frequência boa até\": \"\", \"Resultados mínimos\": \"\", \"Gasto mínimo sem resultado\": \"\", \"Ativo\": \"\"} }];"
       },
-      "id": "9c0d85ee-0dfe-50fb-abff-226eba4eefbb",
-      "name": "Aplicar na Planilha",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "id": "cf3dfc2c-d650-52cc-9a9d-0f2162677212",
+      "name": "Cabeçalhos Parâmetros",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
-        1760,
-        320
+        1460,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1IywT4jszZAVuBCBk3p_8DgsUeffoTCkkiBojdQOybZk",
+          "mode": "list",
+          "cachedResultName": "Planilha-Geral-Konext",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1IywT4jszZAVuBCBk3p_8DgsUeffoTCkkiBojdQOybZk/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Parâmetros",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "d90050b5-52b6-538a-9c7d-3df42a62dfdb",
+      "name": "Planilha Geral › Parâmetros: escrever cabeçalhos",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1680,
+        60
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -223,68 +265,287 @@
         }
       },
       "onError": "continueRegularOutput",
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 2000
+      "alwaysOutputData": true
     },
     {
       "parameters": {
-        "jsCode": "const m = $('Montar Alterações').first().json;\nconst r = $input.first().json || {};\nconst sd = $getWorkflowStaticData('global'); const ek = String($execution.id);\nsd.prep = sd.prep || {}; sd.prep[ek] = sd.prep[ek] || [];\nconst aplicou = m.reqs.length > 0;\nif (m.erro) sd.prep[ek].push('⚠️ ' + m.erro);\nelse if (aplicou && r.error) sd.prep[ek].push('⚠️ falhou: ' + m.feito.join('; ') + ' — ' + String(r.error.message || JSON.stringify(r.error)).slice(0, 200));\nelse for (const f of m.feito) sd.prep[ek].push('✅ ' + f);\nreturn [{ json: { ok: true } }];"
+        "operation": "create",
+        "documentId": {
+          "__rl": true,
+          "value": "1w0y2bu6_gA3Ye-u0GYYZT56voGixcD1InqKiB5dhzwY",
+          "mode": "list",
+          "cachedResultName": "Planilha_Pausa_Campanhas_Meta_Ads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1w0y2bu6_gA3Ye-u0GYYZT56voGixcD1InqKiB5dhzwY/edit"
+        },
+        "title": "Campanhas Pausadas",
+        "options": {}
       },
-      "id": "52e720fd-095c-55a8-85ca-1cdb58cf9baf",
-      "name": "Registrar Resultado",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "id": "fde0297b-b82f-5664-a0c9-fc3d7228e4ac",
+      "name": "Planilha Pausa › criar aba Campanhas Pausadas",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
       "position": [
-        1980,
-        400
+        1920,
+        200
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a83b945c-e694-544c-844e-84c5c2d3509b",
+              "leftValue": "={{ !$json.error && $json.sheetId !== undefined }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e9554f1e-c888-540d-bdc3-b82f3aede040",
+      "name": "Aba Campanhas Pausadas é nova?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2140,
+        200
       ]
     },
     {
       "parameters": {
-        "jsCode": "const sd = $getWorkflowStaticData('global'); const ek = String($execution.id);\nconst lista = (sd.prep || {})[ek] || [];\nif (sd.prep) delete sd.prep[ek];\nreturn [{ json: { mensagem: lista.length ? `🧱 *Planilhas Konext preparadas*\\n\\n${lista.join('\\n')}` : '', mudou: lista.length > 0 } }];"
+        "jsCode": "return [{ json: {\"Data\": \"\", \"Cliente\": \"\", \"ID da Conta\": \"\", \"ID Campanha\": \"\", \"Nome Campanha\": \"\", \"Status\": \"\", \"Reativada em\": \"\", \"Erro\": \"\"} }];"
+      },
+      "id": "07d20985-727a-5c56-b6b7-6855878c73d1",
+      "name": "Cabeçalhos Campanhas Pausadas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2360,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1w0y2bu6_gA3Ye-u0GYYZT56voGixcD1InqKiB5dhzwY",
+          "mode": "list",
+          "cachedResultName": "Planilha_Pausa_Campanhas_Meta_Ads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1w0y2bu6_gA3Ye-u0GYYZT56voGixcD1InqKiB5dhzwY/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Campanhas Pausadas",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "cf409f19-14b1-5c86-9624-015fdd1b37c4",
+      "name": "Planilha Pausa › Campanhas Pausadas: escrever cabeçalhos",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2580,
+        60
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "documentId": {
+          "__rl": true,
+          "value": "1w0y2bu6_gA3Ye-u0GYYZT56voGixcD1InqKiB5dhzwY",
+          "mode": "list",
+          "cachedResultName": "Planilha_Pausa_Campanhas_Meta_Ads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1w0y2bu6_gA3Ye-u0GYYZT56voGixcD1InqKiB5dhzwY/edit"
+        },
+        "title": "Pausas CPR",
+        "options": {}
+      },
+      "id": "9447aa9d-6fa3-5403-bb38-d0508f4791be",
+      "name": "Planilha Pausa › criar aba Pausas CPR",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2820,
+        200
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1b21767-948a-589d-a97c-7a8cb3d5dd93",
+              "leftValue": "={{ !$json.error && $json.sheetId !== undefined }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b1bbe2a9-6614-549e-9a3a-5be1b72b6ff0",
+      "name": "Aba Pausas CPR é nova?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3040,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: {\"Data\": \"\", \"Cliente\": \"\", \"ID da Conta\": \"\", \"ID Campanha\": \"\", \"Nome Campanha\": \"\", \"Motivo\": \"\", \"Anúncios\": \"\"} }];"
+      },
+      "id": "36a7cb15-d68c-5aa9-b0e8-3be7591ccfc5",
+      "name": "Cabeçalhos Pausas CPR",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3260,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1w0y2bu6_gA3Ye-u0GYYZT56voGixcD1InqKiB5dhzwY",
+          "mode": "list",
+          "cachedResultName": "Planilha_Pausa_Campanhas_Meta_Ads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1w0y2bu6_gA3Ye-u0GYYZT56voGixcD1InqKiB5dhzwY/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Pausas CPR",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "859e1d25-3b4d-5f3f-861f-52979ce59ac4",
+      "name": "Planilha Pausa › Pausas CPR: escrever cabeçalhos",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3480,
+        60
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1AR75HoQXFCE7ancGQTLjekHP2eCDt1_-GjuaVgP0iKc:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"requests\": [{\"updateSheetProperties\": {\"properties\": {\"sheetId\": 0, \"title\": \"IDS GRUPOS - CLIENTES KONEXT\"}, \"fields\": \"title\"}}]}",
+        "options": {}
+      },
+      "id": "250bf556-e0e4-52c2-9445-b2dc62858967",
+      "name": "Planilha de Grupos › renomear aba para KONEXT",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3720,
+        200
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const J = n => { try { return $(n).first().json || {}; } catch (e) { return null; } };\nconst err = j => j && j.error ? String(j.error.message || j.error.description || JSON.stringify(j.error)).slice(0, 200) : '';\nconst L = [];\nconst c = J('Planilha Geral › Clientes: criar colunas');\nL.push(c && !err(c) ? '✅ Planilha Geral › Clientes: colunas *Link do Relatório*, Enviar Relatório, Relatório - Melhorias e Relatório - Ajustes prontas' : '⚠️ Planilha Geral › Clientes: não consegui criar as colunas — ' + err(c));\nfor (const [rot, aba] of [[\"Planilha Geral\", \"Parâmetros\"], [\"Planilha Pausa\", \"Campanhas Pausadas\"], [\"Planilha Pausa\", \"Pausas CPR\"]]) {\n  const cr = J(`${rot} › criar aba ${aba}`), hd = J(`${rot} › ${aba}: escrever cabeçalhos`);\n  const e = err(cr);\n  if (!e) L.push(`✅ ${rot} › aba *${aba}* criada` + (hd && !err(hd) ? ' com os cabeçalhos' : ' (⚠️ cabeçalhos não gravados: ' + err(hd) + ')'));\n  else if (/exist/i.test(e)) L.push(`✔️ ${rot} › aba *${aba}* já existia (mantida)`);\n  else L.push(`⚠️ ${rot} › aba *${aba}*: ${e}`);\n}\nconst r = J('Planilha de Grupos › renomear aba para KONEXT');\nL.push(r && !err(r) ? '✅ Planilha de grupos › aba renomeada para *IDS GRUPOS - CLIENTES KONEXT*' : '⚠️ Planilha de grupos › não consegui renomear — ' + err(r));\nreturn [{ json: { mensagem: `🧱 *Planilhas Konext preparadas*\\n\\n${L.join('\\n')}\\n\\nAgora é só colar o link de cada cliente na coluna *Link do Relatório* (Planilha Geral › Clientes).` } }];"
       },
       "id": "32b59518-f27f-5537-b0b7-dfd11a2e2c21",
       "name": "Resumo (Preparar)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        880,
-        140
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "89799e1d-a868-5574-83db-6d762f4e3eda",
-              "leftValue": "={{ $json.mudou === true }}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "9965c329-d939-53c4-b88e-650c8c77d387",
-      "name": "Mudou algo?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        1100,
-        140
+        3940,
+        200
       ]
     },
     {
@@ -300,8 +561,8 @@
       "type": "n8n-nodes-evolution-api.evolutionApi",
       "typeVersion": 1,
       "position": [
-        1320,
-        80
+        4160,
+        200
       ],
       "credentials": {
         "evolutionApi": {
@@ -317,18 +578,171 @@
   ],
   "pinData": {},
   "connections": {
-    "Executar manualmente": {
+    "Planilha Geral › Clientes: criar colunas": {
       "main": [
         [
           {
-            "node": "Config (Preparar)",
+            "node": "Planilha Geral › criar aba Parâmetros",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Todo dia às 05:45": {
+    "Planilha Geral › criar aba Parâmetros": {
+      "main": [
+        [
+          {
+            "node": "Aba Parâmetros é nova?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aba Parâmetros é nova?": {
+      "main": [
+        [
+          {
+            "node": "Cabeçalhos Parâmetros",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Planilha Pausa › criar aba Campanhas Pausadas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cabeçalhos Parâmetros": {
+      "main": [
+        [
+          {
+            "node": "Planilha Geral › Parâmetros: escrever cabeçalhos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Planilha Pausa › criar aba Campanhas Pausadas": {
+      "main": [
+        [
+          {
+            "node": "Aba Campanhas Pausadas é nova?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aba Campanhas Pausadas é nova?": {
+      "main": [
+        [
+          {
+            "node": "Cabeçalhos Campanhas Pausadas",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Planilha Pausa › criar aba Pausas CPR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cabeçalhos Campanhas Pausadas": {
+      "main": [
+        [
+          {
+            "node": "Planilha Pausa › Campanhas Pausadas: escrever cabeçalhos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Planilha Pausa › criar aba Pausas CPR": {
+      "main": [
+        [
+          {
+            "node": "Aba Pausas CPR é nova?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aba Pausas CPR é nova?": {
+      "main": [
+        [
+          {
+            "node": "Cabeçalhos Pausas CPR",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Planilha de Grupos › renomear aba para KONEXT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cabeçalhos Pausas CPR": {
+      "main": [
+        [
+          {
+            "node": "Planilha Pausa › Pausas CPR: escrever cabeçalhos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Planilha Geral › Parâmetros: escrever cabeçalhos": {
+      "main": [
+        [
+          {
+            "node": "Planilha Pausa › criar aba Campanhas Pausadas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Planilha Pausa › Campanhas Pausadas: escrever cabeçalhos": {
+      "main": [
+        [
+          {
+            "node": "Planilha Pausa › criar aba Pausas CPR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Planilha Pausa › Pausas CPR: escrever cabeçalhos": {
+      "main": [
+        [
+          {
+            "node": "Planilha de Grupos › renomear aba para KONEXT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executar manualmente": {
       "main": [
         [
           {
@@ -343,91 +757,36 @@
       "main": [
         [
           {
-            "node": "Estrutura Desejada",
+            "node": "Planilha Geral › Clientes (ler)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Estrutura Desejada": {
+    "Planilha Geral › Clientes (ler)": {
       "main": [
         [
           {
-            "node": "Loop Estrutura",
+            "node": "Montar Colunas Novas",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Propriedades da Planilha": {
+    "Montar Colunas Novas": {
       "main": [
         [
           {
-            "node": "Ler Cabeçalho",
+            "node": "Planilha Geral › Clientes: criar colunas",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Ler Cabeçalho": {
-      "main": [
-        [
-          {
-            "node": "Montar Alterações",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Montar Alterações": {
-      "main": [
-        [
-          {
-            "node": "Tem alteração?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Aplicar na Planilha": {
-      "main": [
-        [
-          {
-            "node": "Registrar Resultado",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Registrar Resultado": {
-      "main": [
-        [
-          {
-            "node": "Loop Estrutura",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Resumo (Preparar)": {
-      "main": [
-        [
-          {
-            "node": "Mudou algo?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Loop Estrutura": {
+    "Planilha de Grupos › renomear aba para KONEXT": {
       "main": [
         [
           {
@@ -435,35 +794,10 @@
             "type": "main",
             "index": 0
           }
-        ],
-        [
-          {
-            "node": "Propriedades da Planilha",
-            "type": "main",
-            "index": 0
-          }
         ]
       ]
     },
-    "Tem alteração?": {
-      "main": [
-        [
-          {
-            "node": "Aplicar na Planilha",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Registrar Resultado",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Mudou algo?": {
+    "Resumo (Preparar)": {
       "main": [
         [
           {

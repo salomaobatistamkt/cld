@@ -985,7 +985,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const j = $input.first().json || {};\nconst per = $('Período (Rel)').first().json;\nreturn [{ json: { 'Data': $now.toFormat('dd/MM/yyyy HH:mm'), 'Cliente': j.cliente, 'ID da Conta': String(j.conta), 'Período': per.rotulo,\n  'Status': j.status || '-', 'Enviado para': (j.envios || []).map(e => (e.tipo === 'cliente' ? 'cliente ' : 'gestor ') + e.para).join(', ') || '-',\n  'Observações': j.obs || '', 'Mensagem': j.texto || '' } }];"
+        "jsCode": "const j = $('Montar Relatório (Rel)').first().json || {};\nconst per = $('Período (Rel)').first().json;\nconst sd = $getWorkflowStaticData('global');\nconst rec = ((sd.exec_rel || {})[String($execution.id)] || {})[j.conta] || {};\nreturn [{ json: { 'Data': $now.toFormat('dd/MM/yyyy HH:mm'), 'Cliente': j.cliente, 'ID da Conta': String(j.conta), 'Período': per.rotulo,\n  'Status': rec.status || j.status || '-', 'Enviado para': (j.envios || []).map(e => (e.tipo === 'cliente' ? 'cliente ' : 'gestor ') + e.para).join(', ') || '-',\n  'Observações': rec.obs || j.obs || '', 'Mensagem': j.texto || '' } }];"
       },
       "id": "abb4d72a-9d65-50ae-b70a-adf69fa23e12",
       "name": "Linha da Aba Relatórios",
@@ -1398,7 +1398,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// ===== utilitários padrão Konext (iguais em todos os fluxos) =====\nconst n_ = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');\nconst pick = (row, nomes) => {\n  const m = {};\n  for (const k of Object.keys(row || {})) m[n_(k)] = row[k];\n  for (const nome of nomes) { const v = m[n_(nome)]; if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim(); }\n  return '';\n};\nconst dig = v => String(v ?? '').replace(/\\D/g, '');\nconst sim = (v, padrao) => { const t = n_(v); if (!t) return padrao; return ['sim', 's', 'yes', 'y', 'true', '1', 'ativo'].includes(t); };\nconst nao = v => ['nao', 'n', 'no', 'false', '0', 'inativo'].includes(n_(v));\nconst money = v => {\n  let s = String(v ?? '').replace(/[^\\d,.\\-]/g, '');\n  if (!s) return null;\n  const c = s.lastIndexOf(','), p = s.lastIndexOf('.');\n  if (c > -1 && p > -1) s = c > p ? s.replace(/\\./g, '').replace(',', '.') : s.replace(/,/g, '');\n  else if (c > -1) s = s.replace(',', '.');\n  else if (/^\\d{1,3}(\\.\\d{3})+$/.test(s)) s = s.replace(/\\./g, '');\n  const n = parseFloat(s); return isNaN(n) ? null : n;\n};\n// Número de WhatsApp ou ID de grupo -> formato aceito pela Evolution API\nconst jid = v => {\n  const s = String(v ?? '').trim();\n  if (!s) return '';\n  if (/@g\\.us$/i.test(s)) return s.replace(/\\s/g, '');\n  const d = s.replace(/\\D/g, '');\n  if (!d) return '';\n  if (d.startsWith('120363') && d.length >= 15) return d + '@g.us';\n  return d.length <= 11 ? '55' + d : d;\n};\n\nconst errTxt = e => { if (e && typeof e === 'object') e = e.message || e.error_user_msg || e.description || JSON.stringify(e); return String(e ?? '').slice(0, 300); };\n\nconst res = $('Montar Relatório (Rel)').first().json;\nconst primeiro = $input.first().json || {};\nconst veioDoEnvio = primeiro.tem_envios === undefined;   // pelo \"false\" do IF chega o próprio resumo\nconst env = veioDoEnvio ? $('Separar Envios (Rel)').all().map(i => i.json) : [];\nconst resps = veioDoEnvio ? $input.all().map(i => i.json || {}) : [];\nlet avisoCliente = res.qtd_ok > 0 ? (res.destino ? 'NÃO ENVIADO' : 'SEM DESTINO') : '-';\nconst falhas = [];\nenv.forEach((e, i) => {\n  const r = resps[i] || {};\n  const erro = r.error ? errTxt(r.error) : '';\n  if (e.tipo === 'cliente') avisoCliente = erro ? 'ERRO' : 'OK';\n  if (erro) falhas.push(`• ${e.tipo === 'cliente' ? 'Cliente' : 'Gestor'} (${e.para}): ${erro}`);\n});\nconst sd = $getWorkflowStaticData('global'); const ek = String($execution.id);\nconst rec = ((sd.exec_rel || {})[ek] || {})[res.conta];\nif (rec) { rec.aviso = avisoCliente; if (falhas.length) rec.obs = [rec.obs, 'Falha no WhatsApp'].filter(Boolean).join(' | '); }\nconst alerta = falhas.length ? `⚠️ *Falha ao enviar WhatsApp (Relatório)*\\n\\nCliente: *${res.cliente}*\\n${falhas.join('\\n')}\\n\\nConfira o WhatsApp/instância.` : '';\nreturn [{ json: { alerta } }];"
+        "jsCode": "// ===== utilitários padrão Konext (iguais em todos os fluxos) =====\nconst n_ = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');\nconst pick = (row, nomes) => {\n  const m = {};\n  for (const k of Object.keys(row || {})) m[n_(k)] = row[k];\n  for (const nome of nomes) { const v = m[n_(nome)]; if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim(); }\n  return '';\n};\nconst dig = v => String(v ?? '').replace(/\\D/g, '');\nconst sim = (v, padrao) => { const t = n_(v); if (!t) return padrao; return ['sim', 's', 'yes', 'y', 'true', '1', 'ativo'].includes(t); };\nconst nao = v => ['nao', 'n', 'no', 'false', '0', 'inativo'].includes(n_(v));\nconst money = v => {\n  let s = String(v ?? '').replace(/[^\\d,.\\-]/g, '');\n  if (!s) return null;\n  const c = s.lastIndexOf(','), p = s.lastIndexOf('.');\n  if (c > -1 && p > -1) s = c > p ? s.replace(/\\./g, '').replace(',', '.') : s.replace(/,/g, '');\n  else if (c > -1) s = s.replace(',', '.');\n  else if (/^\\d{1,3}(\\.\\d{3})+$/.test(s)) s = s.replace(/\\./g, '');\n  const n = parseFloat(s); return isNaN(n) ? null : n;\n};\n// Número de WhatsApp ou ID de grupo -> formato aceito pela Evolution API\nconst jid = v => {\n  const s = String(v ?? '').trim();\n  if (!s) return '';\n  if (/@g\\.us$/i.test(s)) return s.replace(/\\s/g, '');\n  const d = s.replace(/\\D/g, '');\n  if (!d) return '';\n  if (d.startsWith('120363') && d.length >= 15) return d + '@g.us';\n  return d.length <= 11 ? '55' + d : d;\n};\n\nconst errTxt = e => { if (e && typeof e === 'object') e = [e.message || e.error_user_msg || e.description, e.details].filter(Boolean).join(' — ') || JSON.stringify(e); return String(e ?? '').slice(0, 400); };\n\nconst res = $('Montar Relatório (Rel)').first().json;\nconst primeiro = $input.first().json || {};\nconst veioDoEnvio = primeiro.tem_envios === undefined;   // pelo \"false\" do IF chega o próprio resumo\nconst env = veioDoEnvio ? $('Separar Envios (Rel)').all().map(i => i.json) : [];\nconst resps = veioDoEnvio ? $input.all().map(i => i.json || {}) : [];\nlet avisoCliente = res.qtd_ok > 0 ? (res.destino ? 'NÃO ENVIADO' : 'SEM DESTINO') : '-';\nconst falhas = [];\nenv.forEach((e, i) => {\n  const r = resps[i] || {};\n  const erro = r.error ? errTxt(r.error) : '';\n  if (e.tipo === 'cliente') avisoCliente = erro ? 'ERRO' : 'OK';\n  if (erro) falhas.push(`• ${e.tipo === 'cliente' ? 'Cliente' : 'Gestor'} (${e.para}): ${erro}`);\n});\nconst sd = $getWorkflowStaticData('global'); const ek = String($execution.id);\nconst rec = ((sd.exec_rel || {})[ek] || {})[res.conta];\nif (rec) {\n  rec.aviso = avisoCliente;\n  if (avisoCliente === 'ERRO' && rec.status === 'Enviado') rec.status = 'NÃO ENTREGUE (falha no WhatsApp)';\n  if (falhas.length) rec.obs = [rec.obs, 'Falha no WhatsApp: ' + falhas.join(' / ')].filter(Boolean).join(' | ');\n}\nconst dica = falhas.some(f => /@g\\.us/.test(f)) ? '\\n\\nPara grupo: o número da instância precisa ser participante do grupo, e o grupo não pode estar como \"somente administradores enviam mensagens\".' : '';\nconst alerta = falhas.length ? `⚠️ *Falha ao enviar WhatsApp (Relatório)*\\n\\nCliente: *${res.cliente}*\\n${falhas.join('\\n')}${dica}\\n\\nConfira o WhatsApp/instância.` : '';\nreturn [{ json: { alerta } }];"
       },
       "id": "10f758da-2632-5994-b9c1-7b374a3bf99c",
       "name": "Checar Envios (Rel)",
@@ -1421,7 +1421,7 @@
           "conditions": [
             {
               "id": "f3059814-f5b1-5ee6-9e42-5a22da89d5a5",
-              "leftValue": "={{ $json.alerta }}",
+              "leftValue": "={{ $('Checar Envios (Rel)').first().json.alerta }}",
               "rightValue": "",
               "operator": {
                 "type": "string",
@@ -1448,7 +1448,7 @@
         "resource": "messages-api",
         "instanceName": "Salomão - Konext IA",
         "remoteJid": "={{ String($('Config (Rel)').first().json.numero_gestor) }}",
-        "messageText": "={{ $json.alerta }}",
+        "messageText": "={{ $('Checar Envios (Rel)').first().json.alerta }}",
         "options_message": {}
       },
       "id": "d7501b4f-94e8-5699-a68e-3dc30ecc4fe2",
@@ -1473,22 +1473,6 @@
   ],
   "pinData": {},
   "connections": {
-    "Montar Relatório (Rel)": {
-      "main": [
-        [
-          {
-            "node": "Linha da Aba Relatórios",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Tem envios? (Rel)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Linha da Aba Relatórios": {
       "main": [
         [
@@ -1787,6 +1771,17 @@
         ]
       ]
     },
+    "Montar Relatório (Rel)": {
+      "main": [
+        [
+          {
+            "node": "Tem envios? (Rel)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Tem envios? (Rel)": {
       "main": [
         [
@@ -1828,6 +1823,17 @@
       ]
     },
     "Checar Envios (Rel)": {
+      "main": [
+        [
+          {
+            "node": "Linha da Aba Relatórios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Planilha Geral › Relatórios: registrar": {
       "main": [
         [
           {

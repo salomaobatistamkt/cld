@@ -484,7 +484,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const a = $('Avaliar Saldo').first().json;\nlet e = $input.first().json.error; if (e && typeof e === 'object') e = e.message || JSON.stringify(e);\nconst sd = $getWorkflowStaticData('global'); const lista = (sd.resumo || {})[String($execution.id)] || [];\nconst rec = lista.find(x => x.cliente === a.cliente); if (rec) rec.obs = (rec.obs ? rec.obs + '; ' : '') + 'FALHA NO ENVIO';\nreturn [{ json: { cliente: a.cliente, conta: a.conta, erro: 'Falha ao enviar o WhatsApp ao cliente (' + a.destino_desc + '): ' + String(e ?? 'erro desconhecido').slice(0, 250) } }];"
+        "jsCode": "const a = $('Avaliar Saldo').first().json;\nlet e = $input.first().json.error; if (e && typeof e === 'object') e = [e.message, e.details].filter(Boolean).join(' — ') || JSON.stringify(e);\nconst sd = $getWorkflowStaticData('global'); const lista = (sd.resumo || {})[String($execution.id)] || [];\nconst rec = lista.find(x => x.cliente === a.cliente); if (rec) rec.obs = (rec.obs ? rec.obs + '; ' : '') + 'FALHA NO ENVIO';\nreturn [{ json: { cliente: a.cliente, conta: a.conta, erro: 'Falha ao enviar o WhatsApp ao cliente (' + a.destino_desc + '): ' + String(e ?? 'erro desconhecido').slice(0, 250) } }];"
       },
       "id": "d7c38b81-2157-5550-870b-6a744466d0ba",
       "name": "Falha no Envio",

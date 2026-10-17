@@ -1,26 +1,15 @@
-# Konext Gestão — imagem única: monta o site e roda o servidor (Node 24, sem dependências extras).
-
-# 1) Monta o site (React + Excalidraw)
-FROM node:24-alpine AS build
-WORKDIR /app
-# Limita a memória do build para não sufocar a VPS.
-ENV NODE_OPTIONS=--max-old-space-size=1536
-COPY package.json package-lock.json ./
-RUN npm ci --no-audit --no-fund
-COPY . .
-# O tipo do código já é conferido antes de cada envio; aqui só monta (usa menos memória).
-RUN npm run build:servidor && test -f dist/index.html && test -d dist/fonts/Nunito
-
-# 2) Imagem final, pequena: só o site pronto e o servidor
+# Konext Gestão — imagem leve: o site já vem montado na pasta dist (feito antes de cada envio
+# ao GitHub), então a VPS não precisa instalar dependências nem compilar nada no deploy.
+# O servidor usa só módulos do próprio Node 24.
 FROM node:24-alpine
 WORKDIR /app
 ENV NODE_ENV=production \
     PORT=3000 \
     KONEXT_DADOS=/data \
     KONEXT_SITE=/app/dist
-COPY --from=build /app/dist ./dist
+COPY dist ./dist
 COPY server ./server
-RUN mkdir -p /data && chown -R node:node /data
+RUN test -f dist/index.html && mkdir -p /data && chown -R node:node /data
 USER node
 VOLUME ["/data"]
 EXPOSE 3000

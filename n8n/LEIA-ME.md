@@ -69,7 +69,7 @@ Quer priorizar o contato pessoal em vez do grupo? Coloque `preferir_grupo = fals
 
 ## Passo a passo para colocar no ar
 
-> **Primeiro passo:** importe e execute uma vez o **`00 - Preparar Planilhas (rodar 1x).json`** (botão *Execute workflow*). Ele cria sozinho as colunas e abas abaixo (Link do Relatório, Parâmetros, Campanhas Pausadas, Pausas CPR) e renomeia a aba VORK → KONEXT, sem apagar nada. Deixe-o ativo: ele confere a estrutura todo dia às 05:45 e só avisa quando cria algo.
+> **Planilhas já preparadas (17/10/2026):** as colunas `Link do Relatório`, `Enviar Relatório`, `Relatório - Melhorias` e `Relatório - Ajustes` (Planilha Geral › Clientes, colunas O a R), a aba `Parâmetros`, as abas `Campanhas Pausadas` e `Pausas CPR` (Planilha_Pausa) e o nome da aba de grupos (KONEXT) já foram criados direto nas planilhas. O fluxo **00** fica só como reserva, caso alguém apague algo.
 
 1. No n8n, **importe** os 4 arquivos. Você pode abrir o fluxo antigo e usar *Import from File* para substituir, ou criar novos e **desativar os antigos** para não rodar em dobro.
 2. Abra cada fluxo e confirme que as credenciais aparecem selecionadas (`Salomão Konext`, `Google Sheets account 2`, `Facebook Graph account`).

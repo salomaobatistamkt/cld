@@ -1,9 +1,10 @@
 # Automações Meta Ads — Konext (n8n)
 
-5 workflows padronizados. Todos usam a **mesma base de clientes**, as **mesmas credenciais** e a **mesma regra de envio de WhatsApp**.
+6 workflows padronizados. Todos usam a **mesma base de clientes**, as **mesmas credenciais** e a **mesma regra de envio de WhatsApp**.
 
 | Arquivo | Quando roda | O que faz |
 |---|---|---|
+| `00 - Preparar Planilhas (rodar 1x).json` | Rodar 1x agora (+ confere todo dia 05:45) | Cria colunas e abas que faltam, renomeia VORK → KONEXT |
 | `01 - Pausar Campanhas…json` | Sábado 12:00 / Segunda 07:30 | Pausa tudo no sábado, reativa na segunda, avisa cada cliente |
 | `02 - Sincronizar Base de Clientes.json` | Todo dia 06:00 (+ manual) | Preenche Página, Instagram e Públicos na Planilha Geral |
 | `03 - Monitor de Custo por Resultado (CPR).json` | **A cada 30 min, das 06h às 23h30** | Estourou o teto → pausa na hora e avisa |
@@ -68,11 +69,13 @@ Quer priorizar o contato pessoal em vez do grupo? Coloque `preferir_grupo = fals
 
 ## Passo a passo para colocar no ar
 
+> **Primeiro passo:** importe e execute uma vez o **`00 - Preparar Planilhas (rodar 1x).json`** (botão *Execute workflow*). Ele cria sozinho as colunas e abas abaixo (Link do Relatório, Parâmetros, Campanhas Pausadas, Pausas CPR) e renomeia a aba VORK → KONEXT, sem apagar nada. Deixe-o ativo: ele confere a estrutura todo dia às 05:45 e só avisa quando cria algo.
+
 1. No n8n, **importe** os 4 arquivos. Você pode abrir o fluxo antigo e usar *Import from File* para substituir, ou criar novos e **desativar os antigos** para não rodar em dobro.
 2. Abra cada fluxo e confirme que as credenciais aparecem selecionadas (`Salomão Konext`, `Google Sheets account 2`, `Facebook Graph account`).
-3. Na **Planilha_Pausa_Campanhas**, crie a aba `Campanhas Pausadas` com estes cabeçalhos na linha 1 (o fluxo tenta criar sozinho, mas assim é garantido):
+3. A aba `Campanhas Pausadas` é criada pelo fluxo **00** (cabeçalhos:
    `Data | Cliente | ID da Conta | ID Campanha | Nome Campanha | Status | Reativada em | Erro`
-4. Na planilha de grupos, renomeie a aba `IDS GRUPOS - CLIENTES VORK` para `IDS GRUPOS - CLIENTES KONEXT`. Os fluxos leem pela 1ª aba, então o nome não quebra nada.
+4. A aba de grupos é renomeada para `IDS GRUPOS - CLIENTES KONEXT` pelo fluxo **00**.
 5. **Ative** os 4 fluxos. A memória da reativação só funciona com o fluxo **ativo**, não em execução manual.
 6. Teste: no fluxo 01, clique no gatilho "Sábado às 12:00" e em *Execute step*. Confira a aba `Campanhas Pausadas` e o WhatsApp. Depois execute o gatilho "Segunda às 07:30".
 
@@ -113,7 +116,7 @@ Como as regras são aplicadas:
 
 ### Alterar os parâmetros sem mexer em código
 - **Padrão geral:** campos do nó **Config (Rel)** (`cpr_otimo_ate`, `cpr_bom_ate`, `ctr_*`, `impressoes_min`, `alcance_min`, `freq_*`, `resultados_min_classificar`, `variacao_relevante_pct`, `aviso_resultado`).
-- **Por cliente, procedimento, objetivo ou tipo de resultado:** crie a aba **`Parâmetros`** na Planilha Geral com estes cabeçalhos:
+- **Por cliente, procedimento, objetivo ou tipo de resultado:** use a aba **`Parâmetros`** da Planilha Geral (criada pelo fluxo **00**), com estes cabeçalhos:
 
   `Cliente | Procedimento | Objetivo | Tipo de resultado | CPR ótimo até | CPR bom até | CTR muito alto acima de | CTR excelente a partir de | CTR bom a partir de | CTR atenção a partir de | Tipo de CTR | Impressões mínimas | Alcance mínimo | Frequência inicial até | Frequência boa até | Resultados mínimos | Gasto mínimo sem resultado | Ativo`
 
@@ -138,8 +141,8 @@ Como as regras são aplicadas:
 - `ultimos_dias` + `periodo_dias = 7`: últimos 7 dias fechados.
 
 ### Para ativar
-1. Na **Planilha Geral › Clientes**, crie a coluna **`Link do Relatório`** e cole o link do relatório de cada cliente. Opcionais: `Enviar Relatório` (Sim/Não), `Relatório - Melhorias`, `Relatório - Ajustes`.
-2. Na **Planilha_Pausa_Campanhas**, crie a aba **`Pausas CPR`** com os cabeçalhos: `Data | Cliente | ID da Conta | ID Campanha | Nome Campanha | Motivo | Anúncios`. O Monitor de CPR (03) foi atualizado para gravar nela cada pausa; **reimporte o 03**.
+1. Rode o fluxo **00**. Ele cria na **Planilha Geral › Clientes**, no fim da linha 1, a coluna **`Link do Relatório`** (e também `Enviar Relatório`, `Relatório - Melhorias`, `Relatório - Ajustes`). Depois, cole o link do relatório de cada cliente na linha dele.
+2. A aba **`Pausas CPR`** da Planilha_Pausa_Campanhas também é criada pelo **00**. O Monitor de CPR (03) foi atualizado para gravar nela cada pausa; **reimporte o 03**.
 3. Importe o 05. Ele vem com **`modo_teste = true`**: todos os relatórios vão só para você. Rode pelo gatilho *Executar manualmente*, compare com a Konext Gestão nas mesmas datas e, estando tudo igual, mude `modo_teste` para `false` e ative.
 
 ## Pontos que dependem de você (vistos nas planilhas)

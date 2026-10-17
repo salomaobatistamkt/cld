@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## 📊 RELATÓRIO DE PERFORMANCE — terça e sexta às 07:30\nClientes: Planilha Geral › Clientes (Status = Ativo, Enviar Relatório ≠ Não). Envio: grupo do cliente → ou Contato do cliente.\n• Investimento, alcance, impressões, mensagens e visitas = **totais da conta** no período (iguais ao Gerenciador).\n• Investimento da campanha = gasto da campanha. **Custo por resultado da campanha = média do custo por resultado dos conjuntos que tiveram resultado** (conjuntos sem resultado ficam só no investimento).\n• Pausadas = registro do Monitor de CPR (aba *Pausas CPR*) + criativos pausados no período, com link de cada criativo.\n• Período (nó Config): **desde_ultimo_relatorio** (terça = sex→seg, sexta = ter→qui) ou **ultimos_dias**. O período sai escrito na mensagem.\n• Se faltar dado essencial da Meta ou os totais não baterem, o cliente NÃO recebe e o gestor é avisado.\n• **modo_teste = true**: todos os relatórios vão só para o gestor. Mude para false depois de conferir.",
+        "content": "## 📊 RELATÓRIO DE PERFORMANCE — terça e sexta às 07:30\nClientes: Planilha Geral › Clientes (Status = Ativo, Enviar Relatório ≠ Não). Envio: grupo do cliente → ou Contato do cliente.\n• Investimento, alcance, impressões, mensagens e visitas = **totais da conta** no período (iguais ao Gerenciador).\n• Avaliação (CPR, CTR, impressões, alcance, frequência): limites padrão no nó Config (Rel); personalize por cliente/procedimento/objetivo/resultado na aba **Parâmetros** da Planilha Geral. Classificação só aparece com dados suficientes e sempre com a justificativa.\n• Investimento da campanha = gasto da campanha. **Custo por resultado da campanha = média do custo por resultado dos conjuntos que tiveram resultado** (conjuntos sem resultado ficam só no investimento).\n• Pausadas = registro do Monitor de CPR (aba *Pausas CPR*) + criativos pausados no período, com link de cada criativo.\n• Período (nó Config): **desde_ultimo_relatorio** (terça = sex→seg, sexta = ter→qui) ou **ultimos_dias**. O período sai escrito na mensagem.\n• Se faltar dado essencial da Meta ou os totais não baterem, o cliente NÃO recebe e o gestor é avisado.\n• **modo_teste = true**: todos os relatórios vão só para o gestor. Mude para false depois de conferir.",
         "height": 260,
         "width": 1700,
         "color": 6
@@ -107,40 +107,94 @@
               "type": "string"
             },
             {
-              "id": "3cb13c8e-5c96-59f1-9241-0d981ee2e379",
-              "name": "cpr_msg_meta",
-              "value": 8,
+              "id": "6fab9e65-3445-55ba-a4c1-0b2f0b100b8d",
+              "name": "cpr_otimo_ate",
+              "value": 5,
               "type": "number"
             },
             {
-              "id": "7b21a0f8-10c7-5e0b-b1f3-380d60cac0f9",
-              "name": "cpr_msg_max",
+              "id": "c41dd9f2-94f9-5d75-9f5e-e6aae5ce1afc",
+              "name": "cpr_bom_ate",
               "value": 10,
               "type": "number"
             },
             {
-              "id": "c30bff5d-b543-5dea-87ca-0d270fe99c1f",
-              "name": "cpr_visita_max",
-              "value": 0.5,
-              "type": "number"
-            },
-            {
-              "id": "f14506b5-d97b-5bb2-9c1b-ea44a04231e4",
-              "name": "gasto_min_sem_resultado_msg",
+              "id": "b1d48265-00cf-5390-936e-ca2ddf510122",
+              "name": "ctr_muito_alto_acima",
               "value": 10,
               "type": "number"
             },
             {
-              "id": "7eb88dc0-23a3-5027-b02f-b51bb3636e15",
-              "name": "gasto_min_sem_resultado_visita",
+              "id": "fdba1638-f53f-5558-ad2a-5c059eb1d27e",
+              "name": "ctr_excelente_min",
+              "value": 5,
+              "type": "number"
+            },
+            {
+              "id": "73b823f6-bfbf-5661-9a1f-872a227aefd0",
+              "name": "ctr_bom_min",
               "value": 3,
               "type": "number"
             },
             {
-              "id": "28550f04-e3e1-5512-8a2a-f19af338726d",
-              "name": "frequencia_max",
-              "value": 3.5,
+              "id": "bca03874-f7e5-5c04-af45-71163a6ef513",
+              "name": "ctr_atencao_min",
+              "value": 2,
               "type": "number"
+            },
+            {
+              "id": "9f92d74b-15ab-5b47-955e-db0ba6b74b06",
+              "name": "ctr_tipo_padrao",
+              "value": "auto",
+              "type": "string"
+            },
+            {
+              "id": "e67df08e-5414-5d10-9b21-44d264e7ab21",
+              "name": "impressoes_min",
+              "value": 1000,
+              "type": "number"
+            },
+            {
+              "id": "d9725276-2396-5f38-8b01-f0ea89412689",
+              "name": "alcance_min",
+              "value": 1000,
+              "type": "number"
+            },
+            {
+              "id": "e6b5b68c-7003-56ce-883b-4c685ef46091",
+              "name": "freq_inicial_ate",
+              "value": 1.5,
+              "type": "number"
+            },
+            {
+              "id": "85aec23f-27a8-5270-bb7b-57c7cfc1dcac",
+              "name": "freq_boa_ate",
+              "value": 2,
+              "type": "number"
+            },
+            {
+              "id": "75070365-4b4a-523a-ab68-9cab38fb5625",
+              "name": "resultados_min_classificar",
+              "value": 3,
+              "type": "number"
+            },
+            {
+              "id": "59c0bf85-eb46-5151-99ce-ed342baebebc",
+              "name": "gasto_min_sem_resultado",
+              "value": 10,
+              "type": "number"
+            },
+            {
+              "id": "2517b056-7851-5875-8734-b0d8cb5e3100",
+              "name": "variacao_relevante_pct",
+              "value": 15,
+              "type": "number"
+            },
+            {
+              "id": "91860821-c460-5bb1-8d7e-8e619c526038",
+              "name": "aviso_resultado",
+              "value": "Lembrando: um custo por resultado baixo não significa, necessariamente, uma venda lucrativa. O ideal é acompanharmos juntos a qualidade dos atendimentos, as vendas e o retorno financeiro.",
+              "type": "string"
             },
             {
               "id": "0af7742e-2913-5990-a9b9-14674c81f97d",
@@ -369,6 +423,41 @@
     },
     {
       "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1IywT4jszZAVuBCBk3p_8DgsUeffoTCkkiBojdQOybZk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Parâmetros",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "89e536c6-7720-55c4-a6bd-6b53c4eea89d",
+      "name": "Parâmetros (Rel)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1650,
+        460
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5Mj1aRpsgcI4hiXC",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
         "jsCode": "// ===== utilitários padrão Konext (iguais em todos os fluxos) =====\nconst n_ = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');\nconst pick = (row, nomes) => {\n  const m = {};\n  for (const k of Object.keys(row || {})) m[n_(k)] = row[k];\n  for (const nome of nomes) { const v = m[n_(nome)]; if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim(); }\n  return '';\n};\nconst dig = v => String(v ?? '').replace(/\\D/g, '');\nconst sim = (v, padrao) => { const t = n_(v); if (!t) return padrao; return ['sim', 's', 'yes', 'y', 'true', '1', 'ativo'].includes(t); };\nconst nao = v => ['nao', 'n', 'no', 'false', '0', 'inativo'].includes(n_(v));\nconst money = v => {\n  let s = String(v ?? '').replace(/[^\\d,.\\-]/g, '');\n  if (!s) return null;\n  const c = s.lastIndexOf(','), p = s.lastIndexOf('.');\n  if (c > -1 && p > -1) s = c > p ? s.replace(/\\./g, '').replace(',', '.') : s.replace(/,/g, '');\n  else if (c > -1) s = s.replace(',', '.');\n  else if (/^\\d{1,3}(\\.\\d{3})+$/.test(s)) s = s.replace(/\\./g, '');\n  const n = parseFloat(s); return isNaN(n) ? null : n;\n};\n// Número de WhatsApp ou ID de grupo -> formato aceito pela Evolution API\nconst jid = v => {\n  const s = String(v ?? '').trim();\n  if (!s) return '';\n  if (/@g\\.us$/i.test(s)) return s.replace(/\\s/g, '');\n  const d = s.replace(/\\D/g, '');\n  if (!d) return '';\n  if (d.startsWith('120363') && d.length >= 15) return d + '@g.us';\n  return d.length <= 11 ? '55' + d : d;\n};\n\nconst cfg = $('Config (Rel)').first().json;\nconst preferirGrupo = !(cfg.preferir_grupo === false || cfg.preferir_grupo === 'false');\nconst grupos = $('Grupos WhatsApp (Rel)').all().map(i => i.json || {}).filter(g => !g.error)\n  .map(g => ({ nome: pick(g, ['Grupo', 'Nome do Grupo', 'Nome']), id: pick(g, ['ID', 'ID do Grupo']).replace(/\\s/g, ''), ativo: !nao(pick(g, ['Ativo'])) }))\n  .filter(g => g.ativo && /@g\\.us$/i.test(g.id))\n  .map(g => ({ ...g, chave: n_(g.nome) }));\n// Procura o grupo do cliente pelo nome / apelidos (só aceita quando há UM grupo compatível)\nconst acharGrupo = (cliente, apelidos) => {\n  const cands = [cliente, ...apelidos].map(n_).filter(c => c.length >= 4);\n  let m = grupos.filter(g => cands.some(c => g.chave.includes(c)));\n  if (m.length === 1) return m[0];\n  if (m.length > 1) return null;\n  const primeiro = n_(String(cliente).trim().split(/\\s+/)[0]);\n  if (primeiro.length >= 4) { m = grupos.filter(g => g.chave.includes(primeiro)); if (m.length === 1) return m[0]; }\n  return null;\n};\n// Destino: grupo do cliente (coluna \"ID do Grupo\" ou planilha de grupos) e, se não houver, o \"Contato do cliente\".\n// O \"Contato do cliente\" também pode conter direto um ID de grupo (120363...@g.us).\nconst montarDestino = (cliente, apelidos, contatoRaw, grupoRaw) => {\n  const contato = jid(contatoRaw);\n  const fixo = jid(grupoRaw);\n  const g = fixo.endsWith('@g.us') ? { id: fixo, nome: '(ID do Grupo na planilha)' } : acharGrupo(cliente, apelidos);\n  let destino = '', destino_desc = '';\n  const porGrupo = () => { destino = g.id; destino_desc = 'grupo ' + g.nome; };\n  const porContato = () => { destino = contato; destino_desc = (contato.endsWith('@g.us') ? 'grupo ' : 'WhatsApp ') + contato; };\n  if (preferirGrupo) { if (g) porGrupo(); else if (contato) porContato(); }\n  else { if (contato) porContato(); else if (g) porGrupo(); }\n  return { contato, grupo: g ? g.id : '', grupo_nome: g ? g.nome : '', destino, destino_desc };\n};\nconst clientes = []; const vistos = new Set();\nfor (const it of $('Clientes Geral (Rel)').all()) {\n  const r = it.json || {};\n  if (r.error) continue;\n  if (!sim(pick(r, ['Status', 'Ativo']), false)) continue;           // Status = Ativo\n  const conta = dig(pick(r, ['ID da Conta', 'Conta de Anuncio', 'Conta de Anúncio', 'Conta']));\n  const cliente = pick(r, ['Cliente', 'Clientes', 'Nome do cliente', 'Nome']);\n  if (!conta || vistos.has(conta)) continue;\n  vistos.add(conta);\n  const apelidos = pick(r, ['Apelido', 'Apelidos']).split(',').map(s => s.trim()).filter(Boolean);\n  clientes.push({\n    row_number: r.row_number, cliente: cliente || ('Conta ' + conta), conta, apelidos,\n    ...montarDestino(cliente, apelidos, pick(r, ['Contato do cliente', 'Contato', 'WhatsApp do cliente', 'Telefone']), pick(r, ['ID do Grupo', 'Grupo WhatsApp', 'Grupo do cliente'])),\n    valor_base: money(pick(r, ['Valor Base'])),\n    reativar: sim(pick(r, ['Reativar na Segunda', 'Reativar toda segunda', 'Reativar toda segunda-feira', 'Reativar']), true),\n    monitorar: sim(pick(r, ['Monitorar Custo']), true),\n    pagina: dig(pick(r, ['ID da Página', 'ID da Pagina'])),\n    ig_id: dig(pick(r, ['ID Instagram', 'ID do Instagram'])),\n    ig_user: pick(r, ['Instagram (usuário)', 'Usuário do Instagram', 'Instagram']).replace(/^@/, ''),\n    whatsapp_campanha: jid(pick(r, ['WhatsApp da Campanha', 'WhatsApp'])),\n    link_relatorio: pick(r, ['Link do Relatório', 'Link do Relatorio', 'Link Relatório', 'Relatório', 'Link do Dashboard']),\n    enviar_relatorio: sim(pick(r, ['Enviar Relatório', 'Enviar Relatorio']), true),\n    rel_melhorias: pick(r, ['Relatório - Melhorias', 'Melhorias']),\n    rel_ajustes: pick(r, ['Relatório - Ajustes', 'Ajustes']),\n  });\n}\n\nconst metodo = {};\nfor (const p of $('Planilha de Saldo (Rel)').all().map(i => i.json || {})) {\n  if (p.error) continue;\n  const c = dig(pick(p, ['Conta de Anuncio', 'Conta de Anúncio', 'ID da Conta']));\n  if (c && !metodo[c]) metodo[c] = pick(p, ['Metodo de Pagamento', 'Método de Pagamento']);\n}\nconst sd = $getWorkflowStaticData('global');\nsd.exec_rel = { [String($execution.id)]: {} };\nreturn clientes.filter(c => c.enviar_relatorio).map(c => ({ json: { ...c, metodo: metodo[c.conta] || '' } }));"
       },
       "id": "c021fe3d-da35-559c-a5f3-d7bfdbf99355",
@@ -442,7 +531,7 @@
             },
             {
               "name": "fields",
-              "value": "spend,reach,impressions,frequency,actions"
+              "value": "spend,reach,impressions,frequency,inline_link_click_ctr,actions"
             },
             {
               "name": "time_range",
@@ -536,7 +625,7 @@
           "parameters": [
             {
               "name": "fields",
-              "value": "id,name,effective_status,updated_time"
+              "value": "id,name,objective,effective_status,updated_time"
             },
             {
               "name": "effective_status",
@@ -583,7 +672,7 @@
             },
             {
               "name": "fields",
-              "value": "campaign_id,campaign_name,spend,reach,impressions,frequency,actions"
+              "value": "campaign_id,campaign_name,spend,reach,impressions,frequency,inline_link_click_ctr,outbound_clicks_ctr,actions"
             },
             {
               "name": "time_range",
@@ -607,6 +696,57 @@
       "typeVersion": 4.2,
       "position": [
         3080,
+        420
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "20Mw7Bs7oVlElweC",
+          "name": "Facebook Graph account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v26.0/act_{{ $('Loop Clientes (Rel)').first().json.conta }}/insights",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "level",
+              "value": "campaign"
+            },
+            {
+              "name": "fields",
+              "value": "campaign_id,impressions,frequency,inline_link_click_ctr,outbound_clicks_ctr"
+            },
+            {
+              "name": "time_range",
+              "value": "={{ JSON.stringify({since: $('Período (Rel)').first().json.since_ant, until: $('Período (Rel)').first().json.until_ant}) }}"
+            },
+            {
+              "name": "use_unified_attribution_setting",
+              "value": "true"
+            },
+            {
+              "name": "limit",
+              "value": "500"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0b644d30-97b6-561f-afbf-d818f9a4339c",
+      "name": "Insights Campanhas Anterior (Rel)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3300,
         420
       ],
       "retryOnFail": true,
@@ -657,7 +797,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3300,
+        3520,
         420
       ],
       "retryOnFail": true,
@@ -708,7 +848,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3520,
+        3740,
         420
       ],
       "retryOnFail": true,
@@ -751,7 +891,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3740,
+        3960,
         420
       ],
       "retryOnFail": true,
@@ -798,7 +938,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3960,
+        4180,
         420
       ],
       "retryOnFail": true,
@@ -814,14 +954,14 @@
     },
     {
       "parameters": {
-        "jsCode": "const cfg = $('Config (Rel)').first().json;\nconst per = $('Período (Rel)').first().json;\nconst cli = $('Loop Clientes (Rel)').first().json;\nconst J = name => { try { return $(name).first().json || {}; } catch (e) { return { error: 'etapa não executada' }; } };\nconst errTxt = e => { if (e && typeof e === 'object') e = e.message || e.error_user_msg || JSON.stringify(e); return String(e ?? '').slice(0, 250); };\nconst num = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };\nconst milhar = s => s.replace(/\\B(?=(\\d{3})+(?!\\d))/g, '.');\nconst brl = n => { const [i, d] = Number(n).toFixed(2).split('.'); return 'R$ ' + milhar(i) + ',' + d; };\nconst int = n => milhar(Math.round(n).toString());\nconst pct = n => n.toFixed(1).replace('.', ',').replace(',0', '');\nconst listaOk = r => r && !r.error && Array.isArray(r.data);\nconst gestor = String(cfg.numero_gestor);\nconst teste = cfg.modo_teste === true || cfg.modo_teste === 'true';\n\nconst sd = $getWorkflowStaticData('global'); const ek = String($execution.id);\nsd.exec_rel = sd.exec_rel || {}; sd.exec_rel[ek] = sd.exec_rel[ek] || {};\nconst rec = sd.exec_rel[ek][cli.conta] = { cliente: cli.cliente, status: '-', aviso: '-', obs: '' };\nconst saida = (envios, qtdCliente) => [{ json: { cliente: cli.cliente, conta: cli.conta, destino: cli.destino, qtd_ok: qtdCliente, envios, tem_envios: envios.length > 0 } }];\n\nconst conta = J('Conta (Rel)'), insConta = J('Insights Conta (Rel)'), insGen = J('Insights Público (Rel)');\nconst camps = J('Campanhas (Rel)'), insCamp = J('Insights Campanhas (Rel)'), insSet = J('Insights Conjuntos (Rel)');\nconst insSetAnt = J('Insights Conjuntos Anterior (Rel)'), adsP = J('Anúncios Pausados (Rel)'), ativ = $input.first().json || {};\n\n// ---------- 1) Sem os dados essenciais NÃO envia nada ao cliente (nunca manda número errado)\nconst falhas = [['totais da conta', insConta], ['lista de campanhas', camps], ['campanhas', insCamp], ['conjuntos', insSet]]\n  .filter(([, r]) => !listaOk(r)).map(([n, r]) => `• ${n}: ${errTxt(r.error ?? 'sem resposta')}`);\nconst incompleto = [['campanhas', insCamp], ['conjuntos', insSet], ['lista de campanhas', camps]]\n  .filter(([, r]) => listaOk(r) && r.paging && r.paging.next).map(([n]) => n);\nif (falhas.length || incompleto.length) {\n  rec.status = 'NÃO ENVIADO'; rec.obs = falhas.length ? 'erro ao ler a Meta' : 'dados incompletos';\n  return saida([{ para: gestor, tipo: 'gestor', texto: `⚠️ *Relatório NÃO enviado — ${cli.cliente}*\\n\\nConta: ${cli.conta}\\nPeríodo: ${per.rotulo}\\n\\n${falhas.join('\\n')}${incompleto.length ? `\\n• Resposta da Meta veio paginada (mais de 500 linhas) em: ${incompleto.join(', ')}` : ''}\\n\\nPara não enviar números divergentes, o cliente não recebeu o relatório. Confira o token/permissões e rode de novo.` }], 0);\n}\n\n// ---------- 2) Ações (mesmos tipos de ação do Monitor de CPR)\nconst acoes = arr => { const m = {}; for (const a of arr || []) m[a.action_type] = (m[a.action_type] || 0) + num(a.value); return m; };\nconst rxVisita = new RegExp(cfg.acao_visitas_regex || 'profile_visit', 'i');\nconst resMsg = a => num(a[cfg.acao_mensagens]);\nconst resVis = a => { if (a[cfg.acao_visitas] !== undefined) return num(a[cfg.acao_visitas]); let m = 0; for (const [k, v] of Object.entries(a)) if (rxVisita.test(k)) m = Math.max(m, v); return m; };\nconst TIPOS = {\n  mensagens: { rotulo: 'mensagens', custo: 'Custo por mensagem', res: resMsg, meta: num(cfg.cpr_msg_meta), max: num(cfg.cpr_msg_max) },\n  visitas: { rotulo: 'visitas ao perfil', custo: 'Custo por visita', res: resVis, meta: num(cfg.cpr_visita_max), max: num(cfg.cpr_visita_max) },\n  cliques: { rotulo: 'cliques no link', custo: 'Custo por clique', res: a => num(a['link_click']), meta: 0, max: 0 },\n  lp: { rotulo: 'visualizações da página', custo: 'Custo por visualização', res: a => num(a['landing_page_view']), meta: 0, max: 0 },\n  leads: { rotulo: 'cadastros', custo: 'Custo por cadastro', res: a => num(a['lead']) || num(a['onsite_conversion.lead_grouped']) || num(a['offsite_conversion.fb_pixel_lead']), meta: 0, max: 0 },\n  engaj: { rotulo: 'engajamentos', custo: 'Custo por engajamento', res: a => num(a['post_engagement']), meta: 0, max: 0 },\n};\nconst tipoGoal = g => ({ CONVERSATIONS: 'mensagens', REPLIES: 'mensagens', VISIT_INSTAGRAM_PROFILE: 'visitas', PROFILE_VISIT: 'visitas',\n  INSTAGRAM_PROFILE_VISIT: 'visitas', LINK_CLICKS: 'cliques', LANDING_PAGE_VIEWS: 'lp', LEAD_GENERATION: 'leads', QUALITY_LEAD: 'leads',\n  POST_ENGAGEMENT: 'engaj' })[String(g || '').toUpperCase()] || null;\n\n// ---------- 3) Custo por resultado da campanha = MÉDIA do custo por resultado dos CONJUNTOS que tiveram resultado\nconst agrupar = rows => {\n  const m = {};\n  for (const s of rows || []) {\n    const tipo = tipoGoal(s.optimization_goal), a = acoes(s.actions), spend = num(s.spend);\n    const c = m[s.campaign_id] = m[s.campaign_id] || { conjuntos: [], gastoTipo: {} };\n    const res = tipo ? TIPOS[tipo].res(a) : 0;\n    c.conjuntos.push({ id: s.adset_id, tipo, spend, res, cpr: res > 0 ? spend / res : null });\n    if (tipo) c.gastoTipo[tipo] = (c.gastoTipo[tipo] || 0) + spend;\n  }\n  const out = {};\n  for (const [id, c] of Object.entries(m)) {\n    const tipo = (Object.entries(c.gastoTipo).sort((x, y) => y[1] - x[1])[0] || [null])[0];\n    if (!tipo) { out[id] = { tipo: null, resultados: 0, cpr: null, n: 0 }; continue; }\n    const doTipo = c.conjuntos.filter(s => s.tipo === tipo), com = doTipo.filter(s => s.res > 0);\n    out[id] = { tipo, resultados: doTipo.reduce((t, s) => t + s.res, 0), n: com.length,\n                cpr: com.length ? com.reduce((t, s) => t + s.cpr, 0) / com.length : null };\n  }\n  return out;\n};\nconst atual = agrupar(insSet.data);\nconst anterior = listaOk(insSetAnt) && !(insSetAnt.paging && insSetAnt.paging.next) ? agrupar(insSetAnt.data) : null;\nconst adsetCamp = Object.fromEntries(insSet.data.map(s => [s.adset_id, s.campaign_id]));\n\n// ---------- 4) Totais da conta (mesmos números do Gerenciador / Konext Gestão para o período)\nconst tot = insConta.data[0] || {};\nconst aTot = acoes(tot.actions);\nconst T = { spend: num(tot.spend), reach: num(tot.reach), imp: num(tot.impressions), msgs: resMsg(aTot), vis: resVis(aTot) };\nconst somaCamp = insCamp.data.reduce((t, c) => t + num(c.spend), 0);\nconst divergencia = Math.abs(somaCamp - T.spend) > Math.max(1, T.spend * 0.01);\nif (T.spend <= 0 && !(cfg.enviar_sem_investimento === true || cfg.enviar_sem_investimento === 'true')) {\n  rec.status = 'Sem investimento'; rec.obs = 'nada investido no período — relatório não enviado';\n  return saida([], 0);\n}\n\n// ---------- 5) Público\nlet publico = '';\nif (listaOk(insGen)) {\n  const met = cfg.publico_metrica === 'impressions' ? 'impressions' : 'reach';\n  let f = 0, h = 0;\n  for (const g of insGen.data) { if (g.gender === 'female') f += num(g[met]); if (g.gender === 'male') h += num(g[met]); }\n  if (f + h > 0) publico = `${pct(f / (f + h) * 100)}% mulheres, ${pct(h / (f + h) * 100)}% homens`;\n}\n\n// ---------- 6) Campanhas: ativas x pausadas\nconst statusCamp = Object.fromEntries(camps.data.map(c => [String(c.id), c]));\nconst insPorCamp = Object.fromEntries(insCamp.data.map(c => [String(c.campaign_id), c]));\nconst ATIVO = ['ACTIVE', 'IN_PROCESS', 'WITH_ISSUES'];\nconst escaladas = new Set();\nif (listaOk(ativ)) {\n  const val = v => (v && typeof v === 'object') ? num(v.old_value ?? v.new_value ?? v.value ?? v.daily_budget ?? v.lifetime_budget) : num(v);\n  for (const e of ativ.data) {\n    if (!/budget/i.test(String(e.event_type))) continue;\n    let x = e.extra_data; try { if (typeof x === 'string') x = JSON.parse(x); } catch (er) { continue; }\n    if (!x || val(x.new_value) <= val(x.old_value) || val(x.old_value) <= 0) continue;\n    const id = String(e.object_id);\n    escaladas.add(statusCamp[id] ? id : String(adsetCamp[id] || ''));\n  }\n}\nconst ativas = camps.data.filter(c => ATIVO.includes(String(c.effective_status))).map(c => {\n  const i = insPorCamp[String(c.id)] || {}, r = atual[String(c.id)] || { tipo: null, resultados: 0, cpr: null };\n  const ant = anterior ? anterior[String(c.id)] : null;\n  return { id: String(c.id), nome: c.name, spend: num(i.spend), freq: num(i.frequency), ...r,\n           cpr_ant: ant && ant.tipo === r.tipo ? ant.cpr : null, escalada: escaladas.has(String(c.id)) };\n});\nconst lim = c => (c.tipo && TIPOS[c.tipo].max) || 0;\nconst melhores = ativas.filter(c => c.spend > 0 && c.cpr !== null && (!lim(c) || c.cpr <= lim(c)))\n  .sort((x, y) => (lim(x) ? x.cpr / lim(x) : 1) - (lim(y) ? y.cpr / lim(y) : 1)).slice(0, Number(cfg.top_campanhas) || 3);\nconst idsMelhores = new Set(melhores.map(c => c.id));\nconst demais = ativas.filter(c => !idsMelhores.has(c.id)).sort((x, y) => y.spend - x.spend);\nconst linhaCamp = c => {\n  if (!c.spend) return `• *${c.nome}* — sem entrega no período`;\n  let t = `• *${c.nome}*\\n   💰 ${brl(c.spend)}`;\n  if (c.tipo) t += ` | ${int(c.resultados)} ${TIPOS[c.tipo].rotulo}${c.cpr !== null ? ` | ${TIPOS[c.tipo].custo}: ${brl(c.cpr)}` : ''}`;\n  if (c.escalada) t += '\\n   🚀 Escalada (orçamento aumentado)';\n  return t;\n};\n\n// pausadas: registro do Monitor de CPR (aba \"Pausas CPR\") + criativos pausados no período\nconst linkAd = a => a.preview_shareable_link || `https://adsmanager.facebook.com/adsmanager/manage/ads?act=${cli.conta}&selected_ad_ids=${a.id}`;\nconst adsLista = listaOk(adsP) ? adsP.data : [];\nconst iniMs = DateTime.fromISO(per.since, { zone: $now.zoneName }).toMillis();\nconst logItens = $('Pausas CPR (Rel)').all().map(i => i.json || {});\nconst logOk = !logItens.some(l => l.error);\nconst pausadas = new Map();\nfor (const l of logItens) {\n  if (l.error || String(l['ID da Conta'] ?? '').replace(/\\D/g, '') !== cli.conta) continue;\n  const d = DateTime.fromFormat(String(l['Data'] ?? ''), 'dd/MM/yyyy HH:mm', { zone: $now.zoneName });\n  if (!d.isValid || d.toMillis() < iniMs) continue;\n  const id = String(l['ID Campanha'] ?? '').replace(/\\D/g, '');\n  if (!id || (statusCamp[id] && ATIVO.includes(String(statusCamp[id].effective_status)))) continue; // já reativada\n  pausadas.set(id, { nome: l['Nome Campanha'] || id, motivo: l['Motivo'] || '', links: String(l['Anúncios'] || '').split(/\\s+/).filter(Boolean) });\n}\nif (!logOk) {   // sem a aba de registro: campanhas pausadas no período que tiveram investimento\n  for (const c of camps.data) {\n    if (String(c.effective_status) !== 'PAUSED' || !insPorCamp[String(c.id)]) continue;\n    if (DateTime.fromISO(String(c.updated_time || '')).toMillis() < iniMs) continue;\n    pausadas.set(String(c.id), { nome: c.name, motivo: 'pausada no período', links: [] });\n  }\n}\nfor (const [id, p] of pausadas) {\n  const daCamp = adsLista.filter(a => String(a.campaign_id) === id).map(linkAd);\n  if (daCamp.length) p.links = daCamp;\n}\n// criativos pausados individualmente dentro de campanhas que seguem ativas\nconst criativos = adsLista.filter(a => String(a.effective_status) === 'PAUSED' && DateTime.fromISO(String(a.updated_time || '')).toMillis() >= iniMs\n  && statusCamp[String(a.campaign_id)] && ATIVO.includes(String(statusCamp[String(a.campaign_id)].effective_status)));\nconst blocoPausa = [];\nfor (const [, p] of pausadas) {\n  let t = `• *${p.nome}*${p.motivo ? ` — ${p.motivo}` : ''}`;\n  const links = p.links.slice(0, 5);\n  if (links.length) t += '\\n' + links.map((l, i) => `   🎨 Criativo ${i + 1}: ${l}`).join('\\n');\n  if (p.links.length > 5) t += `\\n   … e mais ${p.links.length - 5} criativo(s)`;\n  blocoPausa.push(t);\n}\nconst porCampCriativo = {};\nfor (const a of criativos) (porCampCriativo[String(a.campaign_id)] = porCampCriativo[String(a.campaign_id)] || []).push(a);\nfor (const [cid, lista] of Object.entries(porCampCriativo)) {\n  blocoPausa.push(`• *${statusCamp[cid].name}* — criativo(s) pausado(s), campanha segue ativa\\n` +\n    lista.slice(0, 5).map(a => `   🎨 ${a.name}: ${linkAd(a)}`).join('\\n'));\n}\n\n// ---------- 7) Melhorias e ajustes (automático + colunas opcionais da Planilha Geral)\nconst manual = t => String(t || '').split(/\\n|;/).map(s => s.trim()).filter(Boolean).map(s => s.startsWith('•') ? s : '• ' + s);\nconst melhorias = manual(cli.rel_melhorias), ajustes = manual(cli.rel_ajustes);\nfor (const c of ativas) {\n  if (!c.tipo || !c.spend) continue;\n  const T_ = TIPOS[c.tipo];\n  if (c.cpr !== null && c.cpr_ant !== null && c.cpr <= c.cpr_ant * 0.95)\n    melhorias.push(`• *${c.nome}*: ${T_.custo.toLowerCase()} caiu de ${brl(c.cpr_ant)} para ${brl(c.cpr)} (−${pct((1 - c.cpr / c.cpr_ant) * 100)}%)`);\n  if (c.escalada && c.cpr !== null) melhorias.push(`• *${c.nome}*: orçamento aumentado para escalar os resultados`);\n  if (c.cpr !== null && T_.meta && c.cpr > T_.meta)\n    ajustes.push(`• *${c.nome}*: ${T_.custo.toLowerCase()} em ${brl(c.cpr)}, acima da meta de ${brl(T_.meta)} — vamos testar novos criativos e públicos`);\n  else if (c.cpr === null && c.spend >= num(c.tipo === 'visitas' ? cfg.gasto_min_sem_resultado_visita : cfg.gasto_min_sem_resultado_msg))\n    ajustes.push(`• *${c.nome}*: investiu ${brl(c.spend)} sem ${T_.rotulo} — vamos revisar a segmentação e os criativos`);\n  if (c.freq > num(cfg.frequencia_max)) ajustes.push(`• *${c.nome}*: frequência em ${pct(c.freq)} — vamos renovar os criativos`);\n}\n\n// ---------- 8) Saldo da conta (pré-pago: saldo disponível; cartão: valor em uso até a próxima cobrança)\nconst money = v => { let s = String(v ?? '').replace(/[^\\d,.\\-]/g, ''); if (!s) return null; const c = s.lastIndexOf(','), p = s.lastIndexOf('.');\n  if (c > -1 && p > -1) s = c > p ? s.replace(/\\./g, '').replace(',', '.') : s.replace(/,/g, ''); else if (c > -1) s = s.replace(',', '.');\n  const n = parseFloat(s); return isNaN(n) ? null : n; };\nlet saldoTxt = '';\nif (conta && conta.id && !conta.error) {\n  const met = String(cli.metodo || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();\n  const prepago = /pix|boleto|prepag/.test(met) ? true : (/cartao|credito|card/.test(met) ? false : (conta.is_prepay_account === true || conta.is_prepay_account === 'true'));\n  if (prepago) {\n    const m = String((conta.funding_source_details || {}).display_string || '').match(/\\(([^)]*\\d[^)]*)\\)/);\n    const cap = num(conta.spend_cap), gasto = num(conta.amount_spent);\n    const disp = m ? money(m[1]) : (cap > 0 ? (cap - gasto) / 100 : null);\n    if (disp !== null) saldoTxt = `${brl(disp)} disponível (${/boleto/.test(met) ? 'Boleto' : 'Pix'})`;\n  } else {\n    const cap = num(conta.spend_cap), gasto = num(conta.amount_spent);\n    saldoTxt = cap > 0 ? `${brl((cap - gasto) / 100)} disponível até o limite da conta (cartão de crédito)`\n                       : `pagamento automático no cartão de crédito — ${brl(num(conta.balance) / 100)} em uso até a próxima cobrança`;\n  }\n}\n\n// ---------- 9) Mensagem\nconst h = parseInt($now.toFormat('HH'), 10);\nconst saud = h < 12 ? 'Bom dia' : (h < 18 ? 'Boa tarde' : 'Boa noite');\nconst primeiroNome = String(cli.cliente).split(/\\s+/)[0];\nconst temVis = T.vis > 0 || ativas.some(c => c.tipo === 'visitas');\nconst temMsg = T.msgs > 0 || ativas.some(c => c.tipo === 'mensagens');\nconst L = [];\nL.push(`${saud}, ${primeiroNome}! ☀️`);\nL.push(`Compartilhando com você o relatório das suas campanhas de *${per.rotulo}* 📊`);\nL.push('');\nL.push(`💰 *Investimento:* ${brl(T.spend)}`);\nif (temVis) L.push(`👤 *Visitas ao perfil:* ${int(T.vis)}`);\nif (temMsg) L.push(`💬 *Mensagens:* ${int(T.msgs)}`);\nL.push(`📣 *Alcance:* ${int(T.reach)}`);\nL.push(`👁️ *Impressões:* ${int(T.imp)}`);\nif (publico) L.push(`👥 *Público:* ${publico}`);\nif (melhores.length) { L.push(''); L.push('📈 *Campanhas com melhores performances*' + (melhores.some(c => c.escalada) ? ' (e que já foram escaladas 🚀)' : '')); melhores.forEach(c => L.push(linhaCamp(c))); }\nconst demaisCom = demais.filter(c => c.spend > 0 || cfg.mostrar_sem_entrega === true);\nif (demaisCom.length) { L.push(''); L.push('🟢 *Demais campanhas ativas*'); demaisCom.slice(0, 10).forEach(c => L.push(linhaCamp(c))); }\nif (blocoPausa.length) { L.push(''); L.push('⏸️ *Campanhas pausadas por ficarem acima da média de custo por resultado*'); blocoPausa.slice(0, 8).forEach(b => L.push(b)); }\nif (melhorias.length) { L.push(''); L.push('✅ *Com base nos parâmetros das campanhas, melhoramos:*'); melhorias.slice(0, 6).forEach(b => L.push(b)); }\nL.push(''); L.push('🚧 *Teremos que ajustar essa semana:*');\nif (ajustes.length) ajustes.slice(0, 6).forEach(b => L.push(b)); else L.push('• Tudo dentro dos parâmetros — seguimos acompanhando diariamente.');\nif (cli.link_relatorio) { L.push(''); L.push('🔗 Segue o link do relatório em tempo real da sua conta, verificada 24h por dia:'); L.push(cli.link_relatorio); }\nif (saldoTxt) { L.push(''); L.push(`💳 *Saldo atual da conta:* ${saldoTxt}`); }\nL.push(''); L.push('Caso haja alguma dúvida, pode me acionar!'); L.push('Forte abraço! 🚀');\nlet msg = L.join('\\n');\nif (msg.length > 6000) msg = msg.slice(0, 5950) + '\\n…';\n\n// ---------- 10) Envios\nconst avisos = [];\nif (divergencia) avisos.push(`soma das campanhas (${brl(somaCamp)}) difere do total da conta (${brl(T.spend)})`);\nif (!cli.link_relatorio) avisos.push('sem \"Link do Relatório\" na Planilha Geral');\nif (!logOk) avisos.push('aba \"Pausas CPR\" não encontrada — pausadas detectadas pela data de alteração');\nif (!listaOk(insGen)) avisos.push('público por gênero indisponível');\nif (!cli.destino) avisos.push('cliente sem grupo/contato — relatório NÃO enviado ao cliente');\nconst envios = [];\nlet qtd = 0;\nif (divergencia && cfg.bloquear_se_divergente !== false) {\n  rec.status = 'NÃO ENVIADO'; rec.obs = avisos.join('; ');\n  return saida([{ para: gestor, tipo: 'gestor', texto: `⚠️ *Relatório NÃO enviado — ${cli.cliente}*\\n\\nA soma do investimento das campanhas (${brl(somaCamp)}) não bate com o total da conta (${brl(T.spend)}) em ${per.rotulo}. Para não haver conflito com o relatório, o envio foi bloqueado.\\n\\nPrévia:\\n\\n${msg}`.slice(0, 6500) }], 0);\n}\nif (teste) envios.push({ para: gestor, tipo: 'gestor', texto: `🧪 *TESTE* — relatório que seria enviado para ${cli.destino_desc || '(sem destino)'}\\n\\n${msg}` });\nelse if (cli.destino) { envios.push({ para: cli.destino, tipo: 'cliente', texto: msg }); qtd = 1; }\nif (!teste && cfg.copia_gestor === true && cli.destino !== gestor) envios.push({ para: gestor, tipo: 'gestor', texto: `📋 Cópia — ${cli.cliente} (${cli.destino_desc || 'sem destino'})\\n\\n${msg}` });\nif (!teste && !cli.destino) envios.push({ para: gestor, tipo: 'gestor', texto: `📵 *${cli.cliente}* está sem grupo e sem \"Contato do cliente\" na Planilha Geral — o relatório não foi enviado.\\n\\nPrévia:\\n\\n${msg}`.slice(0, 6500) });\nrec.status = teste ? 'Teste (só gestor)' : (cli.destino ? 'Enviado' : 'Sem destino');\nrec.obs = avisos.join('; ');\nreturn saida(envios, qtd);"
+        "jsCode": "// ===== utilitários padrão Konext (iguais em todos os fluxos) =====\nconst n_ = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');\nconst pick = (row, nomes) => {\n  const m = {};\n  for (const k of Object.keys(row || {})) m[n_(k)] = row[k];\n  for (const nome of nomes) { const v = m[n_(nome)]; if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim(); }\n  return '';\n};\nconst dig = v => String(v ?? '').replace(/\\D/g, '');\nconst sim = (v, padrao) => { const t = n_(v); if (!t) return padrao; return ['sim', 's', 'yes', 'y', 'true', '1', 'ativo'].includes(t); };\nconst nao = v => ['nao', 'n', 'no', 'false', '0', 'inativo'].includes(n_(v));\nconst money = v => {\n  let s = String(v ?? '').replace(/[^\\d,.\\-]/g, '');\n  if (!s) return null;\n  const c = s.lastIndexOf(','), p = s.lastIndexOf('.');\n  if (c > -1 && p > -1) s = c > p ? s.replace(/\\./g, '').replace(',', '.') : s.replace(/,/g, '');\n  else if (c > -1) s = s.replace(',', '.');\n  else if (/^\\d{1,3}(\\.\\d{3})+$/.test(s)) s = s.replace(/\\./g, '');\n  const n = parseFloat(s); return isNaN(n) ? null : n;\n};\n// Número de WhatsApp ou ID de grupo -> formato aceito pela Evolution API\nconst jid = v => {\n  const s = String(v ?? '').trim();\n  if (!s) return '';\n  if (/@g\\.us$/i.test(s)) return s.replace(/\\s/g, '');\n  const d = s.replace(/\\D/g, '');\n  if (!d) return '';\n  if (d.startsWith('120363') && d.length >= 15) return d + '@g.us';\n  return d.length <= 11 ? '55' + d : d;\n};\n\nconst cfg = $('Config (Rel)').first().json;\nconst per = $('Período (Rel)').first().json;\nconst cli = $('Loop Clientes (Rel)').first().json;\nconst J = name => { try { return $(name).first().json || {}; } catch (e) { return { error: 'etapa não executada' }; } };\nconst errTxt = e => { if (e && typeof e === 'object') e = e.message || e.error_user_msg || JSON.stringify(e); return String(e ?? '').slice(0, 250); };\nconst num = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };\nconst milhar = s => s.replace(/\\B(?=(\\d{3})+(?!\\d))/g, '.');\nconst brl = n => { const [i, d] = Number(n).toFixed(2).split('.'); return 'R$ ' + milhar(i) + ',' + d; };\nconst int = n => milhar(Math.round(n).toString());\nconst pf = (n, d = 1) => Number(n).toFixed(d).replace('.', ',');\nconst pct = n => pf(n, 1).replace(/,0$/, '');\nconst listaOk = r => r && !r.error && Array.isArray(r.data);\nconst gestor = String(cfg.numero_gestor);\nconst teste = cfg.modo_teste === true || cfg.modo_teste === 'true';\n\nconst sd = $getWorkflowStaticData('global'); const ek = String($execution.id);\nsd.exec_rel = sd.exec_rel || {}; sd.exec_rel[ek] = sd.exec_rel[ek] || {};\nconst rec = sd.exec_rel[ek][cli.conta] = { cliente: cli.cliente, status: '-', aviso: '-', obs: '' };\nconst saida = (envios, qtdCliente) => [{ json: { cliente: cli.cliente, conta: cli.conta, destino: cli.destino, qtd_ok: qtdCliente, envios, tem_envios: envios.length > 0 } }];\n\nconst conta = J('Conta (Rel)'), insConta = J('Insights Conta (Rel)'), insGen = J('Insights Público (Rel)');\nconst camps = J('Campanhas (Rel)'), insCamp = J('Insights Campanhas (Rel)'), insSet = J('Insights Conjuntos (Rel)');\nconst insSetAnt = J('Insights Conjuntos Anterior (Rel)'), insCampAnt = J('Insights Campanhas Anterior (Rel)');\nconst adsP = J('Anúncios Pausados (Rel)'), ativ = $input.first().json || {};\n\n// ---------- 1) Sem os dados essenciais NÃO envia nada ao cliente (nunca manda número errado)\nconst falhas = [['totais da conta', insConta], ['lista de campanhas', camps], ['campanhas', insCamp], ['conjuntos', insSet]]\n  .filter(([, r]) => !listaOk(r)).map(([n, r]) => `• ${n}: ${errTxt(r.error ?? 'sem resposta')}`);\nconst incompleto = [['campanhas', insCamp], ['conjuntos', insSet], ['lista de campanhas', camps]]\n  .filter(([, r]) => listaOk(r) && r.paging && r.paging.next).map(([n]) => n);\nif (falhas.length || incompleto.length) {\n  rec.status = 'NÃO ENVIADO'; rec.obs = falhas.length ? 'erro ao ler a Meta' : 'dados incompletos';\n  return saida([{ para: gestor, tipo: 'gestor', texto: `⚠️ *Relatório NÃO enviado — ${cli.cliente}*\\n\\nConta: ${cli.conta}\\nPeríodo: ${per.rotulo}\\n\\n${falhas.join('\\n')}${incompleto.length ? `\\n• Resposta da Meta veio paginada (mais de 500 linhas) em: ${incompleto.join(', ')}` : ''}\\n\\nPara não enviar números divergentes, o cliente não recebeu o relatório. Confira o token/permissões e rode de novo.` }], 0);\n}\n\n// ---------- 2) Parâmetros de avaliação: padrão no nó Config (Rel) + aba \"Parâmetros\" da Planilha Geral\n// Na aba, cada linha pode valer para um Cliente, Procedimento (parte do nome da campanha), Objetivo e/ou Tipo de resultado.\n// Coluna vazia = vale para todos. A linha mais específica vence; células vazias herdam o padrão.\nconst D = {\n  cpr_otimo_ate: num(cfg.cpr_otimo_ate), cpr_bom_ate: num(cfg.cpr_bom_ate),\n  ctr_muito_alto: num(cfg.ctr_muito_alto_acima), ctr_excelente_min: num(cfg.ctr_excelente_min),\n  ctr_bom_min: num(cfg.ctr_bom_min), ctr_atencao_min: num(cfg.ctr_atencao_min), ctr_tipo: String(cfg.ctr_tipo_padrao || 'auto'),\n  impressoes_min: num(cfg.impressoes_min), alcance_min: num(cfg.alcance_min),\n  freq_inicial_ate: num(cfg.freq_inicial_ate), freq_boa_ate: num(cfg.freq_boa_ate),\n  resultados_min: num(cfg.resultados_min_classificar), gasto_min_sem_resultado: num(cfg.gasto_min_sem_resultado),\n};\nconst COLS = {\n  cpr_otimo_ate: ['CPR ótimo até', 'Custo por resultado ótimo até'], cpr_bom_ate: ['CPR bom até', 'Custo por resultado bom até'],\n  ctr_muito_alto: ['CTR muito alto acima de'], ctr_excelente_min: ['CTR excelente a partir de'], ctr_bom_min: ['CTR bom a partir de'],\n  ctr_atencao_min: ['CTR atenção a partir de'], ctr_tipo: ['Tipo de CTR'], impressoes_min: ['Impressões mínimas'], alcance_min: ['Alcance mínimo'],\n  freq_inicial_ate: ['Frequência inicial até'], freq_boa_ate: ['Frequência boa até'], resultados_min: ['Resultados mínimos'],\n  gasto_min_sem_resultado: ['Gasto mínimo sem resultado'],\n};\nconst OBJ = { OUTCOME_ENGAGEMENT: 'engajamento', OUTCOME_TRAFFIC: 'trafego', OUTCOME_LEADS: 'leads', OUTCOME_SALES: 'vendas',\n  OUTCOME_AWARENESS: 'reconhecimento', OUTCOME_APP_PROMOTION: 'app', MESSAGES: 'mensagens', LINK_CLICKS: 'trafego', CONVERSIONS: 'vendas',\n  LEAD_GENERATION: 'leads', POST_ENGAGEMENT: 'engajamento', REACH: 'reconhecimento', BRAND_AWARENESS: 'reconhecimento' };\nconst TIPO_ALIAS = { mensagens: ['mensagens', 'mensagem', 'conversas', 'conversa'], visitas: ['visitas', 'visita', 'visitasaoperfil', 'perfil'],\n  cliques: ['cliques', 'clique', 'cliquesnolink'], lp: ['visualizacoes', 'visualizacaodapagina', 'lp'],\n  leads: ['leads', 'lead', 'cadastros', 'cadastro'], engaj: ['engajamento', 'engajamentos'] };\nconst linhasParam = $('Parâmetros (Rel)').all().map(i => i.json || {}).filter(r => !r.error && !nao(pick(r, ['Ativo'])))\n  .map((r, i) => ({ i, r, cliente: n_(pick(r, ['Cliente'])), proc: n_(pick(r, ['Procedimento', 'Campanha'])),\n                     obj: n_(pick(r, ['Objetivo'])), tipo: n_(pick(r, ['Tipo de resultado', 'Resultado'])) }));\nconst ehCliente = c => c === n_(cli.cliente) || c === cli.conta || (cli.apelidos || []).map(n_).includes(c);\nconst paramsPara = camp => {\n  const p = { ...D };\n  const linhas = linhasParam.filter(l => (!l.cliente || ehCliente(l.cliente)) && (!l.proc || n_(camp.nome).includes(l.proc))\n      && (!l.obj || l.obj === n_(camp.objetivo) || l.obj === (OBJ[camp.objetivo] || '_'))\n      && (!l.tipo || (camp.tipo && (TIPO_ALIAS[camp.tipo] || []).includes(l.tipo))))\n    .map(l => ({ ...l, spec: (l.cliente ? 8 : 0) + (l.proc ? 4 : 0) + (l.obj ? 2 : 0) + (l.tipo ? 1 : 0) }))\n    .sort((a, b) => a.spec - b.spec || a.i - b.i);\n  for (const l of linhas) for (const [k, nomes] of Object.entries(COLS)) {\n    const v = pick(l.r, nomes); if (v === '') continue;\n    if (k === 'ctr_tipo') p[k] = v; else { const m = money(v); if (m !== null) p[k] = m; }\n  }\n  return p;\n};\nconst tipoCtr = (p, camp) => { const t = n_(p.ctr_tipo);\n  if (t.startsWith('said') || t.startsWith('outbound')) return 'saida';\n  if (t.startsWith('link')) return 'link';\n  return (['cliques', 'lp'].includes(camp.tipo) || ['OUTCOME_TRAFFIC', 'OUTCOME_SALES', 'LINK_CLICKS', 'CONVERSIONS'].includes(camp.objetivo)) ? 'saida' : 'link'; };\nconst ctrDe = (i, t) => { if (!i) return 0; if (t === 'saida') { const o = i.outbound_clicks_ctr; return Array.isArray(o) ? o.reduce((s, a) => s + num(a.value), 0) : num(o); } return num(i.inline_link_click_ctr); };\nconst nomeCtr = t => t === 'saida' ? 'CTR de saída' : 'CTR de link';\n\n// ---------- 3) Classificações (sempre com a justificativa)\nconst clsCPR = (v, p) => v <= p.cpr_otimo_ate ? { cls: 'otimo', txt: `🟢 ótimo (até ${brl(p.cpr_otimo_ate)})` }\n  : v <= p.cpr_bom_ate ? { cls: 'bom', txt: `🔵 bom (de ${brl(p.cpr_otimo_ate)} a ${brl(p.cpr_bom_ate)})` }\n  : { cls: 'atencao', txt: `🟠 ponto de atenção (acima de ${brl(p.cpr_bom_ate)})` };\nconst clsCTR = (v, p) => v > p.ctr_muito_alto ? { cls: 'muito_alto', txt: `🟢 excelente (acima de ${pct(p.ctr_muito_alto)}%) — vale avaliar também a qualidade do tráfego e dos resultados` }\n  : v >= p.ctr_excelente_min ? { cls: 'excelente', txt: `🟢 excelente (de ${pct(p.ctr_excelente_min)}% a ${pct(p.ctr_muito_alto)}%)` }\n  : v >= p.ctr_bom_min ? { cls: 'bom', txt: `🔵 bom (de ${pct(p.ctr_bom_min)}% a ${pct(p.ctr_excelente_min)}%)` }\n  : v >= p.ctr_atencao_min ? { cls: 'atencao', txt: `🟡 atenção (de ${pct(p.ctr_atencao_min)}% a ${pct(p.ctr_bom_min)}%)` }\n  : { cls: 'alerta', txt: `🔴 alerta de baixo desempenho (abaixo de ${pct(p.ctr_atencao_min)}%)` };\nconst clsFreq = (v, p) => v < 1 ? 'verificar a consistência dos dados e o período de análise'\n  : v < p.freq_inicial_ate ? 'distribuição inicial'\n  : v <= p.freq_boa_ate ? 'boa exposição inicial'\n  : 'exposição repetida (avaliada em conjunto com CTR, custo, alcance, objetivo e período)';\nconst clsImp = (v, p) => v > p.impressoes_min ? 'volume positivo para análise' : 'volume ainda limitado para análise (depende do período e do orçamento)';\nconst clsAlc = (v, p) => v > p.alcance_min ? 'boa distribuição' : 'distribuição limitada ou ainda em fase inicial';\n\n// ---------- 4) Ações (mesmos tipos de ação do Monitor de CPR)\nconst acoes = arr => { const m = {}; for (const a of arr || []) m[a.action_type] = (m[a.action_type] || 0) + num(a.value); return m; };\nconst rxVisita = new RegExp(cfg.acao_visitas_regex || 'profile_visit', 'i');\nconst resMsg = a => num(a[cfg.acao_mensagens]);\nconst resVis = a => { if (a[cfg.acao_visitas] !== undefined) return num(a[cfg.acao_visitas]); let m = 0; for (const [k, v] of Object.entries(a)) if (rxVisita.test(k)) m = Math.max(m, v); return m; };\nconst TIPOS = {\n  mensagens: { rotulo: 'mensagens', custo: 'Custo por mensagem', res: resMsg },\n  visitas: { rotulo: 'visitas ao perfil', custo: 'Custo por visita', res: resVis },\n  cliques: { rotulo: 'cliques no link', custo: 'Custo por clique', res: a => num(a['link_click']) },\n  lp: { rotulo: 'visualizações da página', custo: 'Custo por visualização', res: a => num(a['landing_page_view']) },\n  leads: { rotulo: 'cadastros', custo: 'Custo por cadastro', res: a => num(a['lead']) || num(a['onsite_conversion.lead_grouped']) || num(a['offsite_conversion.fb_pixel_lead']) },\n  engaj: { rotulo: 'engajamentos', custo: 'Custo por engajamento', res: a => num(a['post_engagement']) },\n};\nconst tipoGoal = g => ({ CONVERSATIONS: 'mensagens', REPLIES: 'mensagens', VISIT_INSTAGRAM_PROFILE: 'visitas', PROFILE_VISIT: 'visitas',\n  INSTAGRAM_PROFILE_VISIT: 'visitas', LINK_CLICKS: 'cliques', LANDING_PAGE_VIEWS: 'lp', LEAD_GENERATION: 'leads', QUALITY_LEAD: 'leads',\n  POST_ENGAGEMENT: 'engaj' })[String(g || '').toUpperCase()] || null;\n\n// ---------- 5) Custo por resultado da campanha = MÉDIA do custo por resultado dos CONJUNTOS que tiveram resultado\nconst agrupar = rows => {\n  const m = {};\n  for (const s of rows || []) {\n    const tipo = tipoGoal(s.optimization_goal), a = acoes(s.actions), spend = num(s.spend);\n    const c = m[s.campaign_id] = m[s.campaign_id] || { conjuntos: [], gastoTipo: {} };\n    const res = tipo ? TIPOS[tipo].res(a) : 0;\n    c.conjuntos.push({ id: s.adset_id, tipo, spend, res, cpr: res > 0 ? spend / res : null });\n    if (tipo) c.gastoTipo[tipo] = (c.gastoTipo[tipo] || 0) + spend;\n  }\n  const out = {};\n  for (const [id, c] of Object.entries(m)) {\n    const tipo = (Object.entries(c.gastoTipo).sort((x, y) => y[1] - x[1])[0] || [null])[0];\n    if (!tipo) { out[id] = { tipo: null, resultados: 0, cpr: null, n: 0 }; continue; }\n    const doTipo = c.conjuntos.filter(s => s.tipo === tipo), com = doTipo.filter(s => s.res > 0);\n    out[id] = { tipo, resultados: doTipo.reduce((t, s) => t + s.res, 0), n: com.length,\n                cpr: com.length ? com.reduce((t, s) => t + s.cpr, 0) / com.length : null };\n  }\n  return out;\n};\nconst atual = agrupar(insSet.data);\nconst anterior = listaOk(insSetAnt) && !(insSetAnt.paging && insSetAnt.paging.next) ? agrupar(insSetAnt.data) : null;\nconst adsetCamp = Object.fromEntries(insSet.data.map(s => [s.adset_id, s.campaign_id]));\n\n// ---------- 6) Totais da conta (mesmos números do Gerenciador / Konext Gestão para o período)\nconst tot = insConta.data[0] || {};\nconst aTot = acoes(tot.actions);\nconst T = { spend: num(tot.spend), reach: num(tot.reach), imp: num(tot.impressions), freq: num(tot.frequency),\n            ctr: num(tot.inline_link_click_ctr), msgs: resMsg(aTot), vis: resVis(aTot) };\nconst somaCamp = insCamp.data.reduce((t, c) => t + num(c.spend), 0);\nconst divergencia = Math.abs(somaCamp - T.spend) > Math.max(1, T.spend * 0.01);\nif (T.spend <= 0 && !(cfg.enviar_sem_investimento === true || cfg.enviar_sem_investimento === 'true')) {\n  rec.status = 'Sem investimento'; rec.obs = 'nada investido no período — relatório não enviado';\n  return saida([], 0);\n}\nconst pConta = paramsPara({ nome: '', objetivo: '', tipo: null });\n\n// ---------- 7) Público\nlet publico = '';\nif (listaOk(insGen)) {\n  const met = cfg.publico_metrica === 'impressions' ? 'impressions' : 'reach';\n  let f = 0, h = 0;\n  for (const g of insGen.data) { if (g.gender === 'female') f += num(g[met]); if (g.gender === 'male') h += num(g[met]); }\n  if (f + h > 0) publico = `${pct(f / (f + h) * 100)}% mulheres, ${pct(h / (f + h) * 100)}% homens`;\n}\n\n// ---------- 8) Campanhas ativas, com avaliação\nconst statusCamp = Object.fromEntries(camps.data.map(c => [String(c.id), c]));\nconst insPorCamp = Object.fromEntries(insCamp.data.map(c => [String(c.campaign_id), c]));\nconst insAntPorCamp = listaOk(insCampAnt) ? Object.fromEntries(insCampAnt.data.map(c => [String(c.campaign_id), c])) : {};\nconst ATIVO = ['ACTIVE', 'IN_PROCESS', 'WITH_ISSUES'];\nconst escaladas = new Set();\nif (listaOk(ativ)) {\n  const val = v => (v && typeof v === 'object') ? num(v.old_value ?? v.new_value ?? v.value ?? v.daily_budget ?? v.lifetime_budget) : num(v);\n  for (const e of ativ.data) {\n    if (!/budget/i.test(String(e.event_type))) continue;\n    let x = e.extra_data; try { if (typeof x === 'string') x = JSON.parse(x); } catch (er) { continue; }\n    if (!x || val(x.new_value) <= val(x.old_value) || val(x.old_value) <= 0) continue;\n    const id = String(e.object_id);\n    escaladas.add(statusCamp[id] ? id : String(adsetCamp[id] || ''));\n  }\n}\nconst queda = num(cfg.variacao_relevante_pct) / 100;\nconst ativas = camps.data.filter(c => ATIVO.includes(String(c.effective_status))).map(c => {\n  const id = String(c.id), i = insPorCamp[id] || {}, ia = insAntPorCamp[id] || null;\n  const r = atual[id] || { tipo: null, resultados: 0, cpr: null, n: 0 };\n  const ra = anterior ? anterior[id] : null;\n  const base = { id, nome: c.name, objetivo: String(c.objective || ''), tipo: r.tipo };\n  const p = paramsPara(base), ct = tipoCtr(p, base);\n  return { ...base, ...r, p, ct, spend: num(i.spend), imp: num(i.impressions), reach: num(i.reach), freq: num(i.frequency), ctr: ctrDe(i, ct),\n           imp_ant: ia ? num(ia.impressions) : 0, ctr_ant: ia ? ctrDe(ia, ct) : null,\n           cpr_ant: ra && ra.tipo === r.tipo ? ra.cpr : null, res_ant: ra && ra.tipo === r.tipo ? ra.resultados : 0,\n           escalada: escaladas.has(id) };\n});\nconst alertas = [], melhorias = [];\nfor (const c of ativas) {\n  const p = c.p, T_ = c.tipo ? TIPOS[c.tipo] : null, lab = nomeCtr(c.ct);\n  const nAntes = alertas.length;\n  c.volume = c.imp > p.impressoes_min;               // dados suficientes para classificar CTR / frequência\n  c.cprOk = T_ && c.cpr !== null && c.resultados >= p.resultados_min;\n  if (!c.spend) continue;\n  if (c.cprOk) {\n    const k = clsCPR(c.cpr, p); c.cprCls = k.cls; c.cprTxt = `${T_.custo}: ${brl(c.cpr)} — ${k.txt}`;\n    if (k.cls === 'atencao') alertas.push(`🟠 *${c.nome}*: ${T_.custo.toLowerCase()} de ${brl(c.cpr)} — ponto de atenção, acima de ${brl(p.cpr_bom_ate)}.`);\n  } else if (T_ && c.cpr !== null) c.cprTxt = `${T_.custo}: ${brl(c.cpr)} (ainda poucos resultados para classificar)`;\n  else if (T_ && c.volume && c.spend >= p.gasto_min_sem_resultado)\n    alertas.push(`🔴 *${c.nome}*: ${brl(c.spend)} investidos e ${int(c.imp)} impressões sem ${T_.rotulo} no período.`);\n  if (c.imp > 0) {\n    if (c.volume) {\n      const k = clsCTR(c.ctr, p); c.ctrTxt = `${lab}: ${pf(c.ctr, 2)}% — ${k.txt}`;\n      if (k.cls === 'alerta') alertas.push(`🔴 *${c.nome}*: ${lab} de ${pf(c.ctr, 2)}% — alerta de baixo desempenho, abaixo de ${pct(p.ctr_atencao_min)}%.`);\n      if (k.cls === 'atencao') alertas.push(`🟡 *${c.nome}*: ${lab} de ${pf(c.ctr, 2)}% — atenção, entre ${pct(p.ctr_atencao_min)}% e ${pct(p.ctr_bom_min)}%.`);\n      c.freqTxt = `Frequência: ${pf(c.freq, 2)} — ${clsFreq(c.freq, p)}`;\n      // frequência alta só vira alerta quando vem junto com piora de desempenho\n      if (c.freq > p.freq_boa_ate) {\n        const caiuCtr = c.ctr_ant !== null && c.imp_ant > p.impressoes_min && c.ctr_ant > 0 && c.ctr < c.ctr_ant * (1 - queda);\n        const subiuCpr = c.cprOk && c.cpr_ant !== null && c.res_ant >= p.resultados_min && c.cpr > c.cpr_ant * (1 + queda);\n        if (caiuCtr || subiuCpr) alertas.push(`🟡 *${c.nome}*: frequência ${pf(c.freq, 2)} com ${[caiuCtr ? `queda do ${lab} de ${pf(c.ctr_ant, 2)}% para ${pf(c.ctr, 2)}%` : '', subiuCpr ? `alta do custo de ${brl(c.cpr_ant)} para ${brl(c.cpr)}` : ''].filter(Boolean).join(' e ')} — sinal de saturação; vamos avaliar a renovação dos criativos.`);\n      }\n    } else {\n      c.ctrTxt = `${lab}: ${pf(c.ctr, 2)}%`;\n      c.inicial = `Em fase inicial: ${int(c.imp)} impressões — volume ainda limitado para avaliar o desempenho.`;\n    }\n  }\n  if (c.cprOk && c.cpr_ant !== null && c.res_ant >= p.resultados_min && c.cpr <= c.cpr_ant * 0.95)\n    melhorias.push(`• *${c.nome}*: ${T_.custo.toLowerCase()} caiu de ${brl(c.cpr_ant)} para ${brl(c.cpr)} (−${pct((1 - c.cpr / c.cpr_ant) * 100)}%)`);\n  if (c.volume && c.ctr_ant !== null && c.imp_ant > p.impressoes_min && c.ctr_ant > 0 && c.ctr >= c.ctr_ant * 1.10)\n    melhorias.push(`• *${c.nome}*: ${lab} subiu de ${pf(c.ctr_ant, 2)}% para ${pf(c.ctr, 2)}%`);\n  if (c.escalada) melhorias.push(`• *${c.nome}*: orçamento ampliado no período para aumentar a entrega`);\n  c.temAlerta = alertas.length > nAntes;\n}\nconst manual = t => String(t || '').split(/\\n|;/).map(s => s.trim()).filter(Boolean).map(s => s.startsWith('•') ? s : '• ' + s);\nconst melhoriasFinal = [...manual(cli.rel_melhorias), ...melhorias];\nconst ajustesFinal = [...manual(cli.rel_ajustes), ...alertas.map(a => '• ' + a)];\nconst melhores = ativas.filter(c => c.spend > 0 && ['otimo', 'bom'].includes(c.cprCls) && !c.temAlerta)   // sem nenhum alerta\n  .sort((x, y) => x.cpr / x.p.cpr_bom_ate - y.cpr / y.p.cpr_bom_ate).slice(0, Number(cfg.top_campanhas) || 3);\nconst idsMelhores = new Set(melhores.map(c => c.id));\nconst demais = ativas.filter(c => !idsMelhores.has(c.id)).sort((x, y) => y.spend - x.spend);\nconst linhaCamp = c => {\n  if (!c.spend) return `• *${c.nome}* — sem entrega no período`;\n  const L = [`• *${c.nome}*`, `   💰 ${brl(c.spend)}${c.tipo ? ` | ${int(c.resultados)} ${TIPOS[c.tipo].rotulo}` : ''}`];\n  if (c.cprTxt) L.push('   🎯 ' + c.cprTxt);\n  if (c.ctrTxt) L.push('   🖱️ ' + c.ctrTxt);\n  if (c.freqTxt) L.push('   🔁 ' + c.freqTxt);\n  if (c.inicial) L.push('   ℹ️ ' + c.inicial);\n  if (c.escalada) L.push('   🚀 Escalada (orçamento aumentado no período)');\n  return L.join('\\n');\n};\n\n// ---------- 9) Pausadas: registro do Monitor de CPR (aba \"Pausas CPR\") + criativos pausados no período\nconst linkAd = a => a.preview_shareable_link || `https://adsmanager.facebook.com/adsmanager/manage/ads?act=${cli.conta}&selected_ad_ids=${a.id}`;\nconst adsLista = listaOk(adsP) ? adsP.data : [];\nconst iniMs = DateTime.fromISO(per.since, { zone: $now.zoneName }).toMillis();\nconst logItens = $('Pausas CPR (Rel)').all().map(i => i.json || {});\nconst logOk = !logItens.some(l => l.error);\nconst pausadas = new Map();\nfor (const l of logItens) {\n  if (l.error || String(l['ID da Conta'] ?? '').replace(/\\D/g, '') !== cli.conta) continue;\n  const d = DateTime.fromFormat(String(l['Data'] ?? ''), 'dd/MM/yyyy HH:mm', { zone: $now.zoneName });\n  if (!d.isValid || d.toMillis() < iniMs) continue;\n  const id = String(l['ID Campanha'] ?? '').replace(/\\D/g, '');\n  if (!id || (statusCamp[id] && ATIVO.includes(String(statusCamp[id].effective_status)))) continue; // já reativada\n  pausadas.set(id, { nome: l['Nome Campanha'] || id, motivo: l['Motivo'] || '', links: String(l['Anúncios'] || '').split(/\\s+/).filter(Boolean) });\n}\nif (!logOk) {\n  for (const c of camps.data) {\n    if (String(c.effective_status) !== 'PAUSED' || !insPorCamp[String(c.id)]) continue;\n    if (DateTime.fromISO(String(c.updated_time || '')).toMillis() < iniMs) continue;\n    pausadas.set(String(c.id), { nome: c.name, motivo: 'pausada no período', links: [] });\n  }\n}\nfor (const [id, p] of pausadas) { const daCamp = adsLista.filter(a => String(a.campaign_id) === id).map(linkAd); if (daCamp.length) p.links = daCamp; }\nconst criativos = adsLista.filter(a => String(a.effective_status) === 'PAUSED' && DateTime.fromISO(String(a.updated_time || '')).toMillis() >= iniMs\n  && statusCamp[String(a.campaign_id)] && ATIVO.includes(String(statusCamp[String(a.campaign_id)].effective_status)));\nconst blocoPausa = [];\nfor (const [, p] of pausadas) {\n  let t = `• *${p.nome}*${p.motivo ? ` — ${p.motivo}` : ''}`;\n  const links = p.links.slice(0, 5);\n  if (links.length) t += '\\n' + links.map((l, i) => `   🎨 Criativo ${i + 1}: ${l}`).join('\\n');\n  if (p.links.length > 5) t += `\\n   … e mais ${p.links.length - 5} criativo(s)`;\n  blocoPausa.push(t);\n}\nconst porCampCriativo = {};\nfor (const a of criativos) (porCampCriativo[String(a.campaign_id)] = porCampCriativo[String(a.campaign_id)] || []).push(a);\nfor (const [cid, lista] of Object.entries(porCampCriativo))\n  blocoPausa.push(`• *${statusCamp[cid].name}* — criativo(s) pausado(s), campanha segue ativa\\n` + lista.slice(0, 5).map(a => `   🎨 ${a.name}: ${linkAd(a)}`).join('\\n'));\n\n// ---------- 10) Saldo da conta\nlet saldoTxt = '';\nif (conta && conta.id && !conta.error) {\n  const met = n_(cli.metodo);\n  const prepago = /pix|boleto|prepag/.test(met) ? true : (/cartao|credito|card/.test(met) ? false : (conta.is_prepay_account === true || conta.is_prepay_account === 'true'));\n  const cap = num(conta.spend_cap), gasto = num(conta.amount_spent);\n  if (prepago) {\n    const m = String((conta.funding_source_details || {}).display_string || '').match(/\\(([^)]*\\d[^)]*)\\)/);\n    const disp = m ? money(m[1]) : (cap > 0 ? (cap - gasto) / 100 : null);\n    if (disp !== null) saldoTxt = `${brl(disp)} disponível (${/boleto/.test(met) ? 'Boleto' : 'Pix'})`;\n  } else saldoTxt = cap > 0 ? `${brl((cap - gasto) / 100)} disponível até o limite da conta (cartão de crédito)`\n                            : `pagamento automático no cartão de crédito — ${brl(num(conta.balance) / 100)} em uso até a próxima cobrança`;\n}\n\n// ---------- 11) Mensagem\nconst h = parseInt($now.toFormat('HH'), 10);\nconst saud = h < 12 ? 'Bom dia' : (h < 18 ? 'Boa tarde' : 'Boa noite');\nconst primeiroNome = String(cli.cliente).split(/\\s+/)[0];\nconst temVis = T.vis > 0 || ativas.some(c => c.tipo === 'visitas');\nconst temMsg = T.msgs > 0 || ativas.some(c => c.tipo === 'mensagens');\nconst L = [];\nL.push(`${saud}, ${primeiroNome}! ☀️`);\nL.push(`Compartilhando com você o relatório das suas campanhas de *${per.rotulo}* 📊`);\nL.push('');\nL.push(`💰 *Investimento:* ${brl(T.spend)}`);\nif (temVis) L.push(`👤 *Visitas ao perfil:* ${int(T.vis)}`);\nif (temMsg) L.push(`💬 *Mensagens:* ${int(T.msgs)}`);\nL.push(`📣 *Alcance:* ${int(T.reach)} — ${clsAlc(T.reach, pConta)}`);\nL.push(`👁️ *Impressões:* ${int(T.imp)} — ${clsImp(T.imp, pConta)}`);\nif (T.imp > pConta.impressoes_min) {\n  L.push(`🖱️ *CTR de link (conta):* ${pf(T.ctr, 2)}% — ${clsCTR(T.ctr, pConta).txt}`);\n  L.push(`🔁 *Frequência:* ${pf(T.freq, 2)} — ${clsFreq(T.freq, pConta)}`);\n}\nif (publico) L.push(`👥 *Público:* ${publico}`);\nif (melhores.length) { L.push(''); L.push('📈 *Campanhas com melhores performances*' + (melhores.some(c => c.escalada) ? ' (e que já foram escaladas 🚀)' : '')); melhores.forEach(c => L.push(linhaCamp(c))); }\nconst demaisCom = demais.filter(c => c.spend > 0 || cfg.mostrar_sem_entrega === true);\nif (demaisCom.length) { L.push(''); L.push('🟢 *Demais campanhas ativas*'); demaisCom.slice(0, 10).forEach(c => L.push(linhaCamp(c))); }\nif (blocoPausa.length) { L.push(''); L.push('⏸️ *Campanhas pausadas por ficarem acima da média de custo por resultado*'); blocoPausa.slice(0, 8).forEach(b => L.push(b)); }\nif (melhoriasFinal.length) { L.push(''); L.push('✅ *Com base nos parâmetros das campanhas, melhoramos:*'); melhoriasFinal.slice(0, 6).forEach(b => L.push(b)); }\nL.push(''); L.push('🚧 *Teremos que ajustar essa semana:*');\nif (ajustesFinal.length) ajustesFinal.slice(0, 8).forEach(b => L.push(b)); else L.push('• Nenhum alerta nos parâmetros definidos — seguimos acompanhando diariamente.');\nif (cfg.aviso_resultado) { L.push(''); L.push('ℹ️ ' + cfg.aviso_resultado); }\nif (cli.link_relatorio) { L.push(''); L.push('🔗 Segue o link do relatório em tempo real da sua conta, verificada 24h por dia:'); L.push(cli.link_relatorio); }\nif (saldoTxt) { L.push(''); L.push(`💳 *Saldo atual da conta:* ${saldoTxt}`); }\nL.push(''); L.push('Caso haja alguma dúvida, pode me acionar!'); L.push('Forte abraço! 🚀');\nlet msg = L.join('\\n');\nif (msg.length > 7000) msg = msg.slice(0, 6950) + '\\n…';\n\n// ---------- 12) Envios\nconst avisos = [];\nif (divergencia) avisos.push(`soma das campanhas (${brl(somaCamp)}) difere do total da conta (${brl(T.spend)})`);\nif (!cli.link_relatorio) avisos.push('sem \"Link do Relatório\" na Planilha Geral');\nif (!logOk) avisos.push('aba \"Pausas CPR\" não encontrada — pausadas detectadas pela data de alteração');\nif (!listaOk(insGen)) avisos.push('público por gênero indisponível');\nif (!cli.destino) avisos.push('cliente sem grupo/contato — relatório NÃO enviado ao cliente');\nconst envios = [];\nlet qtd = 0;\nif (divergencia && cfg.bloquear_se_divergente !== false) {\n  rec.status = 'NÃO ENVIADO'; rec.obs = avisos.join('; ');\n  return saida([{ para: gestor, tipo: 'gestor', texto: `⚠️ *Relatório NÃO enviado — ${cli.cliente}*\\n\\nA soma do investimento das campanhas (${brl(somaCamp)}) não bate com o total da conta (${brl(T.spend)}) em ${per.rotulo}. Para não haver conflito com o relatório, o envio foi bloqueado.\\n\\nPrévia:\\n\\n${msg}`.slice(0, 7500) }], 0);\n}\nif (teste) envios.push({ para: gestor, tipo: 'gestor', texto: `🧪 *TESTE* — relatório que seria enviado para ${cli.destino_desc || '(sem destino)'}\\n\\n${msg}` });\nelse if (cli.destino) { envios.push({ para: cli.destino, tipo: 'cliente', texto: msg }); qtd = 1; }\nif (!teste && cfg.copia_gestor === true && cli.destino !== gestor) envios.push({ para: gestor, tipo: 'gestor', texto: `📋 Cópia — ${cli.cliente} (${cli.destino_desc || 'sem destino'})\\n\\n${msg}` });\nif (!teste && !cli.destino) envios.push({ para: gestor, tipo: 'gestor', texto: `📵 *${cli.cliente}* está sem grupo e sem \"Contato do cliente\" na Planilha Geral — o relatório não foi enviado.\\n\\nPrévia:\\n\\n${msg}`.slice(0, 7500) });\nrec.status = teste ? 'Teste (só gestor)' : (cli.destino ? 'Enviado' : 'Sem destino');\nrec.obs = avisos.join('; ');\nreturn saida(envios, qtd);"
       },
       "id": "b5bf464c-6a9d-5b5c-b91c-2899e45b258f",
       "name": "Montar Relatório (Rel)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4180,
+        4400,
         420
       ]
     },
@@ -835,7 +975,7 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        5780,
+        6000,
         300
       ],
       "webhookId": "7cd103cd-d33a-55c4-89c9-4d83a71ce623"
@@ -910,7 +1050,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        4400,
+        4620,
         420
       ]
     },
@@ -925,7 +1065,7 @@
       "type": "n8n-nodes-base.splitOut",
       "typeVersion": 1,
       "position": [
-        4620,
+        4840,
         300
       ]
     },
@@ -942,7 +1082,7 @@
       "type": "n8n-nodes-evolution-api.evolutionApi",
       "typeVersion": 1,
       "position": [
-        4840,
+        5060,
         300
       ],
       "credentials": {
@@ -965,7 +1105,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5060,
+        5280,
         420
       ]
     },
@@ -999,7 +1139,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        5280,
+        5500,
         420
       ]
     },
@@ -1016,7 +1156,7 @@
       "type": "n8n-nodes-evolution-api.evolutionApi",
       "typeVersion": 1,
       "position": [
-        5500,
+        5720,
         300
       ],
       "credentials": {
@@ -1125,6 +1265,17 @@
       "main": [
         [
           {
+            "node": "Parâmetros (Rel)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parâmetros (Rel)": {
+      "main": [
+        [
+          {
             "node": "Normalizar Clientes (Rel)",
             "type": "main",
             "index": 0
@@ -1221,6 +1372,17 @@
       ]
     },
     "Insights Campanhas (Rel)": {
+      "main": [
+        [
+          {
+            "node": "Insights Campanhas Anterior (Rel)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insights Campanhas Anterior (Rel)": {
       "main": [
         [
           {

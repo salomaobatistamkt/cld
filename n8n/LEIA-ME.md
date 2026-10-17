@@ -89,10 +89,44 @@ Quer priorizar o contato pessoal em vez do grupo? Coloque `preferir_grupo = fals
 | **Custo por resultado da campanha** | **média do custo por resultado dos conjuntos que tiveram resultado.** Ex.: conjuntos de R$ 6,00 e R$ 3,00 mais um conjunto sem resultado → R$ 4,50. O conjunto sem resultado conta só no investimento |
 | Campanhas pausadas | registro do Monitor de CPR (aba `Pausas CPR`) com o motivo, mais os criativos pausados no período, com o link de cada criativo |
 | Escalada 🚀 | aumento de orçamento registrado no histórico da conta durante o período |
-| Melhoramos / Ajustar | automático (custo caiu ≥ 5% vs período anterior; acima da meta; sem resultado; frequência > 3,5). Também lê as colunas opcionais `Relatório - Melhorias` e `Relatório - Ajustes`, que você pode preencher |
+| Melhoramos / Ajustar | automático, pelas regras de avaliação abaixo (cada alerta vem com a justificativa). Também lê as colunas opcionais `Relatório - Melhorias` e `Relatório - Ajustes`, que você pode preencher |
 | Saldo atual | Meta em tempo real; tipo (Pix/Boleto/Cartão) pela coluna Método de Pagamento da planilha de saldo |
 
 Todas as consultas usam `use_unified_attribution_setting=true`, a mesma atribuição do Gerenciador de Anúncios.
+
+### Regras de avaliação (CTR, custo por resultado, volume, frequência)
+| Indicador | Faixas padrão |
+|---|---|
+| **CTR** (de link ou de saída, conforme o objetivo; a mensagem sempre diz qual) | > 10% excelente, com indicação para avaliar a qualidade do tráfego · 5–10% excelente · 3–5% bom · 2–3% atenção · < 2% alerta de baixo desempenho |
+| **Custo por resultado** | até R$ 5,00 ótimo · R$ 5,00–10,00 bom · acima de R$ 10,00 ponto de atenção |
+| **Impressões** | > 1.000 volume positivo · até 1.000 volume ainda limitado |
+| **Alcance** | > 1.000 boa distribuição · até 1.000 distribuição limitada ou em fase inicial |
+| **Frequência** | < 1,0 verificar os dados · 1,0–1,5 distribuição inicial · 1,5–2,0 boa exposição inicial · > 2,0 exposição repetida |
+
+Como as regras são aplicadas:
+- **Só classifica com dados suficientes.** CTR e frequência são classificados acima de 1.000 impressões; custo por resultado, a partir de 3 resultados. Abaixo disso a campanha aparece como *"Em fase inicial"*, nunca como ruim.
+- **CTR automático pelo objetivo:** tráfego e vendas usam **CTR de saída**; mensagens, visitas e engajamento usam **CTR de link**.
+- **Frequência alta não é boa nem ruim por si só.** Só vira alerta quando vem junto com queda do CTR ou alta do custo (≥ 15%) em relação ao período anterior.
+- Toda classificação e todo alerta mostram a faixa usada (ex.: *"CTR de link de 1,70%: alerta de baixo desempenho, abaixo de 2%"*).
+- **Melhores performances** = custo ótimo/bom **e** nenhum alerta. O fluxo **nunca recomenda aumentar orçamento**; ele só informa quando o orçamento foi de fato aumentado.
+- Toda mensagem traz o aviso de que resultado barato não é, necessariamente, venda lucrativa (texto editável em `aviso_resultado`). Não há dados comerciais integrados hoje. Quando houver (vendas, qualidade dos leads, faturamento), dá para incluir.
+
+### Alterar os parâmetros sem mexer em código
+- **Padrão geral:** campos do nó **Config (Rel)** (`cpr_otimo_ate`, `cpr_bom_ate`, `ctr_*`, `impressoes_min`, `alcance_min`, `freq_*`, `resultados_min_classificar`, `variacao_relevante_pct`, `aviso_resultado`).
+- **Por cliente, procedimento, objetivo ou tipo de resultado:** crie a aba **`Parâmetros`** na Planilha Geral com estes cabeçalhos:
+
+  `Cliente | Procedimento | Objetivo | Tipo de resultado | CPR ótimo até | CPR bom até | CTR muito alto acima de | CTR excelente a partir de | CTR bom a partir de | CTR atenção a partir de | Tipo de CTR | Impressões mínimas | Alcance mínimo | Frequência inicial até | Frequência boa até | Resultados mínimos | Gasto mínimo sem resultado | Ativo`
+
+  - Colunas de escopo vazias valem para todos. **Procedimento** = palavra do nome da campanha (ex.: *Botox*). **Objetivo** = Engajamento, Tráfego, Leads, Vendas, Reconhecimento. **Tipo de resultado** = Mensagens, Visitas, Cliques, Cadastros, Engajamento. **Tipo de CTR** = Link, Saída ou Auto.
+  - Preencha só os limites que quer mudar; o resto herda o padrão. Se duas linhas servirem, vence a mais específica (Cliente > Procedimento > Objetivo > Tipo de resultado).
+  - Exemplos:
+
+    | Cliente | Procedimento | Objetivo | Tipo de resultado | CPR ótimo até | CPR bom até |
+    |---|---|---|---|---|---|
+    | | | | Visitas | 0,30 | 0,60 |
+    | Thalita Dourado | Botox | | | 4,00 | |
+
+  - Sugestão: crie a linha de **Visitas**. Com o padrão de R$ 5/R$ 10, qualquer custo por visita sai como "ótimo". Os valores acima são só exemplo; use os seus.
 
 ### Proteções para nunca mandar número em conflito
 - Se a Meta falhar em qualquer dado essencial (totais, campanhas, conjuntos), **o cliente não recebe**. Você recebe o erro.

@@ -55,7 +55,7 @@
             {
               "id": "abb65803-e92c-5f32-beb6-733e3c1c6c5a",
               "name": "modo_teste",
-              "value": true,
+              "value": false,
               "type": "boolean"
             },
             {

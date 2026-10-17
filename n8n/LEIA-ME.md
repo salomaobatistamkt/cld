@@ -143,7 +143,7 @@ Como as regras são aplicadas:
 ### Para ativar
 1. Rode o fluxo **00**. Ele cria na **Planilha Geral › Clientes**, no fim da linha 1, a coluna **`Link do Relatório`** (e também `Enviar Relatório`, `Relatório - Melhorias`, `Relatório - Ajustes`). Depois, cole o link do relatório de cada cliente na linha dele.
 2. A aba **`Pausas CPR`** da Planilha_Pausa_Campanhas também é criada pelo **00**. O Monitor de CPR (03) foi atualizado para gravar nela cada pausa; **reimporte o 03**.
-3. Importe o 05. Ele vem com **`modo_teste = true`**: todos os relatórios vão só para você. Rode pelo gatilho *Executar manualmente*, compare com a Konext Gestão nas mesmas datas e, estando tudo igual, mude `modo_teste` para `false` e ative.
+3. Importe o 05 (já vem com `modo_teste = false`, enviando aos clientes) e ative o fluxo. Para voltar a testar só com você, mude `modo_teste` para `true`.
 
 ## Pontos que dependem de você (vistos nas planilhas)
 

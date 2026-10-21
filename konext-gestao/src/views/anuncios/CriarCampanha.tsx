@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, FolderOpen, Image as IconeImagem, Megaphone, MessageCircle, RefreshCw, Rocket, Trash2, Upload, Video } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Pencil, Plus, ChevronLeft, ChevronRight, FolderOpen, Image as IconeImagem, Megaphone, MessageCircle, RefreshCw, Rocket, Trash2, Upload, Video } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Modal, Vazio } from '@/components/ui';
@@ -24,6 +24,7 @@ import { useStore } from '@/lib/store';
 import { formatarMoeda } from '@/lib/util';
 
 import { AvisoSoServidor } from './Diagnostico';
+import { EditorModeloMensagem, type ModeloKonext, PreviaWhatsApp } from './ModeloMensagem';
 
 type Item = { chave: string; midia: Midia; publicoId: string; nomeConjunto: string; nomeConjuntoManual: boolean; nomeAnuncio: string; valor: string };
 type Envio = { chave: string; nome: string; fracao: number; erro?: string };
@@ -82,7 +83,8 @@ export const BibliotecaModal = ({ clienteId, jaUsadas, aoEscolher, aoFechar }: {
 
 // Anúncios → Criar campanha: configuração, criativos e públicos, revisão e publicação (sempre pausada).
 export const CriarCampanha = () => {
-  const { dados, ir } = useStore();
+  const { dados, ir, salvarConfig } = useStore();
+  const modelosKonext: ModeloKonext[] = dados.config.modelosMensagem || [];
   const modoServidor = useStore((estado) => estado.backend?.modo === 'servidor');
   const nomesConjunto = dados.config.nomesConjunto?.length ? dados.config.nomesConjunto : NOMES_CONJUNTO_PADRAO;
   const clientesValidos = dados.clientes.filter((c) => c.status !== 'encerrado' && situacaoConta(c).status === 'validada');
@@ -101,6 +103,8 @@ export const CriarCampanha = () => {
   const [modeloMensagemId, setModeloMensagemId] = useState('');
   const [erroModelos, setErroModelos] = useState('');
   const [carregandoModelos, setCarregandoModelos] = useState(false);
+  // Editor de modelo do Konext: null = fechado; objeto = criando/editando.
+  const [editandoModelo, setEditandoModelo] = useState<Partial<ModeloKonext> | null>(null);
   const [procedimento, setProcedimento] = useState('');
   const [nomeCampanha, setNomeCampanha] = useState('');
   const [nomeManual, setNomeManual] = useState(false);
@@ -185,9 +189,22 @@ export const CriarCampanha = () => {
   useEffect(() => {
     setModelosMensagem(null);
     setModeloMensagemId('');
-    void carregarModelos();
+    void carregarModelos(true);
   }, [carregarModelos]);
   const modeloMensagem = modelosMensagem?.find((m) => m.id === modeloMensagemId) || null;
+  const modeloKonext = modeloMensagemId.startsWith('konext:') ? modelosKonext.find((m) => `konext:${m.id}` === modeloMensagemId) || null : null;
+  const salvarModeloKonext = (m: ModeloKonext) => {
+    const lista = modelosKonext.some((x) => x.id === m.id) ? modelosKonext.map((x) => (x.id === m.id ? m : x)) : [...modelosKonext, m];
+    salvarConfig({ ...dados.config, modelosMensagem: lista });
+    setModeloMensagemId(`konext:${m.id}`);
+    setEditandoModelo(null);
+  };
+  const excluirModeloKonext = (id: string) => {
+    if (!window.confirm('Excluir este modelo de mensagem?')) return;
+    salvarConfig({ ...dados.config, modelosMensagem: modelosKonext.filter((x) => x.id !== id) });
+    setModeloMensagemId('');
+    setEditandoModelo(null);
+  };
 
   const carregarPublicos = useCallback(
     async (atualizar = false) => {
@@ -271,7 +288,8 @@ export const CriarCampanha = () => {
     clienteId,
     modelo,
     referenciaId,
-    modeloMensagemId: modelo === 'whatsapp' && modeloMensagemId ? modeloMensagemId : undefined,
+    modeloMensagemId: modelo === 'whatsapp' && modeloMensagemId && !modeloKonext ? modeloMensagemId : undefined,
+    mensagemPersonalizada: modelo === 'whatsapp' && modeloKonext ? { nome: modeloKonext.nome, boasVindas: modeloKonext.boasVindas, mensagemPronta: modeloKonext.mensagemPronta } : undefined,
     nomeCampanha,
     texto,
     titulo,
@@ -497,6 +515,13 @@ export const CriarCampanha = () => {
                 <div className="linha-modelo">
                   <select id="cc-modelo-mensagem" value={modeloMensagemId} onChange={(e) => setModeloMensagemId(e.target.value)} disabled={!clienteId || carregandoModelos}>
                     <option value="">{carregandoModelos ? 'Carregando modelos…' : 'Sem modelo (a Meta usa a mensagem padrão)'}</option>
+                    {modelosKonext.length ? (
+                      <optgroup label="Modelos do Konext">
+                        {modelosKonext.map((m) => (
+                          <option key={m.id} value={`konext:${m.id}`}>{m.nome}</option>
+                        ))}
+                      </optgroup>
+                    ) : null}
                     {modelosMensagem?.some((m) => m.origem === 'salvo') ? (
                       <optgroup label="Modelos salvos">
                         {modelosMensagem.filter((m) => m.origem === 'salvo').map((m) => (
@@ -512,11 +537,44 @@ export const CriarCampanha = () => {
                       </optgroup>
                     ) : null}
                   </select>
-                  <button type="button" className="btn" title="Atualizar lista" onClick={() => void carregarModelos(true)} disabled={!clienteId || carregandoModelos}>
-                    <RefreshCw size={14} />
+                  <button type="button" className="btn" title="Ler de novo da conta" onClick={() => void carregarModelos(true)} disabled={!clienteId || carregandoModelos}>
+                    <RefreshCw size={14} className={carregandoModelos ? 'girando' : ''} />
                   </button>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() =>
+                      setEditandoModelo({
+                        mensagemPronta: procedimento.trim() ? `Olá! Tenho interesse em realizar o ${procedimento.trim().toLowerCase()}!`.slice(0, 80) : '',
+                        nome: procedimento.trim(),
+                      })
+                    }
+                  >
+                    <Plus size={14} /> Novo modelo
+                  </button>
+                  {modeloKonext ? (
+                    <button type="button" className="btn" onClick={() => setEditandoModelo(modeloKonext)}>
+                      <Pencil size={14} /> Editar
+                    </button>
+                  ) : modeloMensagem ? (
+                    <button type="button" className="btn" title="Cria um modelo do Konext com estes textos para você editar" onClick={() => setEditandoModelo({ nome: modeloMensagem.nome, boasVindas: modeloMensagem.boasVindas, mensagemPronta: modeloMensagem.mensagemPronta.slice(0, 80) })}>
+                      <Pencil size={14} /> Editar uma cópia
+                    </button>
+                  ) : null}
                 </div>
-                {modeloMensagem ? (
+                {editandoModelo ? (
+                  <EditorModeloMensagem
+                    key={editandoModelo.id || 'novo'}
+                    inicial={editandoModelo}
+                    nomePagina={cliente?.metaPaginaNome}
+                    aoSalvar={salvarModeloKonext}
+                    aoExcluir={editandoModelo.id ? () => excluirModeloKonext(editandoModelo.id!) : undefined}
+                    aoFechar={() => setEditandoModelo(null)}
+                  />
+                ) : modeloKonext ? (
+                  <PreviaWhatsApp boasVindas={modeloKonext.boasVindas} mensagemPronta={modeloKonext.mensagemPronta} nomePagina={cliente?.metaPaginaNome} />
+                ) : null}
+                {!editandoModelo && modeloMensagem ? (
                   <div className="previa-modelo">
                     {modeloMensagem.boasVindas ? (
                       <div><b>Mensagem de boas-vindas</b><p>{modeloMensagem.boasVindas}</p></div>
@@ -532,7 +590,7 @@ export const CriarCampanha = () => {
                 ) : null}
                 {erroModelos ? <small className="erro-texto">{erroModelos}</small> : null}
                 {modelosMensagem && !modelosMensagem.length && !erroModelos ? (
-                  <small className="aviso-texto"><AlertTriangle size={13} /> Nenhum modelo encontrado nesta página. Crie um no Gerenciador de Anúncios e clique em atualizar.</small>
+                  <small className="muted">Nenhum modelo usado nesta conta ainda. Crie um modelo do Konext em “Novo modelo”.</small>
                 ) : null}
               </div>
             ) : null}

@@ -119,6 +119,7 @@ export type EntradaPlano = {
   modelo: 'whatsapp' | 'instagram';
   referenciaId: string;
   modeloMensagemId?: string;
+  mensagemPersonalizada?: { nome: string; boasVindas: string; mensagemPronta: string };
   nomeCampanha: string;
   texto: string;
   titulo: string;

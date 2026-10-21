@@ -563,11 +563,53 @@ export const criarCampanhas = ({ db, graph, graphEnviar, ErroMeta, normalizarCon
     const oss = cr?.object_story_spec || {};
     return oss.link_data?.page_welcome_message || oss.video_data?.page_welcome_message || cr?.asset_feed_spec?.additional_data?.page_welcome_message || null;
   };
+  // Modelo criado no Konext → page_welcome_message no formato que a conta já usa: copia a estrutura
+  // de um anúncio existente com mensagem pronta e troca só os textos. Sem base, usa o formato padrão
+  // do Gerenciador (boas-vindas + mensagem pronta).
+  const trocarTextos = (no, boasVindas, mensagemPronta) => {
+    if (!no || typeof no !== 'object') return no;
+    if (Array.isArray(no)) return no.map((x) => trocarTextos(x, boasVindas, mensagemPronta));
+    const novo = {};
+    for (const [k, v] of Object.entries(no)) {
+      if (k === 'autofill_message' && v && typeof v === 'object' && !Array.isArray(v)) novo[k] = { ...v, content: mensagemPronta };
+      else if (k === 'message' && v && typeof v === 'object' && !Array.isArray(v)) {
+        const m = trocarTextos(v, boasVindas, mensagemPronta);
+        if (typeof m.text === 'string') m.text = boasVindas;
+        novo[k] = m;
+      } else novo[k] = trocarTextos(v, boasVindas, mensagemPronta);
+    }
+    return novo;
+  };
+  const montarBoasVindas = (boasVindas, mensagemPronta, base) => {
+    if (base) {
+      try {
+        const obj = typeof base === 'string' ? JSON.parse(base) : base;
+        const novo = trocarTextos(obj, boasVindas, mensagemPronta);
+        const t = textoDoModelo(novo);
+        if (t.boasVindas === boasVindas && t.mensagemPronta === mensagemPronta) return { valor: JSON.stringify(novo), base: true };
+      } catch {
+        // base ilegível: usa o formato padrão
+      }
+    }
+    return {
+      valor: JSON.stringify({
+        type: 'VISUAL_EDITOR',
+        version: 2,
+        landing_screen_type: 'welcome_message',
+        media_type: 'text',
+        text_format: { customer_action_type: 'autofill_message', message: { autofill_message: { content: mensagemPronta }, text: boasVindas } },
+        user_edit: false,
+        surface: 'visual_editor_new',
+      }),
+      base: false,
+    };
+  };
+
   const cacheModelos = new Map();
   const modelosDeMensagem = async (act, paginaId, atualizar = false) => {
     const chave = `${act}|${paginaId}`;
     const guardado = cacheModelos.get(chave);
-    if (!atualizar && guardado && Date.now() - guardado.em < 10 * 60 * 1000) return guardado.valor;
+    if (!atualizar && guardado && Date.now() - guardado.em < 60 * 1000) return guardado.valor;
     const modelos = [];
     const erros = {};
     const vistos = new Set();
@@ -655,7 +697,19 @@ export const criarCampanhas = ({ db, graph, graphEnviar, ErroMeta, normalizarCon
 
     // Modelo de mensagem do WhatsApp: precisa existir de fato nesta página/conta.
     let mensagem = null;
-    if (modelo === 'whatsapp' && entrada.modeloMensagemId) {
+    const personalizada = entrada.mensagemPersonalizada;
+    if (modelo === 'whatsapp' && personalizada && typeof personalizada === 'object') {
+      // Modelo criado no Konext (boas-vindas + mensagem pronta).
+      const boasVindas = String(personalizada.boasVindas || '').trim().slice(0, 300);
+      const mensagemPronta = String(personalizada.mensagemPronta || '').trim();
+      if (!boasVindas || !mensagemPronta) throw new ErroMeta('O modelo de mensagem precisa da mensagem de boas-vindas e da mensagem pronta.', 400);
+      if (mensagemPronta.length > 80) throw new ErroMeta('A mensagem pronta pode ter no máximo 80 caracteres (limite da Meta).', 400);
+      const { modelos } = await modelosDeMensagem(act, cliente.metaPaginaId, true);
+      const base = modelos.find((x) => x.mensagemPronta && x.boasVindas)?.valor || null;
+      const r = montarBoasVindas(boasVindas, mensagemPronta, base);
+      if (!r.base) problemas.push('Modelo de mensagem no formato padrão da Meta (a conta ainda não tem anúncio com mensagem pronta para copiar o formato). Confira o primeiro anúncio no Gerenciador.');
+      mensagem = { id: 'konext', nome: String(personalizada.nome || mensagemPronta).slice(0, 80), origem: 'konext', valor: r.valor, boasVindas, mensagemPronta };
+    } else if (modelo === 'whatsapp' && entrada.modeloMensagemId) {
       const { modelos } = await modelosDeMensagem(act, cliente.metaPaginaId, true);
       const achado = modelos.find((x) => x.id === String(entrada.modeloMensagemId));
       if (!achado) throw new ErroMeta('O modelo de mensagem escolhido não foi encontrado na página deste cliente. Atualize a lista e escolha de novo.', 409);

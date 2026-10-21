@@ -140,6 +140,8 @@ export type Config = {
   // Referências de performance (Desempenho) e modelos de relatório/apresentação.
   performance?: ParametrosPerformance;
   modelosRelatorio?: ModeloRelatorio[];
+  // Modelos de mensagem do WhatsApp criados no Konext (boas-vindas + mensagem pronta).
+  modelosMensagem?: Array<{ id: string; nome: string; boasVindas: string; mensagemPronta: string }>;
   // Por conta de anúncios (act_…): quais ações da Meta contam como seguidor / visita ao perfil.
   acoesMetricas?: Record<string, MapaAcoes>;
 };

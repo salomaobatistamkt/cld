@@ -3775,3 +3775,16 @@ button.cartao-midia {
 @media (max-width: 720px) { .lista-orientacoes { grid-template-columns: 1fr; } .funil-faixa b { font-size: 17px; } }
 .rel-claro, .pagina-clara, .sobreposicao-clara, .apresentar-claro { --cor-mulheres: #e87ba4; --cor-homens: #1baf7a; }
 .rel-escuro { --cor-mulheres: #d55181; --cor-homens: #199e70; }
+
+/* Editor de modelo de mensagem (WhatsApp) */
+.editor-modelo { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; background: var(--surface-2); }
+.editor-modelo-campos { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.editor-modelo-campos input { width: 100%; }
+.previa-whats { border-radius: 14px; overflow: hidden; border: 1px solid var(--border); background: #efeae2; color: #111b21; font-size: 13px; align-self: start; }
+.previa-whats-topo { background: #ffffff; padding: 10px 12px; font-weight: 700; border-bottom: 1px solid #e5e5e5; }
+.previa-whats-corpo { padding: 14px 12px; display: flex; flex-direction: column; gap: 40px; min-height: 180px; justify-content: space-between; }
+.balao-recebido { align-self: flex-start; max-width: 85%; background: #ffffff; border-radius: 0 10px 10px 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1); white-space: pre-wrap; }
+.balao-anuncio { font-size: 11.5px; color: #667781; background: #f0f2f5; border-radius: 6px; padding: 4px 6px; }
+.campo-digitado { background: #ffffff; border-radius: 20px; padding: 9px 14px; color: #111b21; box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1); }
+.modelo-mensagem > .previa-whats { max-width: 320px; }
+@media (max-width: 720px) { .editor-modelo { grid-template-columns: 1fr; } }

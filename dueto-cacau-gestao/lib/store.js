@@ -256,13 +256,18 @@ export const useStore = create(
     {
       name: 'dueto-cacau-v1',
       version: 1,
-      partialize: (s) => ({
-        ingredientes: s.ingredientes, embalagens: s.embalagens, receitas: s.receitas, config: s.config,
-        pedidos: s.pedidos, caixa: s.caixa, tarefas: s.tarefas, exemplo: s.exemplo,
-      }),
+      partialize: pegarDados,
       skipHydration: true,
     },
   ),
 );
 
-export { uid, hoje };
+/** Só os dados (sem funções), para salvar no navegador e na nuvem. */
+function pegarDados(s) {
+  return {
+    ingredientes: s.ingredientes, embalagens: s.embalagens, receitas: s.receitas, config: s.config,
+    pedidos: s.pedidos, caixa: s.caixa, tarefas: s.tarefas, exemplo: s.exemplo,
+  };
+}
+
+export { uid, hoje, pegarDados };

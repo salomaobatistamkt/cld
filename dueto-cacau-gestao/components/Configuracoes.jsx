@@ -1,11 +1,14 @@
 import React, { useRef } from 'react';
-import { Download, HardDrive, RotateCcw, Trash2, Upload } from 'lucide-react';
+import { Cloud, Download, HardDrive, LogOut, RotateCcw, Trash2, Upload } from 'lucide-react';
 import { useStore } from '@/lib/store';
+import { sair, useNuvem } from '@/lib/nuvem';
 import { Aviso, Cartao, CabPagina, confirmar, useToast } from './ui';
 
 export const Configuracoes = () => {
   const st = useStore();
   const mostrar = useToast((s) => s.mostrar);
+  const nuvem = useNuvem();
+  const naNuvem = ['sincronizado', 'salvando', 'offline'].includes(nuvem.status);
   const arquivo = useRef(null);
 
   const baixar = () => {
@@ -37,9 +40,17 @@ export const Configuracoes = () => {
     <div className="pagina">
       <CabPagina titulo="Configurações" descricao="Cópia de segurança e dados do sistema." />
 
-      <Aviso tom="info" icone={HardDrive}>
-        Por enquanto os dados ficam salvos neste aparelho, no navegador. Faça uma cópia de segurança de tempos em tempos. Quando o sistema for para a VPS, eles passam a ficar no servidor e podem ser acessados de qualquer aparelho.
-      </Aviso>
+      {naNuvem ? (
+        <Aviso tom="info" icone={Cloud}>
+          Os dados ficam salvos no servidor e aparecem em qualquer aparelho em que você entrar com a senha. Mesmo assim, baixe uma cópia de segurança de tempos em tempos.
+          {nuvem.mensagem ? <> {nuvem.mensagem}</> : null}
+          {' '}<button type="button" className="btn fantasma" onClick={sair}><LogOut size={15} />Sair</button>
+        </Aviso>
+      ) : (
+        <Aviso tom="info" icone={HardDrive}>
+          Os dados ficam salvos neste aparelho, no navegador. Faça uma cópia de segurança de tempos em tempos.
+        </Aviso>
+      )}
 
       <div className="duas-colunas">
         <Cartao titulo="Cópia de segurança" descricao="Baixe tudo em um arquivo ou restaure a partir de um arquivo anterior.">

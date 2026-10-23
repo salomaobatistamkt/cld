@@ -8,8 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --test tests/logica.test.mjs",
-    "build:site": "SITE_ESTATICO=1 next build"
+    "test": "node --test tests/logica.test.mjs"
   },
   "dependencies": {
     "@fontsource/cormorant-garamond": "^5.3.0",

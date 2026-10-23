@@ -3,6 +3,8 @@ import {
   BookOpen, Calculator, ChevronLeft, ChevronRight, Gauge, LayoutDashboard, ListChecks, LogOut, MoreHorizontal, Package, Search, Settings, ShoppingBag, Wallet, X,
 } from 'lucide-react';
 import { useStore } from '@/lib/store';
+import { iniciarNuvem, useNuvem } from '@/lib/nuvem';
+import { Entrar } from '@/components/Entrar';
 import { Toast } from '@/components/ui';
 import { Painel } from '@/components/Painel';
 import { Receitas } from '@/components/Receitas';
@@ -13,6 +15,13 @@ import { Pedidos } from '@/components/Pedidos';
 import { Tarefas } from '@/components/Tarefas';
 import { Caixa } from '@/components/Caixa';
 import { Configuracoes } from '@/components/Configuracoes';
+
+const TEXTO_STATUS = {
+  sincronizado: 'Salvo na nuvem',
+  salvando: 'Salvando…',
+  offline: 'Sem conexão. Tentando de novo…',
+  local: 'Salvo neste aparelho',
+};
 
 const ICONE = 18;
 const GRUPOS = [
@@ -58,11 +67,13 @@ export default function Home() {
   const [recolhido, setRecolhido] = useState(false);
   const [maisAberto, setMaisAberto] = useState(false);
 
+  const nuvem = useNuvem();
   const pedidos = useStore((s) => s.pedidos);
   const tarefas = useStore((s) => s.tarefas);
 
   useEffect(() => {
-    Promise.resolve(useStore.persist.rehydrate()).finally(() => {
+    Promise.resolve(useStore.persist.rehydrate()).finally(async () => {
+      await iniciarNuvem();
       setTela(lerHash());
       setPronto(true);
     });
@@ -90,6 +101,8 @@ export default function Home() {
   if (!pronto) {
     return <div className="carregando"><div className="hero-marca" role="img" aria-label="Dueto CaCau" /></div>;
   }
+
+  if (nuvem.status === 'login' || nuvem.status === 'erro') return <Entrar />;
 
   const chave = `${tela}:${extra.nova ? 'nova' : ''}${extra.editar || ''}${extra.receitaId || ''}`;
   const conteudo = (() => {
@@ -149,8 +162,8 @@ export default function Home() {
         </nav>
 
         <div className="rodape-sidebar">
-          <span className="ponto" />
-          <span>Salvo neste aparelho</span>
+          <span className={`ponto${nuvem.status === 'offline' ? ' alerta' : ''}`} />
+          <span title={nuvem.mensagem || undefined}>{TEXTO_STATUS[nuvem.status] || 'Salvo neste aparelho'}</span>
         </div>
       </aside>
 

@@ -1,0 +1,26 @@
+{
+  "name": "dueto-cacau-gestao",
+  "version": "1.0.0",
+  "description": "Gest\u00e3o da confeitaria Dueto CaCau",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "node --test tests/logica.test.mjs",
+    "build:site": "SITE_ESTATICO=1 next build"
+  },
+  "dependencies": {
+    "@fontsource/cormorant-garamond": "^5.3.0",
+    "@fontsource/manrope": "^5.3.0",
+    "@supabase/supabase-js": "^2.38.0",
+    "date-fns": "^2.30.0",
+    "lucide-react": "^1.61.0",
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "recharts": "^2.10.0",
+    "zustand": "^4.4.0"
+  }
+}

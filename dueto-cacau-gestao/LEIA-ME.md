@@ -11,6 +11,7 @@ Os dados ficam em `./dados/estado.json`.
 ## Publicar com Coolify (Dockerfile)
 - Build pack: Dockerfile · Base directory: `/dueto-cacau-gestao` · Porta: `80`
 - Variável de ambiente obrigatória: `APP_PASSWORD` (senha de acesso, mínimo 4 caracteres)
+- Variável opcional: `APP_USERS` (nomes de quem pode entrar, separados por vírgula; padrão `salomao,elizandra`)
 - Armazenamento persistente: montar um volume em `/data` (é onde ficam os dados)
 
 Sem `APP_PASSWORD` o sistema recusa qualquer acesso. Sem o volume em `/data`, os dados se perdem a cada novo deploy.

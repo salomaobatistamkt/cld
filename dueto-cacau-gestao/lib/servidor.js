@@ -18,14 +18,18 @@ const iguais = (a, b) => {
   return x.length === y.length && crypto.timingSafeEqual(x, y);
 };
 
+const normalizar = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+const USUARIOS = () => (process.env.APP_USERS || 'salomao,elizandra').split(',').map(normalizar).filter(Boolean);
+export const usuarioValido = (nome) => USUARIOS().includes(normalizar(nome)) ? normalizar(nome) : null;
+
 export const senhaCorreta = (tentativa) => senhaConfigurada() && iguais(
   crypto.createHash('sha256').update(String(tentativa || '')).digest('hex'),
   crypto.createHash('sha256').update(process.env.APP_PASSWORD).digest('hex'),
 );
 
-export const criarCookie = () => {
+export const criarCookie = (usuario) => {
   const exp = Date.now() + VALIDADE_MS;
-  const valor = `${exp}.${assinar(String(exp))}`;
+  const valor = `${exp}.${usuario}.${assinar(`${exp}.${usuario}`)}`;
   return `${COOKIE}=${valor}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${Math.floor(VALIDADE_MS / 1000)}`;
 };
 export const apagarCookie = () => `${COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
@@ -34,9 +38,10 @@ export const autenticado = (req) => {
   if (!senhaConfigurada()) return false;
   const bruto = (req.headers.cookie || '').split(';').map((c) => c.trim()).find((c) => c.startsWith(`${COOKIE}=`));
   if (!bruto) return false;
-  const [exp, assinatura] = bruto.slice(COOKIE.length + 1).split('.');
-  if (!exp || !assinatura || Number(exp) < Date.now()) return false;
-  return iguais(assinatura, assinar(exp));
+  const [exp, usuario, assinatura] = bruto.slice(COOKIE.length + 1).split('.');
+  if (!exp || !usuario || !assinatura || Number(exp) < Date.now()) return false;
+  if (!USUARIOS().includes(usuario)) return false;
+  return iguais(assinatura, assinar(`${exp}.${usuario}`));
 };
 
 /* Limite simples de tentativas de senha por IP. */

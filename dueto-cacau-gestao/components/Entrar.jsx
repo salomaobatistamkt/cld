@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { entrar, useNuvem } from '@/lib/nuvem';
 
 export function Entrar() {
+  const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
   const [enviando, setEnviando] = useState(false);
@@ -12,7 +13,7 @@ export function Entrar() {
     setErro('');
     setEnviando(true);
     try {
-      await entrar(senha);
+      await entrar(usuario, senha);
     } catch (err) {
       setErro(err.message);
     } finally {
@@ -25,17 +26,21 @@ export function Entrar() {
       <form className="entrar-cartao" onSubmit={enviar}>
         <div className="hero-marca" role="img" aria-label="Dueto CaCau" />
         <h1>Dueto CaCau</h1>
-        <p>Gestão da confeitaria. Digite a senha para entrar.</p>
+        <p>Gestão da confeitaria. Entre com seu nome e a senha.</p>
         {status === 'erro' ? (
           <div className="faixa-aviso"><div>{mensagem}</div></div>
         ) : (
           <>
             <label className="campo">
+              <span>Usuário</span>
+              <input id="usuario" type="text" autoComplete="username" autoCapitalize="none" placeholder="salomão ou elizandra" value={usuario} onChange={(e) => setUsuario(e.target.value)} autoFocus />
+            </label>
+            <label className="campo">
               <span>Senha</span>
-              <input id="senha" type="password" autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} autoFocus />
+              <input id="senha" type="password" autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} />
             </label>
             {erro ? <div className="entrar-erro" role="alert">{erro}</div> : null}
-            <button type="submit" className="btn primario" disabled={enviando || !senha}>{enviando ? 'Entrando…' : 'Entrar'}</button>
+            <button type="submit" className="btn primario" disabled={enviando || !usuario || !senha}>{enviando ? 'Entrando…' : 'Entrar'}</button>
           </>
         )}
       </form>

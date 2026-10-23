@@ -132,8 +132,8 @@ export const iniciarNuvem = async () => {
   }
 };
 
-export const entrar = async (senha) => {
-  const r = await chamar('/api/sessao', { method: 'POST', body: JSON.stringify({ senha }) });
+export const entrar = async (usuario, senha) => {
+  const r = await chamar('/api/sessao', { method: 'POST', body: JSON.stringify({ usuario, senha }) });
   if (!r.ok) throw new Error(r.corpo?.erro || 'Não foi possível entrar.');
   await iniciarNuvem();
 };

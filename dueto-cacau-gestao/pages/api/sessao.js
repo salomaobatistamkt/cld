@@ -1,4 +1,4 @@
-import { apagarCookie, autenticado, criarCookie, ipDe, podeTentar, registrarFalha, senhaConfigurada, senhaCorreta } from '@/lib/servidor';
+import { apagarCookie, autenticado, criarCookie, ipDe, podeTentar, registrarFalha, senhaConfigurada, senhaCorreta, usuarioValido } from '@/lib/servidor';
 
 export default function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -13,11 +13,13 @@ export default function handler(req, res) {
   if (req.method === 'POST') {
     const ip = ipDe(req);
     if (!podeTentar(ip)) return res.status(429).json({ erro: 'Muitas tentativas. Aguarde um minuto e tente de novo.' });
-    if (!senhaCorreta(req.body?.senha)) {
+    const usuario = usuarioValido(req.body?.usuario);
+    // a mesma mensagem para usuário ou senha errados, para não revelar quem existe
+    if (!usuario || !senhaCorreta(req.body?.senha)) {
       registrarFalha(ip);
-      return res.status(401).json({ erro: 'Senha incorreta.' });
+      return res.status(401).json({ erro: 'Usuário ou senha incorretos.' });
     }
-    res.setHeader('Set-Cookie', criarCookie());
+    res.setHeader('Set-Cookie', criarCookie(usuario));
     return res.status(200).json({ autenticado: true });
   }
   res.setHeader('Allow', 'GET, POST, DELETE');

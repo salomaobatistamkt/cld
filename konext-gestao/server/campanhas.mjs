@@ -51,6 +51,8 @@ const resumoTargeting = (t) => {
   const interesses = (t.flexible_spec || []).reduce((soma, f) => soma + Object.values(f).reduce((s, v) => s + (Array.isArray(v) ? v.length : 0), 0), 0) + (t.interests?.length || 0);
   if (interesses) partes.push(`${interesses} interesse(s)/comportamento(s)`);
   if (t.custom_audiences?.length) partes.push(`${t.custom_audiences.length} público(s) personalizado(s)`);
+  if ((t.flexible_spec || []).length > 1) partes.push(`${t.flexible_spec.length} grupos de interesse cruzados`);
+  if (t.excluded_custom_audiences?.length) partes.push(`excluindo ${t.excluded_custom_audiences.length} público(s)`);
   return partes.join(' · ');
 };
 
@@ -664,6 +666,77 @@ export const criarCampanhas = ({ db, graph, graphEnviar, ErroMeta, normalizarCon
   const nomeConta = (act) => act;
   const centavos = (valor) => Math.round(Number(valor) * 100);
 
+  // Junta vários públicos num targeting só, do jeito que a Meta permite num conjunto:
+  // - personalizados incluídos somam (pessoa em qualquer um deles); excluídos ficam de fora;
+  // - públicos salvos: “cruzar” exige todos os grupos de interesse (restringe), “somar” aceita qualquer um;
+  // - localização e idade dos salvos são juntadas (união de lugares, faixa de idade mais ampla).
+  const combinarPublicos = (incluidos, excluidos, combinacao) => {
+    const avisos = [];
+    const salvos = incluidos.filter((p) => p.tipo === 'salvo' && p.targeting);
+    const personalizados = incluidos.filter((p) => p.tipo !== 'salvo');
+    const copia = (x) => JSON.parse(JSON.stringify(x || {}));
+    let t;
+    if (!salvos.length) {
+      t = { geo_locations: { countries: ['BR'] }, age_min: 18, age_max: 65 };
+      avisos.push('sem público salvo, vai com localização Brasil e idade 18–65 (a Meta exige localização).');
+    } else {
+      t = copia(salvos[0].targeting);
+      for (const s of salvos.slice(1)) {
+        const o = copia(s.targeting);
+        // Localização: união dos lugares de cada público.
+        const g = t.geo_locations || {};
+        for (const [k, v] of Object.entries(o.geo_locations || {})) {
+          if (Array.isArray(v)) {
+            const chave = (x) => (typeof x === 'object' ? x.key || x.name || JSON.stringify(x) : x);
+            const mapa = new Map([...(Array.isArray(g[k]) ? g[k] : []), ...v].map((x) => [chave(x), x]));
+            g[k] = [...mapa.values()];
+          } else if (g[k] === undefined) g[k] = v;
+        }
+        t.geo_locations = g;
+        if (o.age_min !== undefined) t.age_min = Math.min(t.age_min ?? 18, o.age_min);
+        if (o.age_max !== undefined) t.age_max = Math.max(t.age_max ?? 65, o.age_max);
+        // Gênero: se algum público vale para todos, o conjunto vale para todos.
+        if (!Array.isArray(t.genders) || !Array.isArray(o.genders)) delete t.genders;
+        else t.genders = [...new Set([...t.genders, ...o.genders])];
+        // Interesses/comportamentos.
+        const fa = Array.isArray(t.flexible_spec) ? t.flexible_spec : [];
+        const fb = Array.isArray(o.flexible_spec) ? o.flexible_spec : [];
+        if (combinacao === 'cruzar') t.flexible_spec = [...fa, ...fb];
+        else {
+          const grupo = {};
+          for (const gr of [...fa, ...fb])
+            for (const [k, v] of Object.entries(gr || {})) {
+              if (!Array.isArray(v)) continue;
+              const mapa = new Map([...(grupo[k] || []), ...v].map((x) => [x.id || JSON.stringify(x), x]));
+              grupo[k] = [...mapa.values()];
+            }
+          t.flexible_spec = Object.keys(grupo).length ? [grupo] : [];
+        }
+        if (!t.flexible_spec.length) delete t.flexible_spec;
+        // Exclusões detalhadas e públicos já embutidos no salvo: soma.
+        for (const k of ['custom_audiences', 'excluded_custom_audiences']) {
+          const m = new Map([...(t[k] || []), ...(o[k] || [])].map((x) => [x.id, x]));
+          if (m.size) t[k] = [...m.values()];
+        }
+        if (o.exclusions) {
+          const ex = t.exclusions || {};
+          for (const [k, v] of Object.entries(o.exclusions)) if (Array.isArray(v)) ex[k] = [...new Map([...(ex[k] || []), ...v].map((x) => [x.id || JSON.stringify(x), x])).values()];
+          t.exclusions = ex;
+        }
+      }
+      if (salvos.length > 1) avisos.push(`${salvos.length} públicos salvos ${combinacao === 'cruzar' ? 'cruzados (a pessoa precisa ter os interesses de todos)' : 'somados (basta ter os interesses de um)'}; localizações juntadas e idade de ${t.age_min ?? 18} a ${t.age_max ?? 65}.`);
+    }
+    if (personalizados.length) {
+      const m = new Map([...(t.custom_audiences || []), ...personalizados.map((p) => ({ id: p.id }))].map((x) => [x.id, x]));
+      t.custom_audiences = [...m.values()];
+    }
+    if (excluidos.length) {
+      const m = new Map([...(t.excluded_custom_audiences || []), ...excluidos.map((p) => ({ id: p.id }))].map((x) => [x.id, x]));
+      t.excluded_custom_audiences = [...m.values()];
+    }
+    return { targeting: t, avisos };
+  };
+
   const validarPlano = async (entrada) => {
     const problemas = [];
     const { cliente, act, conta } = await contaDoCliente(String(entrada.clienteId || ''));
@@ -726,9 +799,24 @@ export const criarCampanhas = ({ db, graph, graphEnviar, ErroMeta, normalizarCon
       const midia = lerMidia(String(item.midiaId || ''));
       if (!midia || midia.status !== 'pronta') throw new ErroMeta(`Criativo ${n}: arquivo não encontrado ou incompleto.`, 409);
       if (midia.cliente_id && midia.cliente_id !== cliente.id) throw new ErroMeta(`Criativo ${n} (“${midia.nome}”) pertence a outro cliente. Bloqueado.`, 409);
-      const publico = porId.get(String(item.publicoId || ''));
-      if (!publico) throw new ErroMeta(`Criativo ${n}: o público escolhido não existe mais nesta conta (ou o token não tem acesso). Escolha outro.`, 409);
-      if (!publico.disponivel) throw new ErroMeta(`Criativo ${n}: o público “${publico.nome}” não pode ser usado (${publico.restricao}).`, 409);
+      // Vários públicos por conjunto: incluídos (salvos e/ou personalizados) e excluídos.
+      const idsIncluir = [...new Set((Array.isArray(item.publicoIds) ? item.publicoIds : [item.publicoId]).map((x) => String(x || '')).filter(Boolean))];
+      const idsExcluir = [...new Set((Array.isArray(item.excluirIds) ? item.excluirIds : []).map((x) => String(x || '')).filter(Boolean))];
+      if (!idsIncluir.length) throw new ErroMeta(`Criativo ${n}: escolha pelo menos um público.`, 400);
+      const buscar = (id) => {
+        const p = porId.get(id);
+        if (!p) throw new ErroMeta(`Criativo ${n}: um dos públicos escolhidos não existe mais nesta conta (ou o token não tem acesso). Atualize os públicos.`, 409);
+        if (!p.disponivel) throw new ErroMeta(`Criativo ${n}: o público “${p.nome}” não pode ser usado (${p.restricao}).`, 409);
+        return p;
+      };
+      const incluidos = idsIncluir.map(buscar);
+      const excluidos = idsExcluir.map(buscar);
+      if (excluidos.some((p) => p.tipo !== 'personalizado')) throw new ErroMeta(`Criativo ${n}: só dá para excluir públicos personalizados (a Meta não exclui públicos salvos).`, 400);
+      if (idsExcluir.some((id) => idsIncluir.includes(id))) throw new ErroMeta(`Criativo ${n}: o mesmo público está incluído e excluído.`, 400);
+      const combinacao = item.combinacao === 'somar' ? 'somar' : 'cruzar';
+      const { targeting, avisos: avisosPublico } = combinarPublicos(incluidos, excluidos, combinacao);
+      for (const a of avisosPublico) problemas.push(`Criativo ${n}: ${a}`);
+      const publico = incluidos.length === 1 ? incluidos[0] : { id: idsIncluir.join('+'), nome: incluidos.map((p) => p.nome).join(' + '), tipo: 'combinado', categoria: incluidos[0].categoria };
       const nomeConjunto = String(item.nomeConjunto || '').trim().slice(0, 250);
       const nomeAnuncio = String(item.nomeAnuncio || '').trim().slice(0, 250);
       if (!nomeConjunto || !nomeAnuncio) throw new ErroMeta(`Criativo ${n}: falta o nome do conjunto ou do anúncio.`, 400);
@@ -736,17 +824,15 @@ export const criarCampanhas = ({ db, graph, graphEnviar, ErroMeta, normalizarCon
       nomesAnuncio.add(nomeAnuncio);
       const valor = Number(item.valor);
       if (modo === 'conjunto' && !(valor > 0)) throw new ErroMeta(`Criativo ${n}: informe o orçamento diário do conjunto.`, 400);
-      const targeting =
-        publico.tipo === 'salvo'
-          ? publico.targeting
-          : { custom_audiences: [{ id: publico.id }], geo_locations: { countries: ['BR'] }, age_min: 18, age_max: 65 };
-      if (publico.tipo === 'personalizado') problemas.push(`Criativo ${n}: público personalizado “${publico.nome}” vai com localização Brasil e idade 18–65 (a Meta exige localização).`);
       return {
         n,
         midiaId: midia.id,
         midiaNome: midia.nome,
         midiaTipo: midia.tipo,
         publico: { id: publico.id, nome: publico.nome, tipo: publico.tipo, categoria: publico.categoria },
+        publicos: incluidos.map((p) => ({ id: p.id, nome: p.nome, tipo: p.tipo })),
+        excluidos: excluidos.map((p) => ({ id: p.id, nome: p.nome })),
+        combinacao,
         targeting,
         nomeConjunto,
         nomeAnuncio,

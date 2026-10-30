@@ -124,7 +124,7 @@ export type EntradaPlano = {
   texto: string;
   titulo: string;
   orcamento: { modo: ModoOrcamento; valor?: number; inicio?: string; fim?: string };
-  itens: Array<{ midiaId: string; publicoId: string; nomeConjunto: string; nomeAnuncio: string; valor?: number }>;
+  itens: Array<{ midiaId: string; publicoIds: string[]; excluirIds: string[]; combinacao: 'cruzar' | 'somar'; nomeConjunto: string; nomeAnuncio: string; valor?: number }>;
 };
 
 export type PlanoRevisado = {

@@ -3788,3 +3788,16 @@ button.cartao-midia {
 .campo-digitado { background: #ffffff; border-radius: 20px; padding: 9px 14px; color: #111b21; box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1); }
 .modelo-mensagem > .previa-whats { max-width: 320px; }
 @media (max-width: 720px) { .editor-modelo { grid-template-columns: 1fr; } }
+
+/* Vários públicos por conjunto */
+.chips-publicos { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.chip-publico { display: inline-flex; align-items: center; gap: 6px; padding: 5px 6px 5px 11px; border-radius: 999px; background: var(--accent-soft); border: 1px solid var(--border-strong); font-size: 12.5px; font-weight: 600; max-width: 100%; }
+.chip-publico.excluido { background: rgba(248, 113, 113, 0.12); border-color: rgba(248, 113, 113, 0.4); text-decoration: line-through; text-decoration-color: rgba(248, 113, 113, 0.7); }
+.chip-publico button { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; border: 0; background: transparent; color: var(--text-3); cursor: pointer; }
+.chip-publico button:hover { background: var(--surface-hover); color: var(--text); }
+.combinacao-publicos { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; font-size: 12.5px; color: var(--text-2); }
+.combinacao-publicos label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.campos-item .campo-publicos { grid-column: 1 / -1; }
+.campo-publicos select { max-width: 520px; }
+.combinacao-publicos input[type='radio'] { width: auto; height: auto; min-height: 0; margin: 0; flex-shrink: 0; }
+.combinacao-publicos { flex-direction: row; flex-wrap: wrap; gap: 6px 18px; }

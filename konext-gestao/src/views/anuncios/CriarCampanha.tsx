@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, Pencil, Plus, ChevronLeft, ChevronRight, FolderOpen, Image as IconeImagem, Megaphone, MessageCircle, RefreshCw, Rocket, Trash2, Upload, Video } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Pencil, Plus, X, ChevronLeft, ChevronRight, FolderOpen, Image as IconeImagem, Megaphone, MessageCircle, RefreshCw, Rocket, Trash2, Upload, Video } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Modal, Vazio } from '@/components/ui';
@@ -26,7 +26,7 @@ import { formatarMoeda } from '@/lib/util';
 import { AvisoSoServidor } from './Diagnostico';
 import { EditorModeloMensagem, type ModeloKonext, PreviaWhatsApp } from './ModeloMensagem';
 
-type Item = { chave: string; midia: Midia; publicoId: string; nomeConjunto: string; nomeConjuntoManual: boolean; nomeAnuncio: string; valor: string };
+type Item = { chave: string; midia: Midia; publicoIds: string[]; excluirIds: string[]; combinacao: 'cruzar' | 'somar'; nomeConjunto: string; nomeConjuntoManual: boolean; nomeAnuncio: string; valor: string };
 type Envio = { chave: string; nome: string; fracao: number; erro?: string };
 
 const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -249,7 +249,9 @@ export const CriarCampanha = () => {
         ...novas.map((m, i) => ({
           chave: `${m.id}-${Date.now()}-${i}`,
           midia: m,
-          publicoId: '',
+          publicoIds: [],
+          excluirIds: [],
+          combinacao: 'cruzar' as const,
           nomeConjunto: nomesConjunto[0] ?? '✅CJ',
           nomeConjuntoManual: false,
           nomeAnuncio: '',
@@ -273,16 +275,22 @@ export const CriarCampanha = () => {
   };
 
   const atualizarItem = (chave: string, mudanca: Partial<Item>) => setItens((lista) => lista.map((it) => (it.chave === chave ? { ...it, ...mudanca } : it)));
+  // Vários públicos por conjunto: adicionar inclui (sem tirar os que já estão); excluir é separado.
   const escolherPublico = (chaves: string[], publicoId: string) => {
     const p = publicos?.find((x) => x.id === publicoId);
     setItens((lista) =>
       lista.map((it) => {
-        if (!chaves.includes(it.chave)) return it;
-        const sugerido = p ? nomeConjuntoSugerido(p.categoria, nomesConjunto) : undefined;
-        return { ...it, publicoId, nomeConjunto: !it.nomeConjuntoManual && sugerido ? sugerido : it.nomeConjunto };
+        if (!chaves.includes(it.chave) || it.publicoIds.includes(publicoId)) return it;
+        const primeiro = it.publicoIds.length === 0;
+        const sugerido = p && primeiro ? nomeConjuntoSugerido(p.categoria, nomesConjunto) : undefined;
+        return { ...it, publicoIds: [...it.publicoIds, publicoId], excluirIds: it.excluirIds.filter((x) => x !== publicoId), nomeConjunto: !it.nomeConjuntoManual && sugerido ? sugerido : it.nomeConjunto };
       }),
     );
   };
+  const excluirPublico = (chaves: string[], publicoId: string) =>
+    setItens((lista) => lista.map((it) => (!chaves.includes(it.chave) || it.excluirIds.includes(publicoId) ? it : { ...it, excluirIds: [...it.excluirIds, publicoId], publicoIds: it.publicoIds.filter((x) => x !== publicoId) })));
+  const tirarPublico = (chave: string, publicoId: string) =>
+    setItens((lista) => lista.map((it) => (it.chave !== chave ? it : { ...it, publicoIds: it.publicoIds.filter((x) => x !== publicoId), excluirIds: it.excluirIds.filter((x) => x !== publicoId) })));
 
   const entrada = (): EntradaPlano => ({
     clienteId,
@@ -296,7 +304,9 @@ export const CriarCampanha = () => {
     orcamento: { modo, valor: modo === 'conjunto' ? undefined : Number(valorCampanha.replace(',', '.')), inicio: inicio || undefined, fim: fim || undefined },
     itens: itens.map((it) => ({
       midiaId: it.midia.id,
-      publicoId: it.publicoId,
+      publicoIds: it.publicoIds,
+      excluirIds: it.excluirIds,
+      combinacao: it.combinacao,
       nomeConjunto: it.nomeConjunto,
       nomeAnuncio: it.nomeAnuncio,
       valor: modo === 'conjunto' ? Number(it.valor.replace(',', '.')) : undefined,
@@ -340,7 +350,7 @@ export const CriarCampanha = () => {
   ].filter(Boolean) as string[];
   const faltaEtapa2 = [
     !itens.length && 'Adicione pelo menos um criativo.',
-    itens.some((it) => !it.publicoId) && 'Escolha o público de cada conjunto.',
+    itens.some((it) => !it.publicoIds.length) && 'Escolha pelo menos um público em cada conjunto.',
     modo === 'conjunto' && itens.some((it) => !(Number(it.valor.replace(',', '.')) > 0)) && 'Informe o orçamento diário de cada conjunto.',
     envios.some((e) => !e.erro) && 'Espere os envios terminarem.',
   ].filter(Boolean) as string[];
@@ -722,8 +732,8 @@ export const CriarCampanha = () => {
           {marcados.length ? (
             <div className="barra-lote">
               <b>{marcados.length} selecionado(s):</b>
-              <select aria-label="Aplicar público" value="" onChange={(e) => e.target.value && escolherPublico(marcados, e.target.value)}>
-                <option value="">Aplicar público…</option>
+              <select aria-label="Adicionar público" value="" onChange={(e) => e.target.value && escolherPublico(marcados, e.target.value)}>
+                <option value="">Adicionar público…</option>
                 {publicosPorCategoria.map(([categoria, lista]) => (
                   <optgroup key={categoria} label={categoria}>
                     {lista.filter((p) => p.disponivel).map((p) => (
@@ -734,6 +744,17 @@ export const CriarCampanha = () => {
                   </optgroup>
                 ))}
               </select>
+              <select aria-label="Excluir público" value="" onChange={(e) => e.target.value && excluirPublico(marcados, e.target.value)}>
+                <option value="">Excluir público…</option>
+                {(publicos || []).filter((p) => p.disponivel && p.tipo === 'personalizado').map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nome}
+                  </option>
+                ))}
+              </select>
+              <button type="button" className="btn fantasma pequeno" onClick={() => setItens((l) => l.map((it) => (marcados.includes(it.chave) ? { ...it, publicoIds: [], excluirIds: [] } : it)))}>
+                Limpar públicos
+              </button>
               <select
                 aria-label="Aplicar nome de conjunto"
                 value=""
@@ -780,7 +801,9 @@ export const CriarCampanha = () => {
                 <input type="checkbox" checked={marcados.length === itens.length} onChange={(e) => setMarcados(e.target.checked ? itens.map((i) => i.chave) : [])} /> Selecionar todos
               </label>
               {itens.map((it, indice) => {
-                const publico = publicos?.find((p) => p.id === it.publicoId);
+                const incluidos = it.publicoIds.map((id) => publicos?.find((p) => p.id === id)).filter((p): p is Publico => Boolean(p));
+                const excluidos = it.excluirIds.map((id) => publicos?.find((p) => p.id === id)).filter((p): p is Publico => Boolean(p));
+                const salvosNoItem = incluidos.filter((p) => p.tipo === 'salvo').length;
                 return (
                   <div key={it.chave} className={`item-campanha${marcados.includes(it.chave) ? ' marcado' : ''}`}>
                     <input
@@ -799,29 +822,74 @@ export const CriarCampanha = () => {
                       <div className="vinculo">
                         Conjunto {indice + 1} → anúncio <b>{it.nomeAnuncio}</b>
                       </div>
-                      <label className="campo">
-                        <span>Público</span>
-                        <select value={it.publicoId} onChange={(e) => escolherPublico([it.chave], e.target.value)}>
-                          <option value="">Escolha o público…</option>
+                      <div className="campo campo-publicos">
+                        <span>Públicos incluídos</span>
+                        {incluidos.length ? (
+                          <div className="chips-publicos">
+                            {incluidos.map((p) => (
+                              <span key={p.id} className="chip-publico" title={`${p.tipoTexto} · ID ${p.id}${p.resumo ? ` · ${p.resumo}` : ''}${p.tamanho ? ` · ${p.tamanho} pessoas` : ''}`}>
+                                {p.nome}
+                                <button type="button" aria-label={`Tirar ${p.nome}`} onClick={() => tirarPublico(it.chave, p.id)}>
+                                  <X size={12} />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                        <select value="" onChange={(e) => e.target.value && escolherPublico([it.chave], e.target.value)} aria-label="Adicionar público">
+                          <option value="">{incluidos.length ? '+ Adicionar outro público…' : 'Escolha o público…'}</option>
                           {publicosPorCategoria.map(([categoria, lista]) => (
                             <optgroup key={categoria} label={categoria}>
-                              {lista.map((p) => (
-                                <option key={p.id} value={p.id} disabled={!p.disponivel}>
-                                  {p.nome}
-                                  {p.disponivel ? '' : ' (indisponível)'}
-                                </option>
-                              ))}
+                              {lista
+                                .filter((p) => !it.publicoIds.includes(p.id) && !it.excluirIds.includes(p.id))
+                                .map((p) => (
+                                  <option key={p.id} value={p.id} disabled={!p.disponivel}>
+                                    {p.nome}
+                                    {p.disponivel ? '' : ' (indisponível)'}
+                                  </option>
+                                ))}
                             </optgroup>
                           ))}
                         </select>
-                        {publico ? (
-                          <small>
-                            {publico.tipoTexto} · ID {publico.id}
-                            {publico.resumo ? ` · ${publico.resumo}` : ''}
-                            {publico.tamanho ? ` · ${publico.tamanho} pessoas` : ''}
-                          </small>
+                        {incluidos.length > 1 ? (
+                          <small>Públicos personalizados incluídos somam: entra quem estiver em qualquer um deles.</small>
                         ) : null}
-                      </label>
+                        {salvosNoItem > 1 ? (
+                          <div className="combinacao-publicos" role="radiogroup" aria-label="Como combinar os públicos salvos">
+                            <label>
+                              <input type="radio" checked={it.combinacao === 'cruzar'} onChange={() => atualizarItem(it.chave, { combinacao: 'cruzar' })} /> Cruzar: a pessoa precisa se encaixar em todos (restringe)
+                            </label>
+                            <label>
+                              <input type="radio" checked={it.combinacao === 'somar'} onChange={() => atualizarItem(it.chave, { combinacao: 'somar' })} /> Somar: basta se encaixar em um (amplia)
+                            </label>
+                          </div>
+                        ) : null}
+                      </div>
+                      <div className="campo campo-publicos">
+                        <span>Excluir públicos (opcional)</span>
+                        {excluidos.length ? (
+                          <div className="chips-publicos">
+                            {excluidos.map((p) => (
+                              <span key={p.id} className="chip-publico excluido">
+                                {p.nome}
+                                <button type="button" aria-label={`Não excluir ${p.nome}`} onClick={() => tirarPublico(it.chave, p.id)}>
+                                  <X size={12} />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                        <select value="" onChange={(e) => e.target.value && excluirPublico([it.chave], e.target.value)} aria-label="Excluir público">
+                          <option value="">+ Excluir um público personalizado…</option>
+                          {(publicos || [])
+                            .filter((p) => p.tipo === 'personalizado' && p.disponivel && !it.publicoIds.includes(p.id) && !it.excluirIds.includes(p.id))
+                            .map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.nome}
+                              </option>
+                            ))}
+                        </select>
+                      </div>
                       <label className="campo">
                         <span>Nome do conjunto</span>
                         <input list="nomes-conjunto" value={it.nomeConjunto} onChange={(e) => atualizarItem(it.chave, { nomeConjunto: e.target.value, nomeConjuntoManual: true })} />

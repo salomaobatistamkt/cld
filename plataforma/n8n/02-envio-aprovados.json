@@ -1,0 +1,70 @@
+{
+  "name": "Meridia · envio dos aprovados",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 30
+            }
+          ]
+        }
+      },
+      "id": "1bd7f9c1-b8c7-4290-beec-b62ce7b3e054",
+      "name": "A cada 30 minutos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://SEU-DOMINIO/api/admin/jobs/dispatch",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "8fa6d523-b884-40ae-b401-05fa1ba08133",
+      "name": "Enviar aprovados",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Meridia ADMIN_TOKEN"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "A cada 30 minutos": {
+      "main": [
+        [
+          {
+            "node": "Enviar aprovados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "meta": {
+    "description": "Importe no n8n, crie a credencial Header Auth (Authorization = Bearer <ADMIN_TOKEN>) e troque SEU-DOMINIO."
+  }
+}

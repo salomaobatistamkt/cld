@@ -1,0 +1,28 @@
+name = "meridia"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+
+# Front-end (site público + painel) servido como arquivos estáticos
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "none"
+run_worker_first = false
+
+[[d1_databases]]
+binding = "DB"
+database_name = "meridia"
+database_id = "00000000-0000-0000-0000-000000000000" # substituir após `wrangler d1 create meridia`
+migrations_dir = "migrations"
+
+# Agendamentos nativos (opcional — o n8n pode chamar os mesmos jobs via HTTP)
+# [triggers]
+# crons = ["0 */6 * * *"]
+
+[vars]
+APP_ENV = "local"
+# Segredos (não versionar): use `wrangler secret put NOME` em produção ou .dev.vars localmente
+#   ADMIN_TOKEN            — token do painel e dos jobs chamados pelo n8n
+#   TRAVELPAYOUTS_TOKEN    — token da Data API (Travelpayouts)
+#   TRAVELPAYOUTS_MARKER   — seu marker de afiliado
+#   TELEGRAM_BOT_TOKEN     — bot que publica nos canais

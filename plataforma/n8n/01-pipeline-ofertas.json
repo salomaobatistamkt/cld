@@ -1,0 +1,289 @@
+{
+  "name": "Meridia · pipeline de ofertas",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "e468ec98-1258-4857-a81c-16a123deaae1",
+      "name": "A cada 6 horas",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://SEU-DOMINIO/api/admin/jobs/collect",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "80e9c310-6920-483b-a8d0-d0744bd49ce9",
+      "name": "1. Coletar preços",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Meridia ADMIN_TOKEN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://SEU-DOMINIO/api/admin/jobs/detect",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "376bd7d2-7bf3-4ee7-979d-ce78a87ee218",
+      "name": "2. Detectar oportunidades",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Meridia ADMIN_TOKEN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://SEU-DOMINIO/api/admin/jobs/verify",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "662e5157-a373-4b56-ae5e-2afe052de4c8",
+      "name": "3. Reverificar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Meridia ADMIN_TOKEN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://SEU-DOMINIO/api/admin/jobs/expire",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "38966ee4-5117-4398-9ed2-0d04801f245a",
+      "name": "4. Expirar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Meridia ADMIN_TOKEN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://SEU-DOMINIO/api/admin/jobs/compose",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "e696d393-16b2-4b43-804a-f1a86f9f52da",
+      "name": "5. Montar rascunhos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Meridia ADMIN_TOKEN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "1467fd6f-bdd3-484a-b5d8-15de8c858a1f",
+              "leftValue": "={{ $json.created }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "80059a5b-4026-4943-aebd-875fc4ca570b",
+      "name": "Há rascunhos novos?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "SEU_CHAT_ID_ADMIN",
+        "text": "={{ $json.created }} posts novos aguardando aprovação no painel: https://SEU-DOMINIO/admin/#publicacoes",
+        "additionalFields": {}
+      },
+      "id": "55c623ca-934c-4f86-a5d6-c180f70225f8",
+      "name": "Avisar aprovação pendente",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1540,
+        -80
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Bot Meridia"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "A cada 6 horas": {
+      "main": [
+        [
+          {
+            "node": "1. Coletar preços",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1. Coletar preços": {
+      "main": [
+        [
+          {
+            "node": "2. Detectar oportunidades",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Detectar oportunidades": {
+      "main": [
+        [
+          {
+            "node": "3. Reverificar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Reverificar": {
+      "main": [
+        [
+          {
+            "node": "4. Expirar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Expirar": {
+      "main": [
+        [
+          {
+            "node": "5. Montar rascunhos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5. Montar rascunhos": {
+      "main": [
+        [
+          {
+            "node": "Há rascunhos novos?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Há rascunhos novos?": {
+      "main": [
+        [
+          {
+            "node": "Avisar aprovação pendente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "meta": {
+    "description": "Importe no n8n, crie a credencial Header Auth (Authorization = Bearer <ADMIN_TOKEN>) e troque SEU-DOMINIO."
+  }
+}

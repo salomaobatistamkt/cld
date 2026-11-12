@@ -1,0 +1,102 @@
+{
+  "name": "Meridia · relatório diário",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "id": "2a5ec350-ae87-4057-bcf9-26ecf72748d9",
+      "name": "Todo dia às 8h (fuso do n8n)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://SEU-DOMINIO/api/admin/report",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "c6e7a58b-8832-482d-ace5-d0bd71b339f3",
+      "name": "Buscar relatório",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Meridia ADMIN_TOKEN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "SEU_CHAT_ID_ADMIN",
+        "text": "={{ $json.text }}",
+        "additionalFields": {}
+      },
+      "id": "22f30fc5-6f8c-4ee0-9c1a-61012f2080ed",
+      "name": "Mandar no Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        440,
+        0
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Bot Meridia"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Todo dia às 8h (fuso do n8n)": {
+      "main": [
+        [
+          {
+            "node": "Buscar relatório",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar relatório": {
+      "main": [
+        [
+          {
+            "node": "Mandar no Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "meta": {
+    "description": "Importe no n8n, crie a credencial Header Auth (Authorization = Bearer <ADMIN_TOKEN>) e troque SEU-DOMINIO."
+  }
+}

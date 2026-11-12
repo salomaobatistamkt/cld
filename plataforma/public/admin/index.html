@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Meridia · Painel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<div id="login" class="login" hidden>
+  <form id="login-form" class="login-card">
+    <p class="eyebrow">Meridia · painel</p>
+    <h1>Entrar</h1>
+    <label class="f">Token de acesso<input id="login-token" type="password" autocomplete="current-password" required></label>
+    <p class="small muted">No ambiente local o token é <span class="mono">dev-admin</span> (arquivo .dev.vars). Em produção, use um token forte e o Cloudflare Access.</p>
+    <button class="btn primary" type="submit">Entrar</button>
+  </form>
+</div>
+
+<div id="app" class="app" hidden>
+  <aside class="side">
+    <a class="brand" href="/"><span class="mark" aria-hidden="true"></span>Meridia</a>
+    <nav id="nav" aria-label="Seções do painel">
+      <p class="nav-g">Operação</p>
+      <a href="#visao-geral" data-v="visao-geral">Visão geral</a>
+      <a href="#oportunidades" data-v="oportunidades">Oportunidades</a>
+      <a href="#publicacoes" data-v="publicacoes">Publicações <span class="count" id="c-pub"></span></a>
+      <a href="#gerador" data-v="gerador">Gerador de posts</a>
+      <p class="nav-g">Configuração</p>
+      <a href="#rotas" data-v="rotas">Rotas monitoradas</a>
+      <a href="#canais" data-v="canais">Canais</a>
+      <a href="#parceiros" data-v="parceiros">Parceiros e afiliados</a>
+      <p class="nav-g">Resultados</p>
+      <a href="#comercial" data-v="comercial">Comercial</a>
+      <a href="#interessados" data-v="interessados">Interessados</a>
+      <p class="nav-g">Sistema</p>
+      <a href="#automacoes" data-v="automacoes">Integrações e automações</a>
+      <a href="#atividade" data-v="atividade">Atividade e erros</a>
+      <a href="#ajustes" data-v="ajustes">Ajustes</a>
+    </nav>
+    <div class="side-foot">
+      <span id="env-pill" class="pill neutral">local</span>
+      <button class="btn ghost sm" id="logout">Sair</button>
+    </div>
+  </aside>
+  <main id="view" class="view" tabindex="-1"></main>
+</div>
+
+<script type="module" src="/js/admin.js"></script>
+</body>
+</html>

@@ -7,6 +7,7 @@
     "db:migrate": "wrangler d1 migrations apply meridia --local",
     "db:migrate:remote": "wrangler d1 migrations apply meridia --remote",
     "build:geo": "node scripts/build-geo.mjs",
+    "build:browser": "node scripts/build-browser.mjs",
     "deploy": "wrangler deploy",
     "test": "node scripts/test.mjs"
   },
@@ -16,6 +17,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260702.1",
     "d3-geo": "^3.1.2",
+    "sql.js": "^1.10.3",
     "topojson-client": "^3.1.0",
     "typescript": "^7.0.2",
     "world-atlas": "^2.0.2",

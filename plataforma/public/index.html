@@ -3,125 +3,139 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Meridia · achados de viagem com dados reais</title>
-<meta name="description" content="Passagens, hospedagem e viagens completas com preço comparado ao histórico da rota.">
+<title>Meridia · passagens baratas saindo da sua cidade</title>
+<meta name="description" content="Todo dia procuramos passagens mais baratas que o normal saindo da sua cidade. Você compra direto no site do parceiro.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
 <link rel="stylesheet" href="/css/base.css">
 <link rel="stylesheet" href="/css/site.css">
 </head>
 <body>
+<a class="skip" href="#passo-cidade">Pular para a busca</a>
+
 <header class="top">
-  <div class="top-in">
-    <a class="brand" href="/" aria-label="Meridia, página inicial"><span class="mark" aria-hidden="true"></span>Meridia</a>
-    <nav aria-label="Principal">
-      <a href="#achados">Achados</a>
-      <a href="#pesquisar">Pesquisar</a>
-      <a href="#planejar">Planejar viagem</a>
-      <a href="#receber">Receber ofertas</a>
-    </nav>
-    <a class="btn sm" href="/admin/">Painel</a>
+  <div class="wrap top-in">
+    <a class="brand" href="/" aria-label="Meridia, início"><span class="mark" aria-hidden="true"></span>Meridia</a>
+    <div class="top-actions">
+      <button type="button" class="btn-text" id="font-btn" aria-pressed="false">A<span aria-hidden="true">+</span> <span class="hide-sm">Letra maior</span></button>
+      <a class="btn-text" href="#avisos"><span class="hide-sm">Receber no<a class="btn-text" href="#avisos">Receber no WhatsApp</a>nbsp;</span>WhatsApp</a>
+    </div>
   </div>
 </header>
 
-<main>
-  <!-- Explorar: globo + seleção hierárquica -->
-  <section class="explore" aria-labelledby="t-explore">
-    <div class="explore-panel">
-      <p class="eyebrow">Escolha de onde você sai</p>
-      <h1 id="t-explore">Achados de viagem saindo da sua cidade, comparados com o histórico de cada rota.</h1>
-      <ol class="crumbs" id="crumbs" aria-label="Seleção atual"></ol>
-      <div class="picker">
-        <input id="pick-filter" type="search" placeholder="Filtrar países" aria-label="Filtrar a lista">
-        <div id="pick-list" class="pick-list" role="list"></div>
+<main id="main">
+  <!-- PASSO 1: cidade -->
+  <section class="hero" aria-labelledby="t-hero">
+    <div class="wrap">
+      <h1 id="t-hero">Passagens baratas saindo da sua cidade</h1>
+      <p class="lead">Todo dia procuramos preços e mostramos só as passagens que estão <strong>mais baratas que o normal</strong>. Você compra direto no site da empresa parceira.</p>
+
+      <div class="step" id="passo-cidade">
+        <h2 class="step-q"><span class="step-n" aria-hidden="true">1</span> De onde você vai sair?</h2>
+
+        <div class="chosen" id="chosen" hidden>
+          <span>Saindo de <strong id="chosen-name"></strong></span>
+          <button type="button" class="btn-link" id="change-city">Trocar cidade</button>
+        </div>
+
+        <div id="city-pick">
+          <label class="big-label" for="city-input">Escreva o nome da sua cidade</label>
+          <div class="search-box">
+            <input id="city-input" type="text" autocomplete="off" inputmode="search" placeholder="Exemplo: Natal" aria-describedby="city-help" aria-controls="city-results" aria-expanded="false">
+            <ul id="city-results" class="suggest" role="listbox" hidden></ul>
+          </div>
+          <p id="city-help" class="help">Ou toque em uma das cidades abaixo:</p>
+          <div class="city-grid" id="city-grid"></div>
+          <p class="help"><button type="button" class="btn-link" id="open-map">Prefere procurar no mapa do mundo?</button></p>
+        </div>
       </div>
-      <div id="origin-cta" class="origin-cta" hidden></div>
     </div>
-    <div class="globe-wrap">
-      <canvas id="globe" aria-label="Globo interativo. Arraste para girar, use a roda ou pinça para aproximar, toque num país para selecionar."></canvas>
-      <div class="globe-tools">
-        <button class="btn sm" id="z-in" aria-label="Aproximar">+</button>
-        <button class="btn sm" id="z-out" aria-label="Afastar">−</button>
-        <button class="btn sm" id="z-reset">Ver o planeta</button>
+  </section>
+
+  <!-- PASSO 2: resultados -->
+  <section class="results" id="resultados" aria-labelledby="t-res" hidden>
+    <div class="wrap">
+      <h2 class="step-q"><span class="step-n" aria-hidden="true">2</span> <span id="t-res">Promoções</span></h2>
+
+      <div class="filters" role="group" aria-label="Filtrar promoções">
+        <fieldset class="seg">
+          <legend>Para onde?</legend>
+          <label><input type="radio" name="scope" value="" checked><span>Qualquer lugar</span></label>
+          <label><input type="radio" name="scope" value="nacional"><span>Pelo Brasil</span></label>
+          <label><input type="radio" name="scope" value="internacional"><span>Para fora do Brasil</span></label>
+        </fieldset>
+        <fieldset class="seg">
+          <legend>Quando?</legend>
+          <label><input type="radio" name="when" value="" checked><span>Qualquer data</span></label>
+          <label><input type="radio" name="when" value="45"><span>Próximo mês</span></label>
+          <label><input type="radio" name="when" value="100"><span>Próximos 3 meses</span></label>
+        </fieldset>
       </div>
-      <p class="globe-hint small muted">Arraste para girar · toque num país</p>
+
+      <p class="count" id="count" role="status" aria-live="polite"></p>
+      <div class="offers" id="offers"></div>
     </div>
   </section>
 
-  <!-- Achados -->
-  <section id="achados" class="band" aria-labelledby="t-achados">
-    <div class="band-head">
-      <div>
-        <p class="eyebrow">Painel de partidas</p>
-        <h2 id="t-achados">Achados publicados</h2>
-      </div>
-      <p class="small muted" id="achados-filter">Todas as origens</p>
+  <!-- Como funciona -->
+  <section class="how" aria-labelledby="t-how">
+    <div class="wrap">
+      <h2 id="t-how">Como funciona</h2>
+      <ol class="how-list">
+        <li><b>Você escolhe sua cidade.</b> Mostramos as passagens em promoção saindo dela.</li>
+        <li><b>Você vê o preço e as datas.</b> Dizemos quanto está mais barato que o normal e quando o preço foi visto.</li>
+        <li><b>Você compra no site do parceiro.</b> Nós não vendemos passagem e não cobramos nada de você.</li>
+      </ol>
     </div>
-    <div class="board" id="board" role="table" aria-label="Achados publicados"></div>
-    <p class="small muted legal">Cada achado mostra a data e a hora em que o preço foi visto. Preços mudam e não são garantidos. A classificação compara o preço com a mediana das consultas da mesma rota e duração; sem histórico suficiente, não damos selo.</p>
   </section>
 
-  <!-- Pesquisa -->
-  <section id="pesquisar" class="band" aria-labelledby="t-pesquisar">
-    <div class="band-head">
-      <div><p class="eyebrow">Passagens aéreas</p><h2 id="t-pesquisar">Pesquisar</h2></div>
+  <!-- Avisos -->
+  <section class="alerts" id="avisos" aria-labelledby="t-av">
+    <div class="wrap narrow">
+      <h2 id="t-av">Receba as promoções no seu WhatsApp</h2>
+      <p class="lead">Avisamos quando aparecer passagem barata saindo da sua cidade. Você pode sair quando quiser.</p>
+      <form id="sub-form" class="form" novalidate>
+        <label class="field"><span>Seu nome</span><input id="u-name" autocomplete="name"></label>
+        <label class="field"><span>Seu WhatsApp com DDD</span><input id="u-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(84) 99999-9999"></label>
+        <label class="field"><span>Sua cidade</span><input id="u-city" autocomplete="address-level2" placeholder="Exemplo: Natal"></label>
+        <label class="consent"><input id="u-consent" type="checkbox"><span>Aceito receber promoções de viagem por WhatsApp. Posso pedir para sair a qualquer momento.</span></label>
+        <button class="btn-big" type="submit">Quero receber</button>
+        <p class="form-msg" id="sub-msg" role="status" aria-live="polite"></p>
+      </form>
     </div>
-    <form id="search-form" class="form-row" autocomplete="off">
-      <label class="f grow">Origem<span><input id="s-origin" placeholder="Cidade ou código, ex.: Natal" required></span></label>
-      <label class="f grow">Destino<span><input id="s-dest" placeholder="Cidade ou código, ex.: Buenos Aires" required></span></label>
-      <label class="f">Ida<input id="s-depart" type="date" required></label>
-      <label class="f">Volta<input id="s-ret" type="date"></label>
-      <button class="btn primary" type="submit">Pesquisar</button>
-    </form>
-    <div id="search-out"></div>
-  </section>
-
-  <!-- Planejar -->
-  <section id="planejar" class="band" aria-labelledby="t-planejar">
-    <div class="band-head">
-      <div><p class="eyebrow">Viagem completa</p><h2 id="t-planejar">Planejar viagem</h2></div>
-    </div>
-    <form id="plan-form" class="form-row" autocomplete="off">
-      <label class="f grow">Origem<span><input id="p-origin" required></span></label>
-      <label class="f grow">Destino<span><input id="p-dest" required></span></label>
-      <label class="f">Ida<input id="p-depart" type="date" required></label>
-      <label class="f">Volta<input id="p-ret" type="date" required></label>
-      <label class="f narrow">Pessoas<input id="p-trav" type="number" min="1" max="9" value="1"></label>
-      <label class="f narrow">Diária hotel (R$)<input id="p-hotel" type="number" min="0" placeholder="opcional"></label>
-      <label class="f narrow">Diária carro (R$)<input id="p-car" type="number" min="0" placeholder="opcional"></label>
-      <button class="btn primary" type="submit">Montar</button>
-    </form>
-    <div id="plan-out"></div>
-  </section>
-
-  <!-- Receber ofertas -->
-  <section id="receber" class="band" aria-labelledby="t-receber">
-    <div class="band-head">
-      <div><p class="eyebrow">Alertas personalizados</p><h2 id="t-receber">Receber ofertas</h2></div>
-    </div>
-    <form id="sub-form" class="sub-grid" autocomplete="on">
-      <label class="f">Nome<input id="u-name" name="name"></label>
-      <label class="f">WhatsApp ou celular<input id="u-phone" name="tel" inputmode="tel" placeholder="(84) 9 9999-9999"></label>
-      <label class="f">E-mail<input id="u-email" type="email" name="email"></label>
-      <label class="f">Aeroporto de origem<span><input id="u-airport" placeholder="ex.: Natal"></span></label>
-      <label class="f">Destinos de interesse<input id="u-dests" placeholder="ex.: Lisboa, Buenos Aires, Nordeste"></label>
-      <label class="f">Até quanto quer pagar (R$)<input id="u-max" type="number" min="0"></label>
-      <label class="consent"><input id="u-consent" type="checkbox"> Autorizo o envio de ofertas de viagem pelos canais escolhidos. Posso cancelar quando quiser. Meus dados são usados só para isso.</label>
-      <div class="sub-actions"><button class="btn primary" type="submit">Quero receber</button><span id="sub-msg" class="small muted"></span></div>
-    </form>
   </section>
 </main>
 
 <footer class="foot">
-  <div class="foot-in">
-    <p><b>Meridia</b> (nome provisório) compara preços de parceiros e redireciona você para concluir a compra no site deles. Não emitimos passagens nem cobramos pagamentos.</p>
-    <p class="small muted">Links de afiliado: podemos receber comissão do parceiro, sem custo extra para você. Dados de aeroportos: OurAirports (domínio público). Mapa: Natural Earth.</p>
+  <div class="wrap">
+    <p><b>Meridia</b> mostra promoções encontradas em sites parceiros. Quem vende a passagem é o parceiro. Os preços mudam rápido: sempre confira antes de pagar.</p>
+    <p class="small">Quando você compra pelo nosso link, o parceiro pode nos pagar uma comissão. Você não paga nada a mais por isso.</p>
+    <p class="small"><a href="/admin/">Área do administrador</a></p>
   </div>
 </footer>
 
-<script src="/vendor/d3-array.min.js"></script>
-<script src="/vendor/d3-geo.min.js"></script>
-<script src="/vendor/topojson-client.min.js"></script>
+<!-- Detalhes da oferta -->
+<dialog id="offer-dlg" class="sheet" aria-labelledby="dlg-title">
+  <div class="sheet-in" id="dlg-body"></div>
+</dialog>
+
+<!-- Mapa (carregado só quando a pessoa pede) -->
+<dialog id="map-dlg" class="sheet sheet-wide" aria-labelledby="map-title">
+  <div class="sheet-in">
+    <div class="sheet-head">
+      <h2 id="map-title">Escolha no mapa</h2>
+      <button type="button" class="btn-close" data-close aria-label="Fechar o mapa">Fechar</button>
+    </div>
+    <p class="help" id="map-help">Toque em um país. Depois escolha o aeroporto na lista.</p>
+    <div class="map-grid">
+      <div class="globe-box"><canvas id="globe" aria-label="Mapa do mundo. Arraste para girar."></canvas>
+        <div class="globe-zoom"><button type="button" id="z-in" aria-label="Aproximar">+</button><button type="button" id="z-out" aria-label="Afastar">−</button></div>
+      </div>
+      <div class="map-list" id="map-list"></div>
+    </div>
+  </div>
+</dialog>
+
 <script type="module" src="/js/site.js"></script>
 </body>
 </html>

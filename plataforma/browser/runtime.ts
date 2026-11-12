@@ -65,7 +65,7 @@ async function boot() {
   const call = (method: string, path: string, body?: unknown) => worker.fetch(new Request("https://meridia.local" + path, {
     method, headers: { authorization: "Bearer dev-admin", "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined }), env, ctx);
   await call("POST", "/api/admin/demo/seed");
-  const opps = db.exec("SELECT id FROM opportunities WHERE score_label IN ('imperdivel','excelente','boa') ORDER BY id LIMIT 6")[0]?.values ?? [];
+  const opps = db.exec("SELECT id FROM opportunities WHERE score_label IN ('imperdivel','excelente','boa','competitivo') ORDER BY id")[0]?.values ?? [];
   for (const [id] of opps) await call("PATCH", `/api/admin/opportunities/${id}`, { status: "aprovada" });
   save();
 }

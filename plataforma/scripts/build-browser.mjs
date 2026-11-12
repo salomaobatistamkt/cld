@@ -15,8 +15,8 @@ await build({
   platform: "browser", target: "es2020", loader: { ".sql": "text" }, minify: true, logLevel: "error",
 });
 
-const banner = root => `<div class="demo-bar" role="note">Versão navegável de demonstração: roda no seu navegador e guarda os dados só nele. Preços são de EXEMPLO. <button type="button" onclick="meridiaReset()">Recomeçar do zero</button></div>`;
-const barCss = `<style>.demo-bar{background:var(--amber-soft);color:var(--fg);font-size:13px;padding:8px max(16px,env(safe-area-inset-left,0px));display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;text-align:center}.demo-bar button{font:inherit;font-size:12.5px;border:1px solid var(--amber);background:transparent;color:var(--amber);border-radius:4px;padding:2px 8px;cursor:pointer}</style>`;
+const banner = root => `<div class="demo-bar" role="note">Demonstração: os preços mostrados são de exemplo, não são reais. <button type="button" onclick="meridiaReset()">Recomeçar do zero</button></div>`;
+const barCss = `<style>.demo-bar{background:var(--amber-soft);color:var(--fg);font-size:15px;padding:8px max(16px,env(safe-area-inset-left,0px));display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;text-align:center}.demo-bar button{font:inherit;font-size:15px;border:2px solid var(--amber);background:transparent;color:var(--amber);border-radius:8px;padding:6px 12px;cursor:pointer}</style>`;
 
 function adapt(html, root, home, adminHref, isMain) {
   let s = html

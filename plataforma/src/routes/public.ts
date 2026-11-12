@@ -14,28 +14,62 @@ pub.get("/status", async c => {
   return c.json({ brand: s.brand_name, integrations: integrationStatus(c.env), now: nowIso() });
 });
 
+/** Achados publicados. Filtros: origin (um ou vários IATA separados por vírgula), region (UF de origem),
+ *  scope (nacional | internacional), destination (IATA), before (partida até a data). */
 pub.get("/opportunities", async c => {
-  const origin = c.req.query("origin");
+  const origins = (c.req.query("origin") ?? "").split(",").map(s => s.trim().toUpperCase()).filter(isIata);
   const region = c.req.query("region");
+  const scope = c.req.query("scope");
+  const dest = (c.req.query("destination") ?? "").toUpperCase();
+  const before = c.req.query("before");
   const limit = Math.min(Number(c.req.query("limit") ?? 24), 100);
+  const today = new Date().toISOString().slice(0, 10);
   const { results } = await c.env.DB.prepare(
     `SELECT id, origin, destination, depart_date, return_date, trip_days, price_cents, fare_type, includes_taxes, airline, transfers,
-            source, is_sample, score_label, percentile, median_cents, sample_size, savings_pct, observed_at, last_verified_at, status
-     FROM opportunities WHERE status IN ('aprovada','publicada') ${origin ? "AND origin = ?" : ""}
-     ORDER BY CASE score_label WHEN 'imperdivel' THEN 0 WHEN 'excelente' THEN 1 WHEN 'boa' THEN 2 ELSE 3 END, created_at DESC LIMIT ?`)
-    .bind(...(origin ? [origin, limit * 3] : [limit * 3])).all<any>();
-  let rows = results;
-  if (region) {
-    const ap = await airports(c.env);
-    rows = rows.filter(r => ap.get(r.origin)?.r === region);
-  }
-  return c.json({ items: rows.slice(0, limit).map(r => ({ ...r, label_text: LABEL_TEXT[r.score_label as keyof typeof LABEL_TEXT] })) });
+            source, is_sample, score_label, percentile, median_cents, sample_size, savings_pct, observed_at, last_verified_at, status, deeplink
+     FROM opportunities WHERE status IN ('aprovada','publicada') AND depart_date > ?
+       ${origins.length ? `AND origin IN (${origins.map(() => "?").join(",")})` : ""}
+       ${isIata(dest) ? "AND destination = ?" : ""}
+       ${isDate(before) ? "AND depart_date <= ?" : ""}
+     ORDER BY CASE score_label WHEN 'imperdivel' THEN 0 WHEN 'excelente' THEN 1 WHEN 'boa' THEN 2 ELSE 3 END, price_cents ASC LIMIT ?`)
+    .bind(today, ...origins, ...(isIata(dest) ? [dest] : []), ...(isDate(before) ? [before] : []), limit * 4).all<any>();
+  const ap = await airports(c.env);
+  let rows = results.map(r => {
+    const o = ap.get(r.origin), d = ap.get(r.destination);
+    return { ...r, deeplink: undefined, has_link: Boolean(r.deeplink),
+      origin_city: o?.c || r.origin, origin_region: o?.r ?? null, origin_country: o?.k ?? null,
+      destination_city: d?.c || r.destination, destination_region_name: d?.rn ?? null, destination_country: d?.k ?? null,
+      label_text: LABEL_TEXT[r.score_label as keyof typeof LABEL_TEXT] };
+  });
+  if (region) rows = rows.filter(r => r.origin_region === region);
+  if (scope === "nacional") rows = rows.filter(r => r.destination_country === r.origin_country);
+  if (scope === "internacional") rows = rows.filter(r => r.destination_country !== r.origin_country);
+  return c.json({ items: rows.slice(0, limit), total: rows.length, queried_at: nowIso() });
 });
 
 pub.get("/opportunities/:id", async c => {
   const o = await c.env.DB.prepare("SELECT * FROM opportunities WHERE id = ? AND status IN ('aprovada','publicada')").bind(c.req.param("id")).first<any>();
-  if (!o) return c.json({ error: "Oferta não encontrada ou não está mais ativa." }, 404);
-  return c.json({ ...o, label_text: LABEL_TEXT[o.score_label as keyof typeof LABEL_TEXT] });
+  if (!o) return c.json({ error: "Essa oferta já saiu do ar. Os preços mudam rápido." }, 404);
+  const ap = await airports(c.env);
+  const a = ap.get(o.origin), d = ap.get(o.destination);
+  return c.json({ ...o, origin_city: a?.c || o.origin, origin_airport: a?.n ?? null, destination_city: d?.c || o.destination,
+    destination_airport: d?.n ?? null, destination_country: d?.k ?? null, label_text: LABEL_TEXT[o.score_label as keyof typeof LABEL_TEXT] });
+});
+
+/** Ir para o parceiro: cria (ou reaproveita) o link rastreável do site e redireciona. */
+pub.get("/go/:id", async c => {
+  const db = c.env.DB;
+  const o = await db.prepare("SELECT id, deeplink, partner_id, status FROM opportunities WHERE id = ?").bind(c.req.param("id")).first<any>();
+  if (!o || !o.deeplink || !["aprovada", "publicada"].includes(o.status)) return c.json({ error: "Essa oferta já saiu do ar." }, 404);
+  let link = await db.prepare("SELECT id, code FROM tracked_links WHERE opportunity_id = ? AND channel_id IS NULL").bind(o.id).first<any>();
+  if (!link) {
+    const { randomCode } = await import("../lib/util");
+    const code = randomCode();
+    const r = await db.prepare("INSERT INTO tracked_links (code, opportunity_id, partner_id, target_url) VALUES (?,?,?,?)").bind(code, o.id, o.partner_id, o.deeplink).run();
+    link = { id: r.meta.last_row_id, code };
+  }
+  await db.prepare("INSERT INTO clicks (link_id, referrer) VALUES (?, 'site')").bind(link.id).run();
+  return c.json({ url: o.deeplink });
 });
 
 /** Pesquisa de passagens. Fonte real quando configurada; senão informa que está pendente e mostra o histórico gravado. */

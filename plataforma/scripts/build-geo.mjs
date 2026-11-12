@@ -5,6 +5,7 @@
 import { readFile, writeFile, copyFile } from "node:fs/promises";
 import { geoContains } from "d3-geo";
 import { feature } from "topojson-client";
+import { ptCity, BY_IATA } from "./pt-names.mjs";
 
 const BASE = "https://raw.githubusercontent.com/davidmegginson/ourairports-data/main/";
 
@@ -39,7 +40,7 @@ const keep = airports.filter(a =>
 const out = keep.map(a => ({
   i: a.iata_code,
   n: a.name,
-  c: a.municipality || "",
+  c: BY_IATA[a.iata_code] ?? ptCity(a.municipality || ""),
   r: a.iso_region,
   rn: regionName[a.iso_region] || a.iso_region,
   k: a.iso_country,

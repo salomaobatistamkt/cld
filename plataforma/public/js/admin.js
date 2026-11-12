@@ -78,6 +78,7 @@ VIEWS["visao-geral"] = async () => {
   return h("div", {},
     head("Visão geral", "Operação de descoberta, publicação e conversão. Números somam tudo que está no banco.",
       btn("Rodar pipeline agora", async () => { const r = await post("/jobs/pipeline"); toast(`Coleta: ${r.collect.reason ?? r.collect.saved + " preços"} · ${r.detect.created} oportunidades · ${r.compose.created} rascunhos`); route(); }, "primary")),
+    todoBox(k, d.integrations),
     k.sample_rows ? h("div", { class: "notice amber sample-banner" }, `Há ${k.sample_rows} preços de EXEMPLO no banco (modo demonstração). Eles nunca são publicados. Remova em Integrações e automações quando conectar a fonte real.`) : null,
     h("div", { class: "kpis" },
       kpi("Oportunidades", k.opportunities, "encontradas no total"),
@@ -105,6 +106,19 @@ VIEWS["visao-geral"] = async () => {
     sec("Integrações", null, integList(d.integrations)),
     sec("Atividade recente", null, logTable(d.recent)));
 };
+
+function todoBox(k, integ) {
+  const tasks = [];
+  if (k.posts_pending) tasks.push([`${k.posts_pending} publicação(ões) esperando você aprovar`, "Revisar agora", "#publicacoes"]);
+  const nova = k.opportunities - k.approved;
+  if (nova > 0) tasks.push([`${nova} oferta(s) encontrada(s) ainda não aprovada(s)`, "Ver ofertas", "#oportunidades"]);
+  if (integ.find(i => i.id === "travelpayouts" && i.mode !== "real")) tasks.push(["A busca de preços reais ainda não está ligada (falta o token da Travelpayouts)", "Ver como ligar", "#automacoes"]);
+  if (!k.routes_active) tasks.push(["Nenhuma rota sendo monitorada", "Cadastrar rotas", "#rotas"]);
+  if (k.errors_24h) tasks.push([`${k.errors_24h} erro(s) nas últimas 24 horas`, "Ver erros", "#atividade"]);
+  return h("section", { class: "todo" }, h("h2", {}, "O que fazer agora"),
+    tasks.length ? h("ul", {}, ...tasks.map(([t, b, href]) => h("li", {}, h("span", {}, t), h("a", { class: "btn primary", href }, b))))
+      : h("p", {}, "Tudo em dia. Nada esperando por você."));
+}
 
 function integList(items) {
   return h("div", { class: "integ" }, ...items.map(i => h("div", {}, h("b", {}, i.name), h("span", {}, pill(i.mode === "real" ? "ativo" : "pendente")), h("span", { class: "small" }, i.detail))));

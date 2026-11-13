@@ -1,12 +1,5 @@
 @charset "utf-8";
 /* Painel administrativo */
-body { font-size: 16px; }
-.todo { border: 2px solid var(--accent); border-radius: 10px; background: var(--surface); padding: 18px 20px; margin-bottom: 22px; }
-.todo h2 { font-size: 19px; margin-bottom: 10px; }
-.todo ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
-.todo li { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 12px 0; border-top: 1px solid var(--line); font-size: 16px; flex-wrap: wrap; }
-.todo li:first-child { border-top: 0; }
-.todo .btn { font-size: 15px; padding: 11px 16px; text-decoration: none; }
 html, body { height: 100%; }
 .login { min-height: 100%; display: grid; place-items: center; padding: 24px max(16px, env(safe-area-inset-left, 0px)); }
 .login-card { width: min(380px, 100%); display: grid; gap: 14px; }
@@ -20,7 +13,7 @@ html, body { height: 100%; }
 .mark::after { content: ""; position: absolute; left: -2px; right: -2px; top: 6px; border-top: 2px solid var(--amber); }
 #nav { display: grid; gap: 1px; }
 .nav-g { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 14px 8px 4px; }
-#nav a { display: flex; justify-content: space-between; align-items: center; padding: 10px 10px; border-radius: 6px; color: var(--fg-2); text-decoration: none; font-size: 15.5px; }
+#nav a { display: flex; justify-content: space-between; align-items: center; padding: 7px 8px; border-radius: 5px; color: var(--fg-2); text-decoration: none; font-size: 14px; }
 #nav a:hover { background: var(--surface-2); color: var(--fg); }
 #nav a.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 .count { font-family: var(--f-mono); font-size: 11px; background: var(--amber); color: var(--surface); border-radius: 99px; padding: 0 7px; }

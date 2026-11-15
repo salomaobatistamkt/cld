@@ -6,7 +6,7 @@
 source "$(dirname "$0")/../../comum/lib.sh"
 GSI="${1:?Informe o arquivo gsi.img}"; VBMETA="${2:?Informe o vbmeta.img do firmware original}"
 [[ -f "$GSI" && -f "$VBMETA" ]] || { erro "Arquivo não encontrado."; exit 1; }
-case "$GSI" in *.xz|*.zip|*.7z) erro "Descompacte a GSI antes (precisa ser .img)."; exit 1;; esac
+case "$GSI" in *.xz|*.gz|*.zip|*.7z) erro "Descompacte a GSI antes (precisa ser .img)."; exit 1;; esac
 precisa fastboot
 
 confirmar "Vai substituir o sistema e APAGAR os dados. Bootloader já desbloqueado e firmware original guardado?"

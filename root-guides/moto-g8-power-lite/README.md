@@ -63,8 +63,8 @@ Se o celular ficar bom, **não precisa seguir adiante**. Para desfazer: `bash ..
 ## Etapa 5 — Instalar a GSI (sistema novo)
 1. Baixe o **firmware original** do seu modelo (mesma versão que estava no celular) e extraia.
    Copie `vbmeta.img` e `boot.img` para `arquivos/`.
-2. Baixe a GSI escolhida (tabela em `DOWNLOADS.md`) e **descompacte** o `.xz` (7-Zip no Windows,
-   `xz -d arquivo.img.xz` no Linux/Mac).
+2. Baixe a GSI escolhida (tabela em `DOWNLOADS.md`) e **descompacte** o `.xz` ou `.gz` (7-Zip no Windows,
+   `xz -d arquivo.img.xz` ou `gunzip arquivo.img.gz` no Linux/Mac).
 3. Rode:
    ```bash
    bash scripts/03-instalar-gsi.sh arquivos/<gsi>.img arquivos/vbmeta.img

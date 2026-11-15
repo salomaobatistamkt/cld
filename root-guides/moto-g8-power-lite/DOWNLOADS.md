@@ -19,7 +19,7 @@
 | Resultado do diagnóstico | GSI recomendada | Arquivo a procurar |
 |---|---|---|
 | arm64 + system-as-root ou A/B | **TrebleDroid (AOSP puro, mais leve)** — https://github.com/TrebleDroid/treble_experimentations/releases | `system-td-arm64-ab-vanilla.img.xz` (sem Google) ou `...-gapps.img.xz` |
-| arm64 + system-as-root ou A/B | **LineageOS GSI (AndyYan)** — https://sourceforge.net/projects/andyyan-gsi/files/ | `lineage-2x.x-...-arm64_bvN.img.xz` (`bvN` = sem Google; `bgN` = com Google) |
+| arm64 + system-as-root ou A/B | **LineageOS GSI (AndyYan)** — https://sourceforge.net/projects/andyyan-gsi/files/ | Nomes novos: `lineage-21.0-...-gsi_arm64_vN.img.gz` (`vN` = sem Google; `gN` = com Google). Nomes antigos: `arm64_bvN`/`bgN` |
 | arm32 / binder64 | Mesmos projetos, variante `a64` / `arm32_binder64` | `...-a64-ab-...` |
 | A-only antigo (não SAR) | GSIs antigas (Android 10/11 "aonly") do phh — https://github.com/phhusson/treble_experimentations/releases | `system-quack-arm64-aonly-...` |
 | `vndk.lite = true` | Variante **vndklite** do mesmo projeto | `...-vndklite.img.xz` |

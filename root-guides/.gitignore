@@ -1,0 +1,12 @@
+# Arquivos grandes (ROMs, firmwares, APKs) e backups pessoais ficam só no seu PC
+**/arquivos/
+**/backups/
+**/diagnostico-*.txt
+**/unlock_data.txt
+**/debloat-removidos-*.txt
+**/*.img
+**/*.zip
+**/*.tar
+**/*.md5
+**/*.apk
+**/*.xz

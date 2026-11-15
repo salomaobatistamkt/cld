@@ -1,0 +1,43 @@
+# Bloatware do S20 FE / One UI — remoção sem root, reversível (comum/restaurar-debloat.sh).
+# Use apenas se continuar no One UI (no LineageOS nada disso existe).
+# Uso: bash ../comum/debloat.sh debloat-lista.txt [--aplicar]
+
+# --- Facebook / Microsoft / parceiros ---
+com.facebook.appmanager
+com.facebook.services
+com.facebook.system
+com.facebook.katana
+com.microsoft.skydrive
+com.microsoft.office.officehubrow
+com.linkedin.android
+com.netflix.partner.activation
+com.netflix.mediaclient
+com.spotify.music
+# --- Bixby ---
+com.samsung.android.bixby.agent
+com.samsung.android.bixby.wakeup
+com.samsung.android.bixbyvision.framework
+com.samsung.android.visionintelligence
+com.samsung.android.app.routines
+com.samsung.systemui.bixby2
+# --- AR / Emoji / extras ---
+com.samsung.android.arzone
+com.samsung.android.aremoji
+com.samsung.android.ardrawing
+com.samsung.android.aremojieditor
+com.samsung.android.app.spage
+com.samsung.android.app.tips
+com.samsung.android.tvplus
+com.samsung.android.kidsinstaller
+com.sec.android.app.kidshome
+com.samsung.android.service.peoplestripe
+com.samsung.android.game.gamehome
+com.samsung.android.mdx
+# --- Google opcional ---
+com.google.android.apps.tachyon
+com.google.android.apps.youtube.music
+com.google.android.videos
+com.google.android.apps.magazines
+# --- NÃO REMOVA ---
+# com.google.android.gms / com.android.vending / com.sec.android.app.launcher / com.android.systemui
+# com.samsung.android.game.gos (remover pode piorar temperatura em jogos)

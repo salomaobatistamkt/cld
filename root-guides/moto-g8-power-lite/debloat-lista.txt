@@ -1,0 +1,40 @@
+# Apps de fábrica que podem ser removidos com segurança (sem root, reversível).
+# Linhas com # são ignoradas. Comente (#) o que você QUER manter.
+# Uso: bash ../comum/debloat.sh debloat-lista.txt            (simulação)
+#      bash ../comum/debloat.sh debloat-lista.txt --aplicar  (remove)
+
+# --- Facebook pré-instalado (serviços em segundo plano; o app normal continua instalável) ---
+com.facebook.appmanager
+com.facebook.services
+com.facebook.system
+# --- Parcerias / propaganda ---
+com.netflix.partner.activation
+com.netflix.mediaclient
+com.amazon.mShop.android.shopping
+com.amazon.appmanager
+com.motorola.brapps
+com.motorola.demo
+com.motorola.help
+com.motorola.ccc.notification
+com.motorola.moto.ar
+com.motorola.gamemode
+com.motorola.livewallpaper3
+com.motorola.dynamicvolume
+# --- Google que você pode não usar (todos reinstaláveis pela Play Store) ---
+com.google.android.apps.tachyon
+com.google.android.apps.youtube.music
+com.google.android.videos
+com.google.android.music
+com.google.android.apps.magazines
+com.google.android.apps.subscriptions.red
+com.google.android.apps.wellbeing
+com.google.android.apps.googleassistant
+com.google.android.feedback
+com.google.ar.lens
+com.google.android.apps.podcasts
+com.google.android.apps.docs
+# --- NÃO REMOVA (deixados aqui só como aviso) ---
+# com.google.android.gms          (Google Play Services — WhatsApp precisa)
+# com.android.vending             (Play Store)
+# com.motorola.launcher3          (tela inicial — só remova se instalou outro launcher)
+# com.android.systemui            (interface do sistema)

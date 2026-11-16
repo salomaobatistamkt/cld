@@ -37,8 +37,10 @@ if ! command -v tailscale >/dev/null 2>&1; then
 fi
 
 echo
-echo "==> Placas de som encontradas (anote o número 'card' da sua caixa de som USB):"
-aplay -l | grep '^card' || echo "nenhuma placa encontrada — a caixa está conectada?"
+echo "==> Saídas de som (anote o 'card' onde a caixa está ligada -> ALSA_CARD_SAIDA):"
+aplay -l | grep '^card' || echo "nenhuma saída encontrada"
+echo "==> Microfones (anote o 'card' do microfone USB -> ALSA_CARD_ENTRADA):"
+arecord -l | grep '^card' || echo "nenhum microfone encontrado — ele está conectado?"
 echo
 echo "Pronto! Próximos passos:"
 echo "  1) sudo tailscale up        (abra o link que aparecer e faça login)"

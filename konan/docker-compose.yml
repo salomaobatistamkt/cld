@@ -46,7 +46,8 @@ services:
     environment:
       CEREBRO_URL: http://cerebro:8080
       KONAN_NOME: ${KONAN_NOME:-Konan}
-      ALSA_CARD: ${ALSA_CARD:-0}
+      ALSA_CARD_SAIDA: ${ALSA_CARD_SAIDA:-0}
+      ALSA_CARD_ENTRADA: ${ALSA_CARD_ENTRADA:-1}
       WHISPER_MODELO: ${WHISPER_MODELO:-base}
       VOZ_MOTOR: ${VOZ_MOTOR:-kokoro}
       VOZ_KOKORO: ${VOZ_KOKORO:-pf_dora}

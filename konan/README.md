@@ -30,7 +30,7 @@ Depois que ela responde, você tem **8 segundos** para continuar falando sem rep
 
 - PC com 4 núcleos e 8 GB de RAM (testado para um i5-6500 com 8 GB, sem placa de vídeo)
 - Ubuntu Server 24.04
-- Caixa de som USB com microfone
+- Caixa de som ligada no P2 (saída verde) do PC e um **microfone USB** (ou webcam com microfone)
 - ~10 GB livres em disco
 
 Na primeira vez que sobe, ela baixa os modelos (~3 GB). Depois funciona sem internet.
@@ -54,7 +54,7 @@ cd konan
 sudo bash scripts/preparar-servidor.sh
 sudo tailscale up
 ```
-Anote o número da placa da caixa de som (por exemplo, `card 1: ...` quer dizer `ALSA_CARD=1`). Depois saia e entre de novo na sessão.
+Anote os números das placas: a da saída onde a caixa está ligada (`aplay -l`, normalmente `card 0`, que vira `ALSA_CARD_SAIDA=0`) e a do microfone USB (`arecord -l`, normalmente `card 1`, que vira `ALSA_CARD_ENTRADA=1`). Depois saia e entre de novo na sessão.
 
 Na **VPS**, instale o Tailscale também e entre na mesma conta:
 ```bash
@@ -77,7 +77,8 @@ curl -fsSL https://tailscale.com/install.sh | sh && sudo tailscale up
 2. **Build Pack:** `Docker Compose`. **Arquivo:** `/docker-compose.yml`.
 3. **Server:** o PC de casa (não a VPS!).
 4. Em **Environment Variables**, cadastre pelo menos:
-   - `ALSA_CARD` = número da sua caixa de som
+   - `ALSA_CARD_SAIDA` = placa da caixa de som (ex.: `0`)
+   - `ALSA_CARD_ENTRADA` = placa do microfone USB (ex.: `1`)
    - `INTERFACE_URL` = `http://IP-DO-PC:8090`
 
    As outras opções estão em `.env.example`.
@@ -87,7 +88,7 @@ Quando aparecer `Konan pronta. Diga "Konan" para chamar.`, é só falar.
 
 > **Se o Coolify não passar o áudio** (algumas versões ignoram `devices:` do compose), rode direto no PC:
 > ```bash
-> cd ~/konan && cp .env.example .env && nano .env   # ajuste ALSA_CARD
+> cd ~/konan && cp .env.example .env && nano .env   # ajuste ALSA_CARD_SAIDA e ALSA_CARD_ENTRADA
 > docker compose up -d --build
 > docker compose logs -f voz
 > ```
@@ -113,11 +114,15 @@ Todos são feitos por variável de ambiente (no Coolify ou no `.env`):
 - **"Konan, abre sua interface"** → ela diz o endereço da página
 - **"Konan, apaga sua memória"** → ela pede confirmação; responda **"sim"**
 
+## Sobre caixas Bluetooth
+
+Prefira ligar a caixa pelo **cabo P2 (AUX)**. Bluetooth no servidor exige um adaptador, PipeWire e reconexão automática, e muitas caixas desligam sozinhas quando ficam paradas. O microfone de caixas Bluetooth, quando existe, tem qualidade de telefone.
+
 ## Problemas comuns
 
 | Sintoma | Solução |
 |---|---|
-| Ela não ouve nada | `docker compose logs voz` mostra as placas encontradas; confira o `ALSA_CARD`. Teste com `arecord -D plughw:1 -d 3 t.wav && aplay t.wav` |
+| Ela não ouve ou não fala | `docker compose logs voz` mostra as placas encontradas; confira `ALSA_CARD_SAIDA` e `ALSA_CARD_ENTRADA`. Teste no PC: `arecord -D plughw:1 -d 3 t.wav && aplay -D plughw:0 t.wav` |
 | Acorda sozinha com a TV | `VAD_AGRESSIVIDADE=3` |
 | Corta você no meio da frase | `SILENCIO_FIM_MS=1000` |
 | Muito lenta | use o modelo 1.7B e `WHISPER_MODELO=tiny` |

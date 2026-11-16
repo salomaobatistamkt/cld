@@ -20,16 +20,29 @@ NOME = os.environ.get("KONAN_NOME", "Konan")
 DADOS = os.environ.get("KONAN_DADOS", "/data")
 MODELOS = os.path.join(DADOS, "modelos")
 
-# Cérebro (llama.cpp server, API compatível com OpenAI)
-CEREBRO_URL = os.environ.get("CEREBRO_URL", "http://cerebro:8080")
+# Modo: "local" = microfone/caixa ligados no próprio PC | "web" = microfone e som pelo navegador (celular/PC)
+MODO = os.environ.get("KONAN_MODO", "local").lower()
+SENHA = os.environ.get("KONAN_SENHA", "")
+
+# Cérebro: qualquer API compatível com OpenAI (base já com a versão, ex.: .../v1)
+#   local:  http://cerebro:8080/v1
+#   Groq:   https://api.groq.com/openai/v1
+#   Gemini: https://generativelanguage.googleapis.com/v1beta/openai
+CEREBRO_URL = os.environ.get("CEREBRO_URL", "http://cerebro:8080/v1")
+CEREBRO_CHAVE = os.environ.get("CEREBRO_CHAVE", "")
+CEREBRO_MODELO = os.environ.get("CEREBRO_MODELO", "local")
 CEREBRO_TEMPERATURA = _float("CEREBRO_TEMPERATURA", 0.6)
 CEREBRO_MAX_TOKENS = _int("CEREBRO_MAX_TOKENS", 400)
 
-# Ouvido (faster-whisper)
+# Ouvido: "local" (faster-whisper no próprio servidor) | "api" (transcrição por API compatível com OpenAI)
+OUVIDO_MOTOR = os.environ.get("OUVIDO_MOTOR", "local").lower()
+OUVIDO_URL = os.environ.get("OUVIDO_URL", "https://api.groq.com/openai/v1")
+OUVIDO_CHAVE = os.environ.get("OUVIDO_CHAVE", "") or CEREBRO_CHAVE
+OUVIDO_MODELO = os.environ.get("OUVIDO_MODELO", "whisper-large-v3-turbo")
 WHISPER_MODELO = os.environ.get("WHISPER_MODELO", "base")
 WHISPER_THREADS = _int("WHISPER_THREADS", 2)
 
-# Voz (kokoro = feminina pt-BR "pf_dora"; piper = vozes pt-BR do Piper)
+# Voz: kokoro (feminina pt-BR "pf_dora") | piper (pt-BR) | navegador (a voz do celular/PC fala; só no modo web, custo zero)
 VOZ_MOTOR = os.environ.get("VOZ_MOTOR", "kokoro").lower()
 VOZ_KOKORO = os.environ.get("VOZ_KOKORO", "pf_dora")
 VOZ_PIPER = os.environ.get("VOZ_PIPER", "pt_BR-faber-medium")

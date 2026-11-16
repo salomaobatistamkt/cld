@@ -1,0 +1,34 @@
+# Konan na VPS (modo web): você fala pelo navegador do celular ou do PC.
+# Cérebro e ouvido por API (Groq gratuito por padrão), voz do próprio navegador.
+# Usa ~100 MB de RAM e quase nada de CPU.
+name: konan
+
+services:
+  voz:
+    build:
+      context: ./voz
+      args:
+        PERFIL: leve
+    restart: unless-stopped
+    environment:
+      KONAN_MODO: web
+      KONAN_NOME: ${KONAN_NOME:-Konan}
+      KONAN_SENHA: ${KONAN_SENHA:?defina KONAN_SENHA (mínimo 8 caracteres)}
+      CEREBRO_URL: ${CEREBRO_URL:-https://api.groq.com/openai/v1}
+      CEREBRO_MODELO: ${CEREBRO_MODELO:-llama-3.3-70b-versatile}
+      CEREBRO_CHAVE: ${CEREBRO_CHAVE:?defina CEREBRO_CHAVE (chave da API)}
+      OUVIDO_MOTOR: api
+      OUVIDO_URL: ${OUVIDO_URL:-https://api.groq.com/openai/v1}
+      OUVIDO_MODELO: ${OUVIDO_MODELO:-whisper-large-v3-turbo}
+      OUVIDO_CHAVE: ${OUVIDO_CHAVE:-}
+      VOZ_MOTOR: navegador
+      VOZ_VELOCIDADE: ${VOZ_VELOCIDADE:-1.05}
+      TZ: ${TZ:-America/Sao_Paulo}
+    expose:
+      - "8090"
+    volumes:
+      - dados:/data
+    mem_limit: 300m
+
+volumes:
+  dados:

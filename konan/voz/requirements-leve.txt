@@ -1,0 +1,4 @@
+# Mínimo para o modo web com cérebro e ouvido por API e voz do navegador (VPS pequena)
+numpy>=1.26,<3
+httpx>=0.27,<1
+sympy>=1.13,<2

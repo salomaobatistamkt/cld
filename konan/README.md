@@ -26,7 +26,52 @@ Dois containers:
 
 Depois que ela responde, você tem **8 segundos** para continuar falando sem repetir o nome.
 
-## Requisitos
+## Duas formas de rodar
+
+| | **Fase 1: VPS (Hostinger)** | **Fase 2: PC de casa** |
+|---|---|---|
+| Arquivo | `docker-compose.vps.yml` | `docker-compose.yml` |
+| Onde você fala | navegador do celular ou do PC | microfone ligado no PC |
+| Cérebro | API (Groq, gratuita) | Qwen 4B local |
+| Ouvido | API (Groq Whisper) | Whisper local |
+| Voz | voz do próprio celular ou PC | Kokoro, feminina, no PC |
+| RAM no servidor | ~100 MB | ~3 GB |
+| Privacidade | fala e texto passam pela Groq; a memória fica na VPS | 100% em casa |
+
+Para passar da fase 1 para a 2, é só usar o outro compose. A memória pode ser copiada (`/data/memoria.sqlite3`).
+
+---
+
+## Fase 1: VPS da Hostinger com Coolify
+
+### 1. Pegue uma chave gratuita da Groq
+1. Crie uma conta em **console.groq.com**.
+2. Vá em **API Keys → Create API Key** e copie a chave.
+3. **Não mande essa chave para ninguém** (nem no chat). Ela vai só no Coolify.
+
+### 2. Faça o deploy no Coolify
+1. **Projects → + New → Resource → Public/Private Repository** e escolha o repositório `konan`.
+2. **Build Pack:** `Docker Compose`. **Arquivo:** `/docker-compose.vps.yml`.
+3. **Server:** a VPS (localhost).
+4. **Environment Variables:**
+   - `KONAN_SENHA` = uma senha forte (mínimo 8 caracteres). Ela protege a página, que fica na internet.
+   - `CEREBRO_CHAVE` = a chave da Groq
+5. Em **Domains** do serviço `voz`, coloque um domínio ou subdomínio seu com **https**, por exemplo `https://konan.seudominio.com:8090`. O Coolify gera o certificado sozinho. O **https é obrigatório**: sem ele, o navegador não libera o microfone.
+6. **Deploy**. Ela usa ~100 MB de RAM.
+
+### 3. Use pelo celular
+1. Abra `https://konan.seudominio.com`, digite a senha e toque em **Ativar a Konan**. Permita o microfone.
+2. Para usar a caixa Bluetooth, pareie a caixa **com o celular**. O som da Konan sai por ela.
+3. Diga **"Konan"** ou **"Ei, Konan, tudo bem?"**, ou **segure o botão** para falar sem dizer o nome.
+4. Deixe a página aberta e a tela ligada. No celular, o microfone para quando a tela apaga.
+
+> Para usar o Gemini em vez da Groq: `CEREBRO_URL=https://generativelanguage.googleapis.com/v1beta/openai`, `CEREBRO_MODELO=gemini-2.5-flash` e a chave do Google AI Studio em `CEREBRO_CHAVE`. O ouvido continua na Groq (`OUVIDO_CHAVE`).
+
+---
+
+## Fase 2: PC de casa
+
+### Requisitos
 
 - PC com 4 núcleos e 8 GB de RAM (testado para um i5-6500 com 8 GB, sem placa de vídeo)
 - Ubuntu Server 24.04
@@ -37,7 +82,7 @@ Na primeira vez que sobe, ela baixa os modelos (~3 GB). Depois funciona sem inte
 
 ---
 
-## Passo a passo
+### Passo a passo
 
 ### 1. Instalar o Ubuntu Server no PC
 
@@ -134,7 +179,7 @@ Prefira ligar a caixa pelo **cabo P2 (AUX)**. Bluetooth no servidor exige um ada
 cd voz && pip install -r requirements.txt pytest && python -m pytest -q tests
 ```
 
-## Próximas ideias (fase 2)
+## Próximas ideias
 
 - Extensão do Chrome para reuniões: gravar o vídeo no HD e salvar as notas organizadas na nuvem
 - Lembretes por voz

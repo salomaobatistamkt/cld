@@ -3,6 +3,10 @@
 # Saída e entrada podem ser placas diferentes, ex.: caixa no P2 do PC (placa 0) + microfone USB (placa 1).
 # O "plug" converte taxa/canais automaticamente.
 set -e
+if [ "${KONAN_MODO:-local}" = "web" ]; then
+  echo "[konan] modo web: microfone e som pelo navegador."
+  exec "$@"
+fi
 SAIDA="${ALSA_CARD_SAIDA:-${ALSA_CARD:-0}}"
 ENTRADA="${ALSA_CARD_ENTRADA:-${ALSA_CARD:-0}}"
 cat > /etc/asound.conf <<EOF

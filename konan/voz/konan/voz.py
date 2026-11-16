@@ -58,6 +58,29 @@ class _Piper:
         return (np.concatenate(partes) if partes else np.zeros(1, np.float32)).astype(np.float32), taxa
 
 
+class Sintetizador:
+    """Transforma texto em áudio (sem tocar). Usado no modo web para mandar o WAV ao navegador."""
+
+    def __init__(self):
+        self._motor = _Piper() if config.VOZ_MOTOR == "piper" else _Kokoro()
+
+    def sintetizar(self, texto: str):
+        return self._motor.sintetizar(texto)
+
+    def wav(self, texto: str) -> bytes:
+        import io
+        import wave
+
+        audio, taxa = self.sintetizar(texto)
+        saida = io.BytesIO()
+        with wave.open(saida, "wb") as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(taxa)
+            w.writeframes((np.clip(audio, -1, 1) * 32767).astype("<i2").tobytes())
+        return saida.getvalue()
+
+
 class Voz:
     """Fila de frases -> síntese -> alto-falante. A próxima frase é sintetizada enquanto a anterior toca."""
 
@@ -65,7 +88,7 @@ class Voz:
         import sounddevice as sd
 
         self._sd = sd
-        self._motor = _Piper() if config.VOZ_MOTOR == "piper" else _Kokoro()
+        self._motor = Sintetizador()
         self._frases: queue.Queue = queue.Queue()
         self._audios: queue.Queue = queue.Queue(maxsize=3)
         self._pendentes = 0

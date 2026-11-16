@@ -44,7 +44,7 @@ services:
     group_add:
       - audio
     environment:
-      CEREBRO_URL: http://cerebro:8080
+      CEREBRO_URL: http://cerebro:8080/v1
       KONAN_NOME: ${KONAN_NOME:-Konan}
       ALSA_CARD_SAIDA: ${ALSA_CARD_SAIDA:-0}
       ALSA_CARD_ENTRADA: ${ALSA_CARD_ENTRADA:-1}

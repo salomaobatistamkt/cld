@@ -8,8 +8,10 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+# PERFIL=completo (PC de casa: tudo local) | leve (VPS: cérebro/ouvido por API, voz do navegador)
+ARG PERFIL=completo
+COPY requirements*.txt ./
+RUN if [ "$PERFIL" = "leve" ]; then pip install -r requirements-leve.txt; else pip install -r requirements.txt; fi
 
 COPY konan ./konan
 COPY entrypoint.sh /entrypoint.sh

@@ -106,7 +106,64 @@ def test_cerebro_usa_ferramenta_e_fala_em_frases():
         return httpx.Response(200, text=texto, headers={"content-type": "text/event-stream"})
 
     cliente = httpx.Client(transport=httpx.MockTransport(responder))
-    c = cerebro.Cerebro("http://teste", cliente)
+    c = cerebro.Cerebro("http://teste/v1", cliente, chave="")
     frases = list(c.responder([{"role": "user", "content": "18% de 2340?"}]))
     assert frases == ["Dá quatrocentos e vinte e um e vinte.", "Mais alguma?"]
     assert pedidos[0]["tools"][0]["function"]["name"] == "calcular"
+
+
+def test_modo_web_login_e_conversa(tmp_path, monkeypatch):
+    import time
+    import urllib.error
+    import urllib.request
+
+    import numpy as np
+
+    from konan import config
+    from konan.interface import Painel
+    from konan.nucleo import Konan
+    from konan.ouvido import para_wav
+
+    monkeypatch.setattr(config, "SENHA", "senha-secreta")
+    monkeypatch.setattr(config, "MODO", "web")
+
+    class OuvidoFalso:
+        def transcrever(self, audio):
+            assert audio.dtype == np.float32 and len(audio) == 16000
+            return "Ei Konan, quanto é 18% de 2340?"
+
+    class CerebroFalso:
+        def responder(self, mensagens, ao_calcular=None):
+            assert mensagens[-1]["content"] == "quanto é 18% de 2340?"
+            yield "Dá quatrocentos e vinte e um e vinte."
+
+    konan = Konan(Memoria(str(tmp_path / "m.sqlite3")), CerebroFalso())
+    Painel().servir(18091, konan=konan, ouvido=OuvidoFalso(), sintetizador=None)
+    time.sleep(0.3)
+    base = "http://127.0.0.1:18091"
+
+    # sem login: página de senha e /ouvir bloqueado
+    assert b'name="senha"' in urllib.request.urlopen(base + "/").read()
+    with pytest.raises(urllib.error.HTTPError) as e:
+        urllib.request.urlopen(urllib.request.Request(base + "/ouvir", data=b"x", method="POST"))
+    assert e.value.code == 401
+
+    class SemRedirecionar(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, *a, **k):
+            return None
+
+    abridor = urllib.request.build_opener(SemRedirecionar)
+    with pytest.raises(urllib.error.HTTPError) as e:
+        abridor.open(base + "/entrar", data=b"senha=senha-secreta")
+    cookie = e.value.headers["Set-Cookie"].split(";")[0]
+    assert e.value.code == 303 and cookie.startswith("konan=")
+
+    cfg = json.loads(urllib.request.urlopen(urllib.request.Request(base + "/config", headers={"Cookie": cookie})).read())
+    assert cfg["modo"] == "web" and cfg["vozNavegador"] is True
+
+    req = urllib.request.Request(base + "/ouvir", data=para_wav(np.zeros(16000, np.float32)), method="POST",
+                                 headers={"Cookie": cookie, "Content-Type": "audio/wav"})
+    linhas = [json.loads(l) for l in urllib.request.urlopen(req).read().decode().splitlines()]
+    assert [l["tipo"] for l in linhas] == ["ouvi", "frase", "fim"]
+    assert linhas[1] == {"tipo": "frase", "texto": "Dá quatrocentos e vinte e um e vinte.", "audio": None}
+    assert konan.memoria.total() == 1

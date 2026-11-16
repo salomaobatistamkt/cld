@@ -51,25 +51,38 @@ def para_fala(texto: str) -> str:
 
 
 class Cerebro:
-    def __init__(self, url: str | None = None, cliente: httpx.Client | None = None):
-        self.url = (url or config.CEREBRO_URL).rstrip("/") + "/v1/chat/completions"
+    def __init__(self, url: str | None = None, cliente: httpx.Client | None = None,
+                 chave: str | None = None, modelo: str | None = None):
+        self.base = (url or config.CEREBRO_URL).rstrip("/")
+        self.url = self.base + "/chat/completions"
+        self.chave = config.CEREBRO_CHAVE if chave is None else chave
+        self.modelo = modelo or config.CEREBRO_MODELO
+        cabecalhos = {"Authorization": f"Bearer {self.chave}"} if self.chave else {}
         self.cliente = cliente or httpx.Client(timeout=httpx.Timeout(120, connect=5))
+        self.cliente.headers.update(cabecalhos)
+        # Campos extras só existem no llama.cpp; APIs externas (Groq/Gemini) podem recusá-los.
+        self.local = not self.chave
 
     def pronto(self) -> bool:
         try:
-            return self.cliente.get(self.url.rsplit("/v1/", 1)[0] + "/health", timeout=3).status_code == 200
+            if self.local:
+                raiz = self.base[:-3] if self.base.endswith("/v1") else self.base
+                return self.cliente.get(raiz + "/health", timeout=3).status_code == 200
+            return self.cliente.get(self.base + "/models", timeout=10).status_code == 200
         except httpx.HTTPError:
             return False
 
     def _stream(self, mensagens: list[dict], com_ferramentas: bool) -> Iterator[dict]:
         corpo = {
+            "model": self.modelo,
             "messages": mensagens,
             "stream": True,
             "temperature": config.CEREBRO_TEMPERATURA,
             "max_tokens": config.CEREBRO_MAX_TOKENS,
-            "cache_prompt": True,
-            "chat_template_kwargs": {"enable_thinking": False},
         }
+        if self.local:
+            corpo["cache_prompt"] = True
+            corpo["chat_template_kwargs"] = {"enable_thinking": False}
         if com_ferramentas:
             corpo["tools"] = [matematica.FERRAMENTA]
         with self.cliente.stream("POST", self.url, json=corpo) as resp:
@@ -145,6 +158,6 @@ def esperar_cerebro(cerebro: Cerebro, avisar: Callable[[str], None]) -> None:
     inicio = time.time()
     while not cerebro.pronto():
         if time.time() - inicio > 5:
-            avisar("aguardando o cérebro carregar (na primeira vez ele baixa o modelo, pode levar alguns minutos)…")
+            avisar("aguardando o cérebro responder em %s (na primeira vez o modelo local é baixado; com API, confira a chave)…" % cerebro.base)
             inicio = time.time() + 55
         time.sleep(2)

@@ -30,10 +30,11 @@ class Conversa:
     def acordar(self, agora: float | None = None):
         self.acordada_ate = (agora or time.time()) + config.JANELA_CONTINUACAO_S
 
-    def decidir(self, texto: str, agora: float | None = None) -> Decisao:
+    def decidir(self, texto: str, agora: float | None = None, direto: bool = False) -> Decisao:
+        """direto=True: botão "segure para falar" — não precisa dizer o nome."""
         agora = agora or time.time()
         chamou, resto = despertar.detectar(texto)
-        acordada = agora <= self.acordada_ate
+        acordada = direto or agora <= self.acordada_ate
         if not chamou and not acordada:
             return Decisao("ignorar")
         pedido = (resto if chamou else texto).strip()

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Konan</title>
+<style>
+  :root { --fundo:#05070d; --cor:#5ab4ff; --cor2:#7b5cff; --texto:#cfe3ff; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:radial-gradient(circle at 50% 40%, #0c1426 0%, var(--fundo) 70%); color:var(--texto);
+         font-family:system-ui, sans-serif; min-height:100vh; display:flex; flex-direction:column;
+         align-items:center; justify-content:center; gap:48px; padding:16px; overflow:hidden; }
+  .nucleo { position:relative; width:min(60vw,280px); aspect-ratio:1; }
+  .anel, .esfera { position:absolute; inset:0; border-radius:50%; }
+  .anel { border:1px solid color-mix(in srgb, var(--cor) 40%, transparent); animation:girar 18s linear infinite; }
+  .anel:nth-child(2) { inset:-10%; border-style:dashed; animation-duration:30s; animation-direction:reverse; opacity:.5; }
+  .anel:nth-child(3) { inset:-22%; opacity:.25; animation-duration:45s; }
+  .esfera { inset:18%; background:radial-gradient(circle at 40% 35%, #fff 0%, var(--cor) 25%, var(--cor2) 60%, transparent 72%);
+            filter:blur(2px); box-shadow:0 0 80px var(--cor), 0 0 160px var(--cor2); transition:transform .3s, opacity .3s;
+            animation:respirar 4s ease-in-out infinite; opacity:.55; }
+  body[data-estado="ouvindo"] .esfera { opacity:1; animation-duration:1.2s; }
+  body[data-estado="pensando"] .esfera { opacity:.9; animation:pensar .8s ease-in-out infinite; --cor:#b07bff; }
+  body[data-estado="falando"] .esfera { opacity:1; animation:falar .35s ease-in-out infinite alternate; }
+  body[data-estado="erro"] { --cor:#ff5a6e; --cor2:#a0203a; }
+  .estado { font-size:12px; letter-spacing:.35em; text-transform:uppercase; opacity:.6; }
+  .legenda { max-width:640px; text-align:center; font-size:clamp(16px,2.4vw,22px); line-height:1.5; min-height:3em; }
+  .legenda .quem { display:block; font-size:11px; letter-spacing:.3em; opacity:.5; margin-bottom:6px; text-transform:uppercase; }
+  @keyframes girar { to { transform:rotate(360deg); } }
+  @keyframes respirar { 50% { transform:scale(1.06); } }
+  @keyframes pensar { 50% { transform:scale(.9) rotate(20deg); } }
+  @keyframes falar { from { transform:scale(.97); } to { transform:scale(1.12); } }
+  @media (prefers-reduced-motion: reduce) { * { animation:none !important; } }
+</style>
+</head>
+<body data-estado="iniciando">
+  <div class="nucleo"><div class="anel"></div><div class="anel"></div><div class="anel"></div><div class="esfera"></div></div>
+  <div class="estado" id="estado">iniciando</div>
+  <p class="legenda" id="legenda"></p>
+<script>
+  const nomes = { iniciando:"iniciando", dormindo:"aguardando o nome", ouvindo:"ouvindo", pensando:"pensando", falando:"falando", erro:"erro" };
+  const legenda = document.getElementById("legenda"), estado = document.getElementById("estado");
+  function conectar() {
+    const fonte = new EventSource("/eventos");
+    fonte.onmessage = (e) => {
+      const d = JSON.parse(e.data);
+      document.body.dataset.estado = d.estado;
+      estado.textContent = nomes[d.estado] || d.estado;
+      if (d.texto) {
+        legenda.innerHTML = "";
+        const q = document.createElement("span"); q.className = "quem"; q.textContent = d.quem || "";
+        legenda.append(q, document.createTextNode(d.texto));
+      }
+    };
+    fonte.onerror = () => { fonte.close(); document.body.dataset.estado = "erro"; estado.textContent = "reconectando"; setTimeout(conectar, 3000); };
+  }
+  conectar();
+</script>
+</body>
+</html>

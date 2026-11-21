@@ -20,13 +20,16 @@ echo "   salvo em $SAFE"
 echo ">> 2/5 volumes (mesmos nomes da VPS, o Coolify reaproveita)"
 for t in "$B"/volumes/*.tgz; do
   v=$(basename "$t" .tgz)
-  if docker volume inspect "$v" >/dev/null 2>&1; then echo "   já existe: $v (pulando)"; continue; fi
-  labels=()
-  if [[ "$v" == *_* && "$v" != redis-data-* ]]; then
-    labels=(--label "com.docker.compose.project=${v%%_*}" --label "com.docker.compose.volume=${v#*_}")
+  if docker volume inspect "$v" >/dev/null 2>&1; then
+    if [ -n "$(docker run --rm -v "$v":/v alpine ls -A /v)" ]; then echo "   já tem dados: $v (pulando)"; continue; fi
+  else
+    labels=()
+    if [[ "$v" == *_* && "$v" != redis-data-* ]]; then
+      labels=(--label "com.docker.compose.project=${v%%_*}" --label "com.docker.compose.volume=${v#*_}")
+    fi
+    docker volume create "${labels[@]}" "$v" >/dev/null
   fi
-  docker volume create "${labels[@]}" "$v" >/dev/null
-  docker run --rm -v "$v":/v -v "$B/volumes":/b:ro alpine tar xzpf "/b/$v.tgz" --numeric-owner -C /v
+  docker run --rm -v "$v":/v -v "$B/volumes":/b:ro alpine tar xzpf "/b/$v.tgz" -C /v
   echo "   ok: $v"
 done
 
